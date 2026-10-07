@@ -14,7 +14,8 @@
     "Existing licensed R01\u2013R22 derivative retained",
     "OSS setup guide, allowlisted diagnostics, static operator and public documentation",
     "Curated public source-only plugin stub and metadata; upstream assets/private operators omitted",
-    "Post-publication quick navigation over existing destinations/read panels; memory-only queries, unchanged RPC/backend contracts"
+    "Post-publication quick navigation over existing destinations/read panels; memory-only queries, unchanged RPC/backend contracts",
+    "Developer Preview 2 release metadata and self-contained update-test output; unchanged application source, dependency resolution and backend contracts"
   ],
   "files": [
     {
@@ -80,6 +81,15 @@
       "sourceSha256": "be4cb717405f8666cd62b56e4cb14d9660164c7bc9fce96076a0033a68b646ea",
       "sha256": "be4cb717405f8666cd62b56e4cb14d9660164c7bc9fce96076a0033a68b646ea",
       "modifiedDuringExport": false
+    },
+    {
+      "file": "CHANGELOG.md",
+      "source": "CHANGELOG.md",
+      "sourceSha256": "f6745ec0c86fd8b1fc243975a0408ef7dceedba20036f3799151321b54497f29",
+      "sha256": "3143f47de4696eddcdd9da51601b91ddb8cabd886782c002d02ac6aa3d6de114",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true,
+      "modifiedAfterExport": true
     },
     {
       "file": "CONTRIBUTING.md",
@@ -173,7 +183,7 @@
       "file": "docs/OSS_ROADMAP.md",
       "source": "docs/OSS_ROADMAP.md",
       "sourceSha256": "2c05358499fed1e0b719f4c7cd6b70e77730552ae1135be4420af0c3a21fa214",
-      "sha256": "f7a36eb74f2e13d145b85cb31129193beefd3a577d365f5acb7b518f112cf2bb",
+      "sha256": "2289eb298e1163828d8b255c3753ecccfaf43419aa9ebdbcb0c7fdfbe13ff632",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },
@@ -375,14 +385,15 @@
       "file": "package-lock.json",
       "source": "docs/oss-public/package-lock.json",
       "sourceSha256": "df5bb57790a7d68ab9e68195be5d913cb288ac2ba8e79761019c4946ae2b92ff",
-      "sha256": "df5bb57790a7d68ab9e68195be5d913cb288ac2ba8e79761019c4946ae2b92ff",
-      "modifiedDuringExport": false
+      "sha256": "3389c9faddc3230ef810b98b4652f0cc2308e5ad798a6dbd627bfd3dd354ef10",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "package.json",
       "source": "package.json",
       "sourceSha256": "978e0c9ac7f92e0fa479ec2e7f1310c7a62039f2cebdd002c5c8693a81042ba9",
-      "sha256": "c22c40ecc55dd6a98bbe83e0f3a8be27a64ae8013757de8d9174ba62ffe0b010",
+      "sha256": "67830b3e41486a4f1ed61fbdc08ce4f9d6d8654415c091f84b422664f3961a67",
       "modifiedDuringExport": true,
       "modifiedAfterExport": true
     },
@@ -2737,8 +2748,9 @@
       "file": "scripts/e2e-update-cache.mjs",
       "source": "scripts/e2e-update-cache.mjs",
       "sourceSha256": "1caf8b94eacd2d8d3777409b38c5412f4d69fce19c77a6704aaaf8aa9f259952",
-      "sha256": "1caf8b94eacd2d8d3777409b38c5412f4d69fce19c77a6704aaaf8aa9f259952",
-      "modifiedDuringExport": false
+      "sha256": "a79891a82221def4703da583ebe1399f7e7b9977be91594f62c548b62e7de041",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "scripts/fixture-server.mjs",

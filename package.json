@@ -1,6 +1,6 @@
 {
   "name": "hermes-remote-web",
-  "version": "2.0.0-preview.1",
+  "version": "2.0.0-preview.2",
   "description": "Japanese single-user mobile Web client for an existing same-origin Hermes Dashboard",
   "type": "module",
   "license": "MIT",
