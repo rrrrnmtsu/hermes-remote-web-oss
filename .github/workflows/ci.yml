@@ -1,0 +1,92 @@
+name: OSS verification
+on:
+  push:
+    branches: [main, 'codex/**']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test -- --maxWorkers=1 --minWorkers=1
+      - run: npm run test:oss
+      - run: node scripts/verify-product.mjs
+      - run: python3 native/ios/scripts/generate_project.py --check && python3 native/ios/scripts/verify_source.py
+      - run: npm run build && npm run verify:pwa && npm run verify:pack
+      - name: Owned fixture and interaction harness safety
+        run: node --test scripts/fixture-server.test.mjs scripts/worker-readiness.test.mjs scripts/layout-geometry.test.mjs scripts/date-fixture-guards.test.mjs scripts/interactions-fixture.test.mjs scripts/interactions-observation.test.mjs scripts/verify-text-pilot.test.mjs scripts/verify-image-turn.test.mjs
+      - name: Install fixed test browsers
+        run: node_modules/.bin/playwright install --with-deps chromium webkit
+      - name: Both browser engines and existing scoped UI
+        run: |
+          npm run e2e:remote
+          npm run e2e:chat-ux
+          npm run e2e:sidebar
+          npm run e2e:daily-ui
+          npm run e2e:quote-image
+          npm run e2e:next-phase
+          npm run e2e:oss-guide
+          node scripts/e2e-conversation-date-fields.mjs --long-project=1
+          npm run e2e:interactions
+          node scripts/e2e-update-cache.mjs
+          node scripts/e2e-product-origins.mjs
+          node scripts/run-worker-network-isolated.mjs
+      - name: Reproducible source and static package
+        run: npm run package:release
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: oss-preview-static-and-synthetic-proof
+          path: |
+            output/public-release/
+            output/oss-guide/
+            evidence/*browser*.json
+            evidence/browser-fixture.json
+          retention-days: 7
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          repository: NousResearch/hermes-agent
+          ref: e8c97320ac8691d4de92af49f98459f9ef9ddb08
+          path: output/backend-ci
+          persist-credentials: false
+      - run: node scripts/verify-product.mjs --source output/backend-ci --apply
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39
+        with:
+          version: '0.12.13'
+      - name: Fixed isolated Python and dependencies
+        working-directory: output/backend-ci
+        run: uv sync --locked --python 3.14.7 --no-install-project --extra anthropic --extra web --extra homeassistant --group dev
+      - run: uv pip install --python output/backend-ci/.venv/bin/python --no-index --no-deps patches/product/wheels/*.whl
+      - name: Real handlers, synthetic provider, ownership and legacy regressions
+        run: |
+          mkdir -p output/backend-proof
+          bash scripts/product/run-backend-tests.sh "$PWD/output/backend-ci" "$PWD/output/backend-ci/.venv/bin/python" > output/backend-proof/backend.log 2>&1
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: oss-fixed-backend-synthetic-proof
+          path: output/backend-proof/
+          retention-days: 7

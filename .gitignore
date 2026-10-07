@@ -1,0 +1,100 @@
+# Dependencies
+node_modules/
+
+# Local env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# Private/internal docs (not for public repo or npm tarball)
+.private/
+
+# Local agent/runtime state
+.dev-department/runs/
+.dev-department/transcripts/
+.dev-department/private-prompts/
+.dev-department/tmp/
+.dev-department/*.local.md
+.claude/
+.codex/
+.kilo/
+.opencode/
+.hermes/
+.agent-runs/
+.agent-scratch/
+.agent-logs/
+*.session.json
+*.trajectory.json
+*.transcript.json
+*.trace.json
+*.audit.raw.md
+*.prompt.raw.md
+
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Build/cache outputs not distributed
+packages/*/dist/
+*.tsbuildinfo
+.vite/
+.cache/
+coverage/
+
+# Prevent tsc artifacts from leaking into src/ when outDir is misconfigured
+packages/*/src/**/*.js
+packages/*/src/**/*.js.map
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.d.ts.map
+# ...but keep hand-written ambient type declarations (source, not build output)
+!packages/web/src/vite-env.d.ts
+
+# tsc artifacts for root-level / package config files
+/test/setup.js
+/test/setup.d.ts
+/test/setup.js.map
+/test/setup.d.ts.map
+/vitest.config.js
+/vitest.config.d.ts
+/vitest.config.js.map
+/vitest.config.d.ts.map
+packages/*/vite.config.js
+packages/*/vite.config.d.ts
+packages/*/vite.config.js.map
+packages/*/vite.config.d.ts.map
+
+# Hermes plugin distribution output is intentionally committed.
+# Keep source maps out of distribution unless explicitly approved.
+dashboard/dist/**/*.map
+
+# Local browser binaries for QA scripts
+.playwright-browsers/
+
+# QA screenshots / disposable visual diffs (NOT the README gallery in docs/screenshots/)
+dashboard/dist/mobile/preview-qa*.png
+/*.png
+# docs/screenshots/ are release assets referenced by README — keep them tracked.
+
+# Logs
+releases/
+output/
+evidence/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo

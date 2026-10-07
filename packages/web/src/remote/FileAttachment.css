@@ -1,0 +1,6 @@
+.remote-file-attachment { display: grid; gap: 0.4rem; min-width: 0; max-width: 100%; padding: 0.65rem; border: 1px solid var(--remote-border); border-radius: 0.8rem; }
+.remote-file-name { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: baseline; overflow-wrap: anywhere; }
+.remote-file-attachment .remote-file-preview { max-height: 8rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.8125rem; margin: 0; }
+.remote-file-attachment p { margin: 0; }
+.remote-file-actions { display: flex; flex-wrap: nowrap; align-items: center; gap: 0.5rem; position: sticky; bottom: 0; z-index: 1; background: var(--remote-surface); padding-block: 4px; }
+.remote-file-actions button { flex: 1 1 0; min-width: 44px; min-height: 44px; white-space: nowrap; }

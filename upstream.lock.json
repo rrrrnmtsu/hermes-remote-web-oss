@@ -1,0 +1,268 @@
+{
+  "base": {
+    "url": "https://github.com/stasstepv/hermes-pwa",
+    "commit": "7dc780bf80eb957ad0c2826954b54adce7db7ad5",
+    "license": "MIT",
+    "sourceArchiveSha256": "80bd450bcadf527a9a893b6d867f45501ab7a5b7f61a9efadff72445653a28a2",
+    "reviewedFiles": [
+      {
+        "path": "LICENSE",
+        "sha256": "1854e34469bea30a5fdb8b0ca2c52c25703bbe679a510d8c7db5581910d387db"
+      },
+      {
+        "path": "NOTICE",
+        "sha256": "64f8833011422fd6fbdda687c915878cba0eb3637d4855c0640ef611ecac4413"
+      },
+      {
+        "path": "AGENTS.md",
+        "sha256": "f2246af07c3f92af63092c7c1ee301219ff290acf6d841c90ebdb41419148bbc"
+      },
+      {
+        "path": "ARCHITECTURE.md",
+        "sha256": "88edd902c94e743926bdcd9608b5b160de5d3ef6d5c3919ffa2c6053b2293cc6"
+      },
+      {
+        "path": "CODING_RULES.md",
+        "sha256": "f9745556cfff7d756fd3eadfaaa7035c92977bd58ee1d4187b3c78c2dc35a9f7"
+      },
+      {
+        "path": "CONTRIBUTING.md",
+        "sha256": "20a1d721370e14b92ba58bdbdd10d49d6b1319c14956305177c212e2eff2fced"
+      },
+      {
+        "path": "package.json",
+        "sha256": "60950489276c196f1ae579854213fa94892190f9b6fb297c45a645429bb6b11c"
+      },
+      {
+        "path": "package-lock.json",
+        "sha256": "4c4f86933fb4a7a98a6251662292a55e0fa119a7ff8c8d72a46fe08ae4792ec8"
+      },
+      {
+        "path": "plugin.yaml",
+        "sha256": "c911e3e3d8ce3b26fd2948cef8bb5f9a709620a7b629930144325c9edc051375"
+      },
+      {
+        "path": "__init__.py",
+        "sha256": "6e553b2b920ad83f6b0ff4a8e89019a25f049abb63e047f46b32c01949d3c5fb"
+      },
+      {
+        "path": "push_common.py",
+        "sha256": "6e37bb768a0cf8449f9e3b7839983e9927609c8889ffd137f79e56fd25d99f5c"
+      },
+      {
+        "path": "packages/core/src/transport/jsonrpc.ts",
+        "sha256": "78e47d46a3da6ec83e72649645a1115bf589dba508ae6d827dad98138855aa12"
+      },
+      {
+        "path": "packages/core/src/stores/chat.ts",
+        "sha256": "44259e8b4c59936c6c97a3196c4981811150f1d7a70d83903106459fd9ce9fff"
+      },
+      {
+        "path": "packages/web/src/main.tsx",
+        "sha256": "2ca281b6131a2750451af302e94ca4da071faa46368c03e4c70487766b3b9544"
+      },
+      {
+        "path": "packages/web/index.html",
+        "sha256": "df2fc1a3e3acd73afe58c2687e26af040f7f5cc39b25c06a4fd947c73406b785"
+      },
+      {
+        "path": "packages/web/vite.config.ts",
+        "sha256": "4edd80a396f17208936d5ef42bda12698ce61acd73581d0694096bd87c5112a4"
+      },
+      {
+        "path": "scripts/install-plugin.mjs",
+        "sha256": "726fef1bf955c1630910822ede0389c113c4df3c07c28328780ad8874462eb3f"
+      }
+    ]
+  },
+  "hermes": {
+    "url": "https://github.com/NousResearch/hermes-agent",
+    "commit": "e8c97320ac8691d4de92af49f98459f9ef9ddb08",
+    "license": "MIT",
+    "files": [
+      {
+        "path": "apps/shared/src/json-rpc-channel.ts",
+        "vendored_path": "packages/core/src/vendor/hermes/json-rpc-channel.ts",
+        "sha256": "496c7d24c40ea43a91e4944d166c532bf33e25971be93ddf58b252d817659268"
+      },
+      {
+        "path": "apps/shared/src/json-rpc-gateway.ts",
+        "vendored_path": "packages/core/src/vendor/hermes/json-rpc-gateway.ts",
+        "sha256": "2a00b6214795f64568004876b77f5fbf16e685539764ade0b136cf41c930d916"
+      },
+      {
+        "path": "apps/shared/src/gateway-events.ts",
+        "vendored_path": "packages/core/src/vendor/hermes/gateway-events.ts",
+        "sha256": "f2172b313c2002d15784d0d74c988cb00e15011220fa9d26d5ce38222d2611e0"
+      },
+      {
+        "path": "apps/shared/src/gateway-contract.generated.ts",
+        "vendored_path": "packages/core/src/vendor/hermes/gateway-contract.generated.ts",
+        "sha256": "fc05b2bca1b972eff444b2a2199e35978b98b33ac3c91714a1a7a96abdb0591e"
+      },
+      {
+        "path": "LICENSE",
+        "vendored_path": "packages/core/src/vendor/hermes/LICENSE",
+        "sha256": "821556e6336796450ab852d375117b48a4887e71d255794fd6318d99982a5ab6"
+      },
+      {
+        "path": "tui_gateway/contracts/common.py",
+        "reference_only": true,
+        "sha256": "671961584e3d049bb8d8b5e9ca7e556bcd1846a6ecafdf1ee5955ef6646b016f"
+      },
+      {
+        "path": "tui_gateway/contracts/server_requests.py",
+        "reference_only": true,
+        "sha256": "109aa34931b04f471e773e8e6e1aaf548769aabb2abe0b37cfc7816352bf0d99"
+      },
+      {
+        "path": "tui_gateway/contracts/sessions.py",
+        "reference_only": true,
+        "sha256": "0e7adddacd715788168e57d3ac80a25309b2185bdef251fc428cdbd4abc5a609"
+      },
+      {
+        "path": "tui_gateway/contracts/prompt_voice.py",
+        "reference_only": true,
+        "sha256": "29fc3910fe26d19a9cfa8168dbc636bc8033e07521266c55cf87d7d5d92be92f"
+      },
+      {
+        "path": "tui_gateway/contracts/liveness.py",
+        "reference_only": true,
+        "sha256": "b46913c61f39784b2b78af1640d79409d4f3ed79e05ff9cb45e81e9bc4766692"
+      },
+      {
+        "path": "hermes_cli/dashboard_auth/routes.py",
+        "reference_only": true,
+        "sha256": "2d179b9a3f2b23d21cb178f4c11e933ac4cf1e64c0e8544e7ebbcc74f009cb36"
+      },
+      {
+        "path": "hermes_cli/web_server_chat.py",
+        "reference_only": true,
+        "sha256": "d3fb44e2f7b22b2b687a4b0c837581e643fe8cc9568fc8348bc33dc68ba55c03"
+      },
+      {
+        "path": "tui_gateway/ws.py",
+        "reference_only": true,
+        "sha256": "87a3f4c2e2952ff62353340fd276d0fa00ce3451e8ff27a378c396fbd32e79eb"
+      },
+      {
+        "path": "tui_gateway/methods_config.py",
+        "reference_only": true,
+        "sha256": "c550442afa3ef61802dd177992256c6d79542a367c18ad3358ad55603f06538e"
+      },
+      {
+        "path": "tui_gateway/methods_projects.py",
+        "reference_only": true,
+        "sha256": "da1274947c881b1f6ec91925b89c4c115c8f3404fa235d7ff5dfb9022acbd252"
+      },
+      {
+        "path": "tui_gateway/project_tree.py",
+        "reference_only": true,
+        "sha256": "f944de1dcf4c1a545a36bfe4c799dae61e2ef4ae01f7d5df69dd1b6fbbf35210"
+      }
+    ]
+  },
+  "runtime": {
+    "node": "24.18.0",
+    "npm": "11.16.0"
+  },
+  "policy": "Only generated static release assets are deployed; original installers, Python plugins, push hooks, admin screens and service workers are not in this distribution.",
+  "references": [
+    {
+      "url": "https://github.com/willscott-v2/hermes-mobile-pwa",
+      "commit": "315da1802c6cabb12dd8f1ca2c7723251f57e9db",
+      "files": [
+        {
+          "path": "LICENSE",
+          "sha256": "451f4008150000f05c3553c865ffc6ea7af77a0a6a3c8344b5049f38694b5a6a",
+          "reference_only": true
+        },
+        {
+          "path": "README.md",
+          "sha256": "6cf05dc22f51d05453c1d0f94a582f0c9a8ef172c6aeb6b1824b6f9cc2266a59",
+          "reference_only": true
+        },
+        {
+          "path": "src/App.tsx",
+          "sha256": "fd1b78b9ccd205d0ab41d872ee3c0328176a874ce2a5097bec0746d6c080e00c",
+          "reference_only": true
+        },
+        {
+          "path": "public/sw.js",
+          "sha256": "e93f5268ed2228c5c86b7adc752be590101f799daf6e023a9d38cf90ad4f9b81",
+          "reference_only": true
+        },
+        {
+          "path": "package.json",
+          "sha256": "0c1a233ad8afc9f0d30f2fd1ce6eff446a0b0c1386e929e488aac697d992c729",
+          "reference_only": true
+        }
+      ],
+      "source_copied": false
+    }
+  ],
+  "remoteImageContractReview": {
+    "url": "https://github.com/NousResearch/hermes-agent",
+    "commit": "e8c97320ac8691d4de92af49f98459f9ef9ddb08",
+    "license": "MIT",
+    "mode": "reference-only; no Python implementation copied or changed",
+    "reviewedFiles": [
+      {
+        "path": "tui_gateway/contracts/prompt_voice.py",
+        "sha256": "29fc3910fe26d19a9cfa8168dbc636bc8033e07521266c55cf87d7d5d92be92f"
+      },
+      {
+        "path": "tui_gateway/contracts/sessions.py",
+        "sha256": "0e7adddacd715788168e57d3ac80a25309b2185bdef251fc428cdbd4abc5a609"
+      },
+      {
+        "path": "tui_gateway/methods_prompt.py",
+        "sha256": "b22a460d2502e641553d17eff0163cc038e033d9f39df78099acdd53a5528ce9"
+      },
+      {
+        "path": "tui_gateway/prompt_attachments.py",
+        "sha256": "3e983ecfccb74dfa40f59c5a193ed4109a3da9a824be8b64e5ee9c20021620b2"
+      },
+      {
+        "path": "tui_gateway/prompt_turn.py",
+        "sha256": "6f2bf8c7b62fa7e36a0ed36edee290686e0c53a2829aa74558a3bcf8c7b28b46"
+      },
+      {
+        "path": "tui_gateway/server.py",
+        "sha256": "b27402eb9d227d7c39cd270c6ca24ec6e64e5b0d146619ed31e7196c5881f873"
+      },
+      {
+        "path": "hermes_cli/web_server.py",
+        "sha256": "74f85f417e9c90ba0e0bdf311cdcb09a9d433fec7ded2422842611461201da20"
+      },
+      {
+        "path": "tests/tui_gateway/test_attach_does_not_wait_for_agent.py",
+        "sha256": "0fb4c207bb9e77b7a7c21d381e92c4ab08e979a2e94f6b418ee428f537ac489a"
+      },
+      {
+        "path": "tests/tui_gateway/test_session_images_dir.py",
+        "sha256": "c0e565c8cd4acaa78f8a7a9a40c9544007eefebf12fa6ecc2adf78fa56c32fde"
+      },
+      {
+        "path": "tests/tui_gateway/test_image_routing_stale_model.py",
+        "sha256": "6309ccc007c661baf85971652d5f4e58a1bdeb6ca8a76cdbd5b21a8cf2ccae0f"
+      }
+    ],
+    "limitations": [
+      "no public pending-image projection",
+      "no attach/submit reservation contract",
+      "filename-first sniffing; decode/dimension checks not enforced",
+      "production upload/proxy/model compatibility NOT_RUN"
+    ]
+  },
+  "remoteImageTurnCandidate": {
+    "candidateCommit": "87520b3f47b11a729c1e4cf6b92f06a9f245f294",
+    "baseCommit": "5b9d6c8dc643174a9358a672f2955066b4d12fbf",
+    "upstreamBaseCommit": "e8c97320ac8691d4de92af49f98459f9ef9ddb08",
+    "patchSha256": "b3fca80c4f1e97734848a908193b213ef685a85932f63ccba5dc88ce1cfc63fe",
+    "patchLock": "patches/image-turn/upstream.lock.json",
+    "applied": false,
+    "method": "prompt.submit optional image",
+    "generatedContractSha256": "648e869eeef95c558cb904a44572560ac51e06872755b27c20396dd7123aa4a6"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "product": "Hermes Remote Web",
+  "releaseChannel": "developer-preview",
+  "appPath": "/hermes-remote-web/",
+  "runtime": {
+    "node": "24.18.0",
+    "browser": "HTTPS, WebSocket subprotocols and Web Locks required for operations",
+    "staticOperator": "Linux with flock; other platforms not qualified"
+  },
+  "backend": {
+    "officialBase": "e8c97320ac8691d4de92af49f98459f9ef9ddb08",
+    "candidate": "797ef4994a4c8c707a558f9c9a5a3a8490213d3d",
+    "patchLock": "patches/product/upstream.lock.json",
+    "contractVersion": 1,
+    "stockLatest": "NOT_TESTED",
+    "stockWithoutRemoteContract": "read-only; generation disabled"
+  },
+  "gates": {
+    "connection": [
+      "https",
+      "native-auth",
+      "fresh-ticket",
+      "wss",
+      "gateway.ready",
+      "read-rpc"
+    ],
+    "operations": [
+      "per_session_exclusive_submit",
+      "remote_web_version=1",
+      "authenticated-principal",
+      "server generation_allowed",
+      "browser Web Lock"
+    ],
+    "attachments": [
+      "explicit caption",
+      "server capability",
+      "provider policy",
+      "one typed attachment",
+      "no fallback to text-only"
+    ]
+  },
+  "acceptance": {
+    "code": "existing R01-R22 retained",
+    "syntheticProvider": "separate fixture evidence",
+    "realGeneration": "NOT_RUN",
+    "iphoneSafari": "NOT_RUN_FOR_RELEASE",
+    "homeScreen": "NOT_RUN_FOR_RELEASE",
+    "nativeIos": "SOURCE_ONLY_UNCOMPILED"
+  },
+  "defaultPrivacy": {
+    "memoryOnly": true,
+    "analytics": false,
+    "saveOfflinePushMicrophone": "explicit opt-in only"
+  }
+}

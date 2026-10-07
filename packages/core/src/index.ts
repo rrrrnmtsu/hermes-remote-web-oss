@@ -1,0 +1,71 @@
+// Public surface of @hermes-pwa/core
+// Framework-agnostic: transport, domain, stores, platform interface.
+
+export type { Platform } from './platform';
+export { HermesHttpError, makeHttp, type Http } from './transport/http';
+export { makeAuthClient } from './transport/auth';
+export type { AuthState, HermesStatus, HermesUser } from './transport/auth';
+export { makeRestClient, type RestClient } from './transport/rest';
+export type { PushStatus, PushSubscribeBody, PushSubscriptionSafe } from './transport/rest';
+export type { UpdateCheck, UpdateInstruction } from './domain/update';
+export { makeRpcClient, makeRpcEvents, type RpcClient, type RpcEvents, type RpcEvent } from './transport/jsonrpc';
+export { makeWsConnection, type WsConnection } from './transport/ws';
+export { useConnectionStore, type ConnectionState, type ConnectionStore } from './stores/connection';
+export { useSessionsStore, type SessionsStore } from './stores/sessions';
+export { useChatStore, type ChatStore } from './stores/chat';
+export { useActivityStore, type ActivityStore } from './stores/activity';
+export { useCronStore, type CronStore } from './stores/cron';
+export { useConfigStore, type ConfigStore } from './stores/config';
+export { useModelStore, type ModelStore } from './stores/model';
+export { useProjectsStore, type ProjectsStore } from './stores/projects';
+export { useAgentsStore, type AgentsStore } from './stores/agents';
+export { useProfilesStore, type ProfilesStore } from './stores/profiles';
+export { useSpawnStore, type SpawnStore } from './stores/spawnStore';
+export { explainConnectionError, connectionStateLabel, type ConnectionDiagnostics } from './diagnostics';
+
+// Domain types
+export type { GatewayStatus } from './domain/status';
+export type { AuthProvider, LoginBody, LoginResult, WsTicket } from './domain/auth';
+export type { Session, Message, MessageRole, ToolCall } from './domain/session';
+export {
+  normalizeSessionSource,
+  sessionPinId,
+  sessionCurrentSourceId,
+  sessionHasDifferentCurrentSource,
+  sessionSourceId,
+  sessionSourceLabel,
+  sessionSourceSearchTerms,
+} from './domain/session';
+export type { ActionItem, ActionKind, ActionStatus, Approval, Clarify } from './domain/activity';
+export type { Board, BoardDetail, Column, Task, TaskStatus, Worker } from './domain/project';
+export type { AgentProfile } from './domain/agent';
+export type { Profile, ProfileActive, ProfileCreateBody, ProfileCreateResult, ReasoningEffort } from './domain/profile';
+export type { SpawnedAgent, SpawnNode, StreamEntry, SpawnStatus, StreamKind } from './domain/spawn';
+export { buildSpawnTree } from './domain/spawn';
+export type { CronDeliveryTarget, CronJob, CronJobRun, CronSchedule } from './domain/cron';
+export {
+  DEFAULT_SCHEDULE_STATE,
+  ENGLISH_SCHEDULE_STRINGS,
+  WEEKDAY_INDEXES,
+  buildScheduleString,
+  describeSchedule,
+  englishOrdinal,
+  toCronDeliveryTarget,
+  toCronJob,
+  toCronJobRun,
+} from './domain/cron';
+export type { IntervalUnit, ScheduleBuilderState, ScheduleDescribeStrings, ScheduleMode, Weekday } from './domain/cron';
+export type { McpServer } from './domain/mcp';
+export type { EnvVar } from './domain/env';
+export type { Skill } from './domain/skills';
+export type {
+  AuxiliaryModels,
+  ModelAssignment,
+  ModelAssignmentResult,
+  ModelInfo,
+  ModelOptions,
+  ModelProvider,
+} from './domain/model';
+export type { SystemStats, Checkpoint, OpsRunResult, SystemActionStatus } from './domain/system';
+export type { Artifact } from './domain/artifact';
+export type { HermesConfig } from './domain/config';

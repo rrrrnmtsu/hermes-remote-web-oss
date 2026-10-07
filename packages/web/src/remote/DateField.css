@@ -1,0 +1,16 @@
+.remote-date-field { min-width: 0; max-width: 100%; }
+.remote-date-entry { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.remote-date-shell {
+  display: grid; grid-template-columns: minmax(0, 1fr); flex: 1 1 14rem; min-width: 0; max-width: 100%;
+  border: 1px solid var(--remote-border); border-radius: 12px; padding: 0 12px; background: var(--remote-surface);
+}
+/* iOS native date sizing can add host padding outside a 100% width even with
+ * border-box. Keep all spacing on the shell; never mask overflowing content.
+ * https://bugs.webkit.org/show_bug.cgi?id=301648 */
+.remote-conversation-tools .remote-date-shell input[type="date"] {
+  display: block; width: 100%; min-width: 0; max-width: 100%; min-height: 44px; margin: 0;
+  border: 0; padding: 0; background: transparent; font-size: 1rem; line-height: 1.5; box-sizing: border-box;
+}
+.remote-date-shell input[type="date"]::-webkit-date-and-time-value { min-height: 1.5em; text-align: left; }
+.remote-date-clear { flex: 0 0 auto; min-width: 44px; min-height: 44px; }
+.remote-date-clear svg { display: block; width: 20px; height: 20px; }

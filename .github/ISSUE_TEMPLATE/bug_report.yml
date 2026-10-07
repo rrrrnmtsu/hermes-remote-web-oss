@@ -1,0 +1,26 @@
+name: Bug report
+description: Report a reproducible problem without private data
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: "Use Settings → sanitized diagnostic copy. Remove sensitive text. Report security issues privately via SECURITY.md."
+  - type: textarea
+    id: environment
+    attributes:
+      label: Build, numeric Hermes version, OS/browser and launch method
+      placeholder: "Web build, backend contract, Safari/home-screen/desktop. Do not include origins, sessions or credentials."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps, expected behavior and observed result
+      placeholder: "Use synthetic data; distinguish fixture from real server/device."
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostic
+    attributes:
+      label: Reviewed sanitized diagnostic report
+      description: "Optional. No raw errors, conversations, ticket/cookie/keys, attachments or service environment."

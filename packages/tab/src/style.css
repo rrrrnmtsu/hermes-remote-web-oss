@@ -1,0 +1,247 @@
+/* Mobile Tab Styles -- using Hermes design tokens */
+
+.hm-mobile-tab {
+  background: #f7f8fa;
+  box-sizing: border-box;
+  color: #14171c;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  min-height: 100%;
+  padding: 24px;
+}
+
+.hm-mobile-tab__hero,
+.hm-status-card,
+.hm-install-card,
+.hm-warning-banner {
+  background: #ffffff;
+  border: 1px solid #e2e5ea;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(13, 17, 22, 0.06), 0 1px 1px rgba(13, 17, 22, 0.04);
+}
+
+.hm-mobile-tab__hero {
+  margin-bottom: 20px;
+  padding: 24px;
+}
+
+.hm-mobile-tab__eyebrow {
+  color: #3b5bdb;
+  font-size: 13px;
+  font-weight: 640;
+  letter-spacing: 0.06em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.hm-mobile-tab__title {
+  color: #14171c;
+  font-size: 28px;
+  font-weight: 640;
+  line-height: 1.2;
+  margin: 0 0 12px;
+}
+
+.hm-mobile-tab__subtitle,
+.hm-status-detail,
+.hm-install-card p,
+.hm-warning-banner p {
+  color: #5b626d;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.hm-mobile-tab__subtitle {
+  margin: 0 0 20px;
+}
+
+.hm-mobile-tab__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.hm-button {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 15px;
+  font-weight: 640;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 16px;
+  text-decoration: none;
+}
+
+.hm-button--primary {
+  background: #3b5bdb;
+  color: #ffffff;
+}
+
+.hm-button--secondary {
+  background: #e8edfb;
+  color: #14171c;
+}
+
+.hm-warning-banner {
+  background: #fdf3e3;
+  border-color: #f5d9a3;
+  color: #7a4e0c;
+  margin-bottom: 20px;
+  padding: 16px;
+}
+
+.hm-warning-banner--error {
+  background: #fdecec;
+  border-color: #f5a3a3;
+  color: #7a0c0c;
+}
+
+.hm-warning-banner strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 640;
+  margin-bottom: 4px;
+}
+
+.hm-warning-banner p {
+  margin: 0;
+}
+
+.hm-mobile-tab__grid {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.hm-status-card {
+  align-items: flex-start;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 16px;
+}
+
+.hm-status-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.hm-status-label {
+  color: #14171c;
+  font-size: 15px;
+  font-weight: 640;
+}
+
+.hm-status-detail {
+  color: #5b626d;
+  font-size: 13px;
+  line-break: anywhere;
+}
+
+.hm-badge {
+  border-radius: 999px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 640;
+  height: 24px;
+  line-height: 24px;
+  padding: 0 9px;
+  text-align: center;
+}
+
+.hm-badge--pass {
+  background: #ebf8ee;
+  color: #2f9e44;
+}
+
+.hm-badge--warn {
+  background: #fdf3e3;
+  color: #e8920c;
+}
+
+.hm-badge--fail {
+  background: #fdecec;
+  color: #e03131;
+}
+
+.hm-badge--pending {
+  background: #f0f2f5;
+  color: #8a909b;
+}
+
+.hm-install-card {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.hm-install-card h2 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+
+.hm-install-card p {
+  margin: 0 0 12px;
+}
+
+.hm-install-card__copy {
+  min-width: 0;
+}
+
+.hm-install-card code {
+  background: #f0f2f5;
+  border-radius: 8px;
+  color: #14171c;
+  display: block;
+  font-family: 'SF Mono', 'Cascadia Code', monospace;
+  font-size: 12px;
+  line-break: anywhere;
+  padding: 8px;
+}
+
+.hm-install-card__qr {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hm-install-card__qr img {
+  background: #ffffff;
+  border: 1px solid #d8dde6;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(13, 17, 22, 0.08);
+  height: 168px;
+  image-rendering: pixelated;
+  object-fit: contain;
+  padding: 10px;
+  width: 168px;
+}
+
+.hm-install-card__qr span {
+  color: #5b626d;
+  font-size: 13px;
+  font-weight: 640;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .hm-install-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hm-install-card__qr {
+    align-items: flex-start;
+  }
+
+  .hm-install-card__qr img {
+    height: 180px;
+    width: 180px;
+  }
+}

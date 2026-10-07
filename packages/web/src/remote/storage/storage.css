@@ -1,0 +1,16 @@
+.remote-storage-panel { min-width: 0; overflow-wrap: anywhere; }
+.remote-storage-panel label { display: grid; gap: .45rem; margin-block: .7rem; min-width: 0; }
+.remote-storage-panel input:not([type="checkbox"]) { font-size: 1rem; min-height: 44px; box-sizing: border-box; width: 100%; padding: .6rem; border: 1px solid var(--remote-line, #687181); border-radius: .65rem; background: transparent; color: inherit; }
+.remote-storage-panel button { min-height: 44px; min-width: 44px; max-width: 100%; overflow-wrap: anywhere; }
+.remote-storage-panel .remote-storage-choice { display: flex; align-items: center; min-height: 44px; gap: .65rem; }
+.remote-storage-choice input[type="checkbox"] { width: 22px; height: 22px; min-width: 22px; min-height: 22px; margin: 0; padding: 0; flex: 0 0 22px; }
+.remote-storage-choice > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.remote-storage-list { list-style: none; padding: 0; }
+.remote-storage-list li { border-top: 1px solid var(--remote-line, #687181); padding-block: .75rem; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; overflow-wrap: anywhere; }
+.remote-storage-list li > p, .remote-storage-list li > div { flex-basis: 100%; min-width: 0; }
+.remote-storage-preview { max-width: 100%; max-height: min(calc(var(--remote-height, 100dvh) * .35), 300px); white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; }
+.remote-confirm.remote-offline-history { width: min(calc(var(--remote-width, 100vw) - 16px), 840px); max-height: calc(var(--remote-height, 100dvh) - 16px); min-width: 0; overflow: auto; padding: clamp(8px, calc(var(--remote-height, 100dvh) * .03), 16px); }
+.remote-offline-history[open] { display: flex; flex-direction: column; }
+.remote-offline-history > .remote-sheet-heading, .remote-offline-history > button { flex: 0 0 auto; }
+.remote-offline-messages { flex: 1 1 auto; min-height: 0; min-width: 0; overflow: auto; overscroll-behavior: contain; overflow-wrap: anywhere; padding-bottom: 4px; }
+.remote-offline-history .remote-message { margin-block: .75rem; }

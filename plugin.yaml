@@ -1,0 +1,5 @@
+name: hermes-remote-web-source-only
+version: 2.0.0-preview.1
+description: Source-only derivative; distribute the static release, never install this plugin
+provides_tools: []
+provides_hooks: []

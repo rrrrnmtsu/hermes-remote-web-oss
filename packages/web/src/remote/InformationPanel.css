@@ -1,0 +1,30 @@
+.remote-confirm.remote-information { width: min(42rem, calc(var(--remote-width, 100vw) - 16px)); max-height: calc(var(--remote-height, 100dvh) - 16px); min-width: 0; overflow: auto; padding: clamp(8px, calc(var(--remote-height, 100dvh) * .03), 16px); }
+.remote-information[open] { display: flex; flex-direction: column; }
+.remote-information-header { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex: 0 0 auto; min-width: 0; }
+.remote-information-header h2 { margin: 0; font-size: 1.125rem; min-width: 0; overflow-wrap: anywhere; }
+.remote-information-header button { flex: 0 0 auto; }
+.remote-information button { min-width: 44px; min-height: 44px; }
+.remote-information input, .remote-information select { min-height: 44px; min-width: 0; font-size: max(16px, 1rem); width: 100%; max-width: 100%; }
+.remote-information-tabs { display: flex; gap: .25rem; overflow-x: auto; padding-block: 8px; flex-shrink: 0; min-width: 0; }
+.remote-information-tabs button { flex: 0 0 auto; }
+.remote-information-scroll { flex: 1 1 auto; min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain; overflow-wrap: anywhere; padding-bottom: 4px; }
+.remote-information-scroll button { max-width: 100%; overflow-wrap: anywhere; }
+.remote-information-scroll label { min-width: 0; }
+.remote-information-scroll h3 { font-size: 1.0625rem; margin-top: 1rem; }
+.remote-information-scroll h4 { font-size: 1rem; }
+.remote-information-scroll article { border-top: 1px solid var(--remote-border, #888); padding-block: .75rem; }
+.remote-information-scroll li span { display: block; font-size: .8125rem; margin-block: .25rem; }
+.remote-information-values { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .5rem; }
+.remote-information-values dt, .remote-information-values dd { margin: 0; overflow-wrap: anywhere; }
+.remote-session-model { display: grid; gap: 8px; min-width: 0; }
+.remote-session-model p { margin: 0; }
+.remote-session-model-current { display: flex; flex-direction: column; gap: 4px; }
+.remote-session-model-current strong { font-size: 1.0625rem; }
+.remote-session-model-current span, .remote-session-model-hint { color: var(--remote-muted, #465069); font-size: .875rem; }
+.remote-session-model label { display: grid; gap: 8px; }
+.remote-session-model > button { justify-self: start; }
+.remote-session-model-details { margin-top: 8px; min-width: 0; }
+.remote-session-model-details summary { min-height: 44px; display: list-item; cursor: pointer; padding-block: 12px; box-sizing: border-box; }
+.remote-session-model-details ul { margin: 8px 0 0; padding-inline-start: 20px; }
+.remote-session-model-details li { margin-block: 12px; }
+.remote-session-model-details p { margin-block: 8px; }

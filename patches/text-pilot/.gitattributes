@@ -1,0 +1,2 @@
+# Unified diff context lines preserve their required leading space.
+hermes-text-pilot.patch whitespace=-blank-at-eol

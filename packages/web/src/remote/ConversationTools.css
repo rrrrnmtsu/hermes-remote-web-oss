@@ -1,0 +1,27 @@
+.remote-conversation-tools { min-width: 0; }
+.remote-conversation-tools label { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; max-width: 100%; gap: .25rem; margin-block: .6rem; }
+.remote-conversation-tools input, .remote-conversation-tools textarea, .remote-conversation-tools select {
+  min-width: 0; width: 100%; max-width: 100%; min-height: 44px; box-sizing: border-box; font: inherit; font-size: 1rem;
+}
+.remote-conversation-tools textarea { resize: vertical; line-height: 1.6; }
+/* Bound native option layout without clipping its text or replacing the picker. */
+.remote-conversation-tools select { contain: layout; }
+.remote-conversation-tools button { min-width: 44px; min-height: 44px; }
+.remote-conversation-tools ul { list-style: none; padding: 0; }
+.remote-conversation-tools li { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; margin-block: .65rem; }
+.remote-conversation-tools li > :first-child { flex: 1; min-width: 5rem; overflow-wrap: anywhere; }
+.remote-conversation-tools small { display: block; font-size: .8125rem; }
+/* Native date widgets must fit their column; narrow or enlarged text wraps the pair. */
+.remote-conversation-fields { display: flex; flex-wrap: wrap; gap: .6rem; min-width: 0; max-width: 100%; }
+.remote-conversation-fields > * { flex: 1 1 14rem; min-width: 0; max-width: 100%; }
+.remote-conversation-search-actions { display: flex; flex-wrap: wrap; gap: 8px; min-width: 0; max-width: 100%; }
+.remote-conversation-search-actions button { max-width: 100%; overflow-wrap: anywhere; }
+.remote-date-error { overflow-wrap: anywhere; }
+.remote-conversation-tools blockquote { overflow-wrap: anywhere; white-space: pre-wrap; max-height: 12rem; overflow-y: auto; }
+.remote-confirm.remote-tools-dialog[open] { display: flex; flex-direction: column; min-width: 0; overflow: auto; }
+.remote-tools-dialog-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex: 0 0 auto; min-width: 0; }
+.remote-tools-dialog-header h2 { min-width: 0; margin: 0; font-size: 1.125rem; overflow-wrap: anywhere; }
+.remote-tools-dialog-header button { flex: 0 0 auto; min-width: 44px; min-height: 44px; white-space: nowrap; }
+.remote-tools-dialog-body { flex: 1 1 auto; min-height: 0; min-width: 0; overflow: auto; overscroll-behavior: contain; overflow-wrap: anywhere; padding-bottom: 4px; }
+.remote-tools-dialog-footer { display: flex; justify-content: flex-end; align-items: center; gap: 8px; flex: 0 0 auto; min-width: 0; padding-top: 8px; }
+.remote-tools-dialog-footer button { min-width: 44px; min-height: 44px; white-space: nowrap; }

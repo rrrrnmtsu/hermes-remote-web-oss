@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/NousResearch/hermes-agent",
+  "baseCommit": "e8c97320ac8691d4de92af49f98459f9ef9ddb08",
+  "candidateCommit": "5b9d6c8dc643174a9358a672f2955066b4d12fbf",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2025 Nous Research",
+  "licenseSha256": "821556e6336796450ab852d375117b48a4887e71d255794fd6318d99982a5ab6",
+  "patchSha256": "17561906b168dbc2fc66d7a074e32a18d45e7f5d425d47abb1dd1be2c7c9e280",
+  "status": "LOCAL_CANDIDATE_NOT_APPLIED",
+  "productionBuild": "remote-v2-5ce7ccdfa40f7274",
+  "files": [
+    {
+      "path": "agent/agent_init.py",
+      "originalSha256": "1920c4443152ac3698b2f7a38f03d612dda62d1351b7869dc4731667022d9c20",
+      "patchedSha256": "55cc5db5cb8a011e451198a7076eeda4cb0d6e0edcb99abaaa37b7eb11d7ef1f"
+    },
+    {
+      "path": "agent/auxiliary_client.py",
+      "originalSha256": "c29c7e4008c85765a84db2bafced055cc46062dd08ebfb4a84b797db25c16709",
+      "patchedSha256": "ac4a1e6d4b9bccaf7f55c2dff70a589fa090a70c2aa06ff998529d900a5e7de9"
+    },
+    {
+      "path": "agent/chat_completion_helpers.py",
+      "originalSha256": "a30544a450129bdf3d22b31687e2325e5c765ff70fb605e3a997810a3f532b55",
+      "patchedSha256": "ac07a813d840cceb8875d9b310b19f0e19adb88cdbd1aab04a8a313692c6876b"
+    },
+    {
+      "path": "agent/client_lifecycle.py",
+      "originalSha256": "5333b2dd5c96427996f060e9c01f6ca86d882cb89a59f60482e2281de8b66d5f",
+      "patchedSha256": "4a6f704e09cefcc3788cb9a9526c47b3899d93b1f767c471bc431f56a714eb15"
+    },
+    {
+      "path": "agent/conversation_loop.py",
+      "originalSha256": "8e5ab6777948fc229b3c2669d34fc645311e09b67a4ae546124682674dd7d377",
+      "patchedSha256": "f8008b1e1ba393001cf62a0c02ebe2b9a1a766f1a2a8c9a9f7f7c33ad254c71c"
+    },
+    {
+      "path": "agent/system_prompt.py",
+      "originalSha256": "3b2c40033b7ad01f92c0343e1fc6b00309709d304ab60f63fc9a14f145728f7a",
+      "patchedSha256": "d547afa41f221fb3ffec1783100495ebc2ad6d2c4406faddc13089f6508a8c38"
+    },
+    {
+      "path": "agent/text_pilot.py",
+      "originalSha256": null,
+      "patchedSha256": "0bbe392be9b37a76a90824dd364136785d4fda4414b6a0ebc3e83436ea0a4dd1"
+    },
+    {
+      "path": "agent/turn_api_call.py",
+      "originalSha256": "a059a5f6a8b75d1c8242d59fbc1500adb86e2ec8d57a97660c0f25e35d5dc9b2",
+      "patchedSha256": "7a33a099c110fd7851dd51f8268bf13c3b5b8079ccedda737c6e9f4efef0c1a8"
+    },
+    {
+      "path": "agent/turn_api_error.py",
+      "originalSha256": "4290cb91411abec9aa804e5bc8e5454caf6fca5f0eaea86ba2b2c332db3198ec",
+      "patchedSha256": "813f2ef715afe8084228fe02de6c592b0a88f928d14f83559299f3f22e5d67bc"
+    },
+    {
+      "path": "agent/turn_api_request.py",
+      "originalSha256": "fae43abf285e6f2b82d1820b7bd62ee10214676a48d6af552b8d62530e59dd15",
+      "patchedSha256": "8751357543c973af12d708aeb0d4c28c515eebd22da8d807c9540f70a0875534"
+    },
+    {
+      "path": "run_agent.py",
+      "originalSha256": "f6ec811b47a884ffa56fc3abd0a02822939e5480d5399310f4d0c20745051679",
+      "patchedSha256": "b4df921efc8e93a07b3479d733826d181bc29e50df425a4bbf732876e6a90d88"
+    },
+    {
+      "path": "tests/agent/test_text_pilot.py",
+      "originalSha256": null,
+      "patchedSha256": "fc5fabbaaf01d39a9eee6ccf79232bcd1eb1dac907eb7a86bffc8f7e5dd21399"
+    },
+    {
+      "path": "tests/agent/test_text_pilot_integration.py",
+      "originalSha256": null,
+      "patchedSha256": "9c2e8ccf150764ce7c28a13a7125f131816c0dd5816c6ee3561d18631709ac17"
+    },
+    {
+      "path": "tests/tui_gateway/test_text_pilot_construction.py",
+      "originalSha256": null,
+      "patchedSha256": "5cf45a3d1749700caf4f717cf9866fc3f9875027cce860862998ccd3f2aed9fd"
+    },
+    {
+      "path": "tui_gateway/server.py",
+      "originalSha256": "b27402eb9d227d7c39cd270c6ca24ec6e64e5b0d146619ed31e7196c5881f873",
+      "patchedSha256": "0d0495b87c28e36ee2af2fc95cea4723268a9eb1edd22fb8d0d6092ede425f56"
+    }
+  ]
+}

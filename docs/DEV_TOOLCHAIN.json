@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "baseLockSha256": "4ac8df0698bb5d341fcef6c9f0e4abc2296fa131a999678b42fab53b07a86d30",
+  "publicLockSha256": "df5bb57790a7d68ab9e68195be5d913cb288ac2ba8e79761019c4946ae2b92ff",
+  "devDependencies": {
+    "vite": "6.4.3",
+    "vitest": "3.2.6",
+    "@vitest/coverage-v8": "3.2.6"
+  },
+  "overrides": {
+    "tinypool": "2.1.2"
+  },
+  "runtimeResolutionChanges": 0,
+  "reason": "Fixed dev-only Vitest UI/tinypool/Vite security advisories; no production/runtime update",
+  "remainingAudit": {
+    "critical": 0,
+    "high": 9,
+    "moderate": 3,
+    "runtime": 0,
+    "scope": "development-only transitive braces/mocker; documented source-build boundary"
+  }
+}

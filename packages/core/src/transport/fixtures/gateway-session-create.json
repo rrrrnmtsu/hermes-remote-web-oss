@@ -1,0 +1,51 @@
+{
+  "source": "recorded from live Hermes 0.17.0 dashboard /api/ws on 2026-06-25; sensitive/local IDs sanitized",
+  "frames": [
+    {
+      "jsonrpc": "2.0",
+      "method": "event",
+      "params": {
+        "type": "gateway.ready",
+        "payload": {
+          "skin": {
+            "name": "default",
+            "colors": {
+              "banner_border": "#CD7F32",
+              "banner_title": "#FFD700",
+              "ui_accent": "#FFBF00",
+              "ui_ok": "#4caf50",
+              "ui_error": "#ef5350"
+            },
+            "branding": {
+              "agent_name": "Hermes Agent",
+              "welcome": "Welcome to Hermes Agent! Type your message or /help for commands.",
+              "prompt_symbol": "❯"
+            },
+            "tool_prefix": "┊",
+            "help_header": "(^_^)? Available Commands"
+          }
+        }
+      }
+    },
+    {
+      "jsonrpc": "2.0",
+      "id": "1",
+      "result": {
+        "session_id": "live-session-id",
+        "stored_session_id": "stored-session-id",
+        "message_count": 0,
+        "messages": [],
+        "info": {
+          "model": "gpt-5.5",
+          "tools": {},
+          "skills": {},
+          "cwd": "/home/user/.hermes/hermes-agent",
+          "branch": "main",
+          "lazy": true,
+          "desktop_contract": 2,
+          "profile_name": "default"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "url": "https://github.com/martinthomson/encrypted-content-encoding",
+  "commit": "676b0096206abc8b7689ea714c920a3c9a1d32dc",
+  "tag": "v1.2.1",
+  "licenseUrl": "https://raw.githubusercontent.com/martinthomson/encrypted-content-encoding/676b0096206abc8b7689ea714c920a3c9a1d32dc/LICENSE",
+  "licenseSha256": "717363ac0c7f0883042868db171cfed1f4b423119249eac9bce5131291017ea8",
+  "sourceFile": "python/http_ece/__init__.py",
+  "sourceSha256": "2ddd0f18e1b0c287fe6bea53be7fbab1d950fe15b7184bb80ffabd98c40433f9",
+  "wheelSourceMatchesTag": true
+}

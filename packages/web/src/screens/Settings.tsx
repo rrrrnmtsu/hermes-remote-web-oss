@@ -1,0 +1,508 @@
+import { useEffect, useMemo, useState } from 'react';
+import { useConnectionStore, useProfilesStore, useModelStore, useConfigStore } from '@hermes-pwa/core';
+import type { RestClient, SystemStats, ModelProvider, ReasoningEffort, PushStatus } from '@hermes-pwa/core';
+import { Icon } from '../components/Icon';
+import { BottomSheet } from '../components/BottomSheet';
+import { HERMES_PWA_VERSION_LABEL } from '../app/version';
+import { disablePushNotifications, enablePushNotifications, getPushCapability } from '../pwa/push';
+import { canPromptInstall, INSTALL_PROMPT_CHANGED_EVENT, isIosSafari, promptInstall } from '../pwa/install';
+
+interface SettingsProps {
+  rest: RestClient;
+  onNavigate: (screen: string) => void;
+  onLogout: () => void;
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="hm-settings__section">
+      <h3 className="hm-settings__section-title">{title}</h3>
+      <div className="hm-settings__section-body">{children}</div>
+    </section>
+  );
+}
+
+type BusyInputMode = 'queue' | 'steer' | 'interrupt';
+const REASONING_EFFORTS: ReasoningEffort[] = ['none', 'minimal', 'low', 'medium', 'high', 'xhigh'];
+
+function reasoningLabel(effort: ReasoningEffort | undefined): string {
+  if (!effort) return 'Default';
+  if (effort === 'xhigh') return 'Extra high';
+  return effort.charAt(0).toUpperCase() + effort.slice(1);
+}
+
+function thinkingLabel(showReasoning: boolean | undefined): string {
+  if (showReasoning === true) return 'Shown';
+  if (showReasoning === false) return 'Hidden';
+  return 'Default';
+}
+
+function normalizeBusyInputMode(value: unknown): BusyInputMode {
+  return value === 'queue' || value === 'interrupt' || value === 'steer' ? value : 'queue';
+}
+
+function busyInputModeLabel(value: BusyInputMode): string {
+  if (value === 'queue') return 'Queue after current turn';
+  if (value === 'interrupt') return 'Interrupt current turn';
+  return 'Steer running turn';
+}
+
+function busyInputModeDescription(value: BusyInputMode): string {
+  if (value === 'queue') return 'Messages typed while Hermes is busy are sent after the current turn finishes.';
+  if (value === 'interrupt') return 'Messages typed while Hermes is busy interrupt the current turn, then send as the next prompt.';
+  return 'Messages typed while Hermes is busy are injected into the running turn without interrupting.';
+}
+
+function SettingsRow({ label, value, children, action }: { label: string; value?: string; children?: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className="hm-settings-row">
+      <span className="hm-settings-row__label">{label}</span>
+      {value ? <span className="hm-settings-row__value hm-muted">{value}</span> : children}
+      {action}
+    </div>
+  );
+}
+
+export function Settings({ rest, onNavigate, onLogout }: SettingsProps) {
+  const { status } = useConnectionStore();
+  const activeName = useProfilesStore((s) => s.activeName);
+  const activeProfile = useProfilesStore((s) => s.profiles.find((p) => p.name === s.activeName));
+  const loadProfiles = useProfilesStore((s) => s.load);
+  const { options, info, loading: modelLoading, setting, error: modelError, loadOptions, loadInfo, setMainModel } = useModelStore();
+  const config = useConfigStore((s) => s.config);
+  const configLoading = useConfigStore((s) => s.loading);
+  const configSaving = useConfigStore((s) => s.saving);
+  const configError = useConfigStore((s) => s.error);
+  const loadConfig = useConfigStore((s) => s.load);
+  const updateConfig = useConfigStore((s) => s.update);
+  const busyInputMode = normalizeBusyInputMode(config?.display?.busy_input_mode);
+  const [stats, setStats] = useState<SystemStats | undefined>();
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsError, setStatsError] = useState<string | undefined>();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedEffort, setSelectedEffort] = useState<ReasoningEffort>('high');
+  const [selectedShowReasoning, setSelectedShowReasoning] = useState(false);
+  const [localSetting, setLocalSetting] = useState(false);
+  const [pushStatus, setPushStatus] = useState<PushStatus | undefined>();
+  const [pushLoading, setPushLoading] = useState(true);
+  const [pushError, setPushError] = useState<string | undefined>();
+  const [pushBusy, setPushBusy] = useState(false);
+  const [installPromptAvailable, setInstallPromptAvailable] = useState(false);
+  const [installing, setInstalling] = useState(false);
+  const [installOutcome, setInstallOutcome] = useState<string | undefined>();
+
+  const gatewayHost = typeof window !== 'undefined' ? window.location.host : 'hermes.local:9119';
+  const authLabel = status?.authRequired
+    ? (status.authProviders?.join(', ') || 'Basic')
+    : (status ? 'None' : '—');
+  const modelLabel = activeProfile?.model ?? info?.model ?? '—';
+  const providerLabel = activeProfile?.provider ?? info?.provider;
+  const effortLabel = reasoningLabel(activeProfile?.reasoningEffort);
+  const thinkingDisplayLabel = thinkingLabel(activeProfile?.showReasoning);
+  const pushProfile = activeName || 'default';
+  const pushCapability = useMemo(() => getPushCapability(), []);
+  const iosSafari = useMemo(() => isIosSafari(), []);
+  const activePushSubscription = pushStatus?.subscriptions.find((sub) => sub.enabled) ?? pushStatus?.subscriptions[0];
+  const pushStatusLabel = pushLoading
+    ? 'Loading…'
+    : pushStatus?.available
+      ? 'Available'
+      : (pushStatus?.reason ?? pushCapability.reason ?? 'Unavailable');
+
+  useEffect(() => {
+    void loadOptions(rest);
+    void loadInfo(rest);
+    void loadConfig(rest);
+  }, [rest, loadOptions, loadInfo, loadConfig]);
+
+  useEffect(() => {
+    setStatsLoading(true);
+    rest
+      .systemStats()
+      .then((s) => {
+        setStats(s);
+        setStatsError(undefined);
+      })
+      .catch((err) => setStatsError(err instanceof Error ? err.message : 'Failed to load stats'))
+      .finally(() => setStatsLoading(false));
+  }, [rest]);
+
+  function reloadPushStatus() {
+    setPushLoading(true);
+    rest
+      .pushStatus(pushProfile)
+      .then((next) => {
+        setPushStatus(next);
+        setPushError(undefined);
+      })
+      .catch((err) => setPushError(err instanceof Error ? err.message : 'Failed to load push status'))
+      .finally(() => setPushLoading(false));
+  }
+
+  useEffect(() => {
+    reloadPushStatus();
+    // reloadPushStatus intentionally closes over the latest rest client and push profile only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rest, pushProfile]);
+
+  useEffect(() => {
+    const refreshInstallPrompt = () => setInstallPromptAvailable(canPromptInstall());
+    refreshInstallPrompt();
+    window.addEventListener(INSTALL_PROMPT_CHANGED_EVENT, refreshInstallPrompt);
+    window.addEventListener('focus', refreshInstallPrompt);
+    return () => {
+      window.removeEventListener(INSTALL_PROMPT_CHANGED_EVENT, refreshInstallPrompt);
+      window.removeEventListener('focus', refreshInstallPrompt);
+    };
+  }, []);
+
+  const providersBySlug = useMemo(() => {
+    const map = new Map<string, ModelProvider>();
+    options?.providers.forEach((p) => map.set(p.slug, p));
+    return map;
+  }, [options]);
+
+  function openSheet() {
+    const providerSlug = activeProfile?.provider ?? info?.provider ?? options?.provider ?? options?.providers[0]?.slug ?? '';
+    const provider = providersBySlug.get(providerSlug);
+    const model = activeProfile?.model ?? info?.model ?? options?.model ?? provider?.models[0] ?? '';
+    setSelectedProvider(providerSlug);
+    setSelectedModel(model);
+    setSelectedEffort(activeProfile?.reasoningEffort ?? 'high');
+    setSelectedShowReasoning(activeProfile?.showReasoning ?? false);
+    setSheetOpen(true);
+  }
+
+  function closeSheet() {
+    setSheetOpen(false);
+  }
+
+  function handleProviderChange(providerSlug: string) {
+    setSelectedProvider(providerSlug);
+    const provider = providersBySlug.get(providerSlug);
+    setSelectedModel(provider?.models[0] ?? '');
+  }
+
+  async function handleSave() {
+    setLocalSetting(true);
+    try {
+      const result = await setMainModel(rest, selectedProvider, selectedModel, false, activeName, selectedEffort, selectedShowReasoning);
+      if (result.confirm_required) {
+        const ok = confirm(result.confirm_message ?? 'This model may be expensive. Continue?');
+        if (ok) {
+          await setMainModel(rest, selectedProvider, selectedModel, true, activeName, selectedEffort, selectedShowReasoning);
+        }
+      }
+      if (activeName) await loadProfiles(rest);
+      closeSheet();
+    } catch {
+      /* error surfaced in store */
+    } finally {
+      setLocalSetting(false);
+    }
+  }
+
+  async function handleBusyInputModeChange(mode: BusyInputMode) {
+    try {
+      await updateConfig(rest, 'display.busy_input_mode', mode);
+    } catch {
+      /* error surfaced in config store */
+    }
+  }
+
+  async function handleEnablePush() {
+    setPushBusy(true);
+    setPushError(undefined);
+    try {
+      if (!pushStatus?.vapidPublicKey) {
+        throw new Error(pushStatus?.reason ?? 'Push server is missing a VAPID public key.');
+      }
+      await enablePushNotifications(rest, pushStatus.vapidPublicKey, activeName || 'default');
+      reloadPushStatus();
+    } catch (err) {
+      setPushError(err instanceof Error ? err.message : 'Failed to enable notifications');
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleDisablePush() {
+    setPushBusy(true);
+    setPushError(undefined);
+    try {
+      await disablePushNotifications(rest, activePushSubscription?.id, pushProfile);
+      reloadPushStatus();
+    } catch (err) {
+      setPushError(err instanceof Error ? err.message : 'Failed to disable notifications');
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleTestPush() {
+    if (!activePushSubscription?.id) return;
+    setPushBusy(true);
+    setPushError(undefined);
+    try {
+      await rest.pushTest(activePushSubscription.id, pushProfile);
+      reloadPushStatus();
+    } catch (err) {
+      setPushError(err instanceof Error ? err.message : 'Failed to send test notification');
+    } finally {
+      setPushBusy(false);
+    }
+  }
+
+  async function handleInstallApp() {
+    setInstalling(true);
+    setInstallOutcome(undefined);
+    try {
+      const outcome = await promptInstall();
+      setInstallOutcome(outcome === 'unavailable' ? 'Install prompt is not available in this browser right now.' : `Install ${outcome}.`);
+      setInstallPromptAvailable(canPromptInstall());
+    } finally {
+      setInstalling(false);
+    }
+  }
+
+  const currentProvider = providersBySlug.get(selectedProvider);
+  const saving = setting || localSetting;
+
+  return (
+    <div className="hm-settings hm-scroll">
+      {statsError && <div className="hm-warning-banner hm-warning-banner--error">{statsError}</div>}
+      {modelError && <div className="hm-warning-banner hm-warning-banner--error">{modelError}</div>}
+      {configError && <div className="hm-warning-banner hm-warning-banner--error">{configError}</div>}
+      {pushError && <div className="hm-warning-banner hm-warning-banner--error">{pushError}</div>}
+
+      <Section title="Profiles">
+        <button
+          className="hm-settings-row hm-settings-row--link"
+          onClick={() => onNavigate('profiles')}
+          aria-label="Manage profiles"
+        >
+          <span className="hm-settings-row__body">
+            <span className="hm-settings-row__label">Manage profiles</span>
+            {activeProfile && (
+              <span className="hm-settings-row__sub hm-muted">
+                Active: {activeProfile.displayName ?? activeProfile.name}
+              </span>
+            )}
+          </span>
+          <span className="hm-settings-row__chevron" aria-hidden="true">
+            <Icon name="chevR" size={14} />
+          </span>
+        </button>
+      </Section>
+
+      <Section title="Connection">
+        <SettingsRow label="Gateway URL" value={gatewayHost} />
+        <SettingsRow label="Auth" value={authLabel} />
+        <SettingsRow
+          label="Model"
+          value={providerLabel ? `${providerLabel} / ${modelLabel} · Effort ${effortLabel} · Thinking ${thinkingDisplayLabel}` : modelLabel}
+          action={
+            <button
+              type="button"
+              className="hm-agent-card__activate"
+              onClick={openSheet}
+              disabled={modelLoading}
+              aria-label="Change model"
+            >
+              Change
+            </button>
+          }
+        />
+        <button
+          className="hm-settings-row hm-settings-row--link"
+          onClick={onLogout}
+          aria-label="Log out"
+        >
+          <span className="hm-settings-row__label">Log out</span>
+          <span className="hm-settings-row__chevron" aria-hidden="true">
+            <Icon name="logout" size={14} />
+          </span>
+        </button>
+      </Section>
+
+      <Section title="Notifications">
+        <SettingsRow label="Browser" value={pushCapability.supported ? `Supported · permission ${pushCapability.permission}` : (pushCapability.reason ?? 'Unsupported')} />
+        <SettingsRow label="Server" value={pushStatusLabel} />
+        <SettingsRow label="Devices" value={pushLoading ? 'Loading…' : String(pushStatus?.subscriptions.filter((s) => s.enabled).length ?? 0)} />
+        {pushCapability.iosStandaloneRequired && (
+          <p className="hm-muted">iPhone/iPad: install Hermes Mobile to Home Screen before enabling notifications.</p>
+        )}
+        {!pushStatus?.available && pushStatus?.reason && <p className="hm-muted">{pushStatus.reason}</p>}
+        <div className="hm-settings__segmented" aria-label="Push notification actions">
+          <button
+            type="button"
+            className="hm-filter-chip"
+            disabled={pushBusy || pushLoading || !pushCapability.supported || !pushStatus?.available || !pushStatus.vapidPublicKey}
+            onClick={() => void handleEnablePush()}
+          >
+            Enable on this device
+          </button>
+          <button
+            type="button"
+            className="hm-filter-chip"
+            disabled={pushBusy || pushLoading || !pushStatus?.available || !activePushSubscription?.id}
+            onClick={() => void handleTestPush()}
+          >
+            Send test
+          </button>
+          <button
+            type="button"
+            className="hm-filter-chip"
+            disabled={pushBusy || pushLoading || !activePushSubscription?.id}
+            onClick={() => void handleDisablePush()}
+          >
+            Disable device
+          </button>
+        </div>
+      </Section>
+
+      <Section title="Install app">
+        <SettingsRow
+          label="Browser install"
+          value={installPromptAvailable ? 'Install prompt ready' : 'Use browser menu or Add to Home Screen'}
+        />
+        {installPromptAvailable ? (
+          <button
+            type="button"
+            className="hm-filter-chip"
+            disabled={installing}
+            onClick={() => void handleInstallApp()}
+          >
+            Install Hermes Mobile
+          </button>
+        ) : iosSafari ? (
+          <p className="hm-muted">iPhone/iPad Safari: tap Share, then choose Add to Home Screen.</p>
+        ) : (
+          <p className="hm-muted">If no install prompt is available, use your browser menu and choose Add to Home Screen / Install app.</p>
+        )}
+        {installOutcome && <p className="hm-muted">{installOutcome}</p>}
+      </Section>
+
+      <Section title="Chat behavior">
+        <SettingsRow label="Busy input" value={configLoading ? 'Loading…' : busyInputModeLabel(busyInputMode)} />
+        <p className="hm-muted">{busyInputModeDescription(busyInputMode)}</p>
+        <div className="hm-settings__segmented" role="radiogroup" aria-label="Busy input mode">
+          {(['steer', 'queue', 'interrupt'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              className={`hm-filter-chip ${busyInputMode === mode ? 'hm-filter-chip--active' : ''}`}
+              disabled={configLoading || configSaving}
+              onClick={() => void handleBusyInputModeChange(mode)}
+              role="radio"
+              aria-checked={busyInputMode === mode}
+            >
+              {busyInputModeLabel(mode)}
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      <Section title="About">
+        <SettingsRow label="PWA client" value={HERMES_PWA_VERSION_LABEL} />
+        <SettingsRow label="Hermes backend" value={statsLoading ? 'Loading…' : (stats?.version ?? '—')} />
+        <button
+          className="hm-settings-row hm-settings-row--link"
+          onClick={() => onNavigate('command')}
+          aria-label="Open system command center"
+        >
+          <span className="hm-settings-row__body">
+            <span className="hm-settings-row__label">System command center</span>
+            <span className="hm-settings-row__sub hm-muted">Restart, update, doctor</span>
+          </span>
+          <span className="hm-settings-row__chevron" aria-hidden="true">
+            <Icon name="chevR" size={14} />
+          </span>
+        </button>
+      </Section>
+
+      {sheetOpen && (
+        <BottomSheet
+          title="Model"
+          onClose={closeSheet}
+          closeDisabled={saving}
+          footer={
+            <div className="hm-projects__inline-actions">
+              <button
+                type="button"
+                className="hm-primary hm-projects__inline-save"
+                disabled={saving || !selectedProvider || !selectedModel}
+                onClick={() => void handleSave()}
+              >
+                {saving ? 'Saving…' : 'Save model'}
+              </button>
+              <button type="button" className="hm-ghost" onClick={closeSheet} disabled={saving}>
+                Cancel
+              </button>
+            </div>
+          }
+        >
+              <div className="hm-projects__field">
+                <label className="hm-projects__label">Provider</label>
+                <select
+                  className="hm-select"
+                  value={selectedProvider}
+                  onChange={(e) => handleProviderChange(e.target.value)}
+                  disabled={saving}
+                >
+                  {options?.providers.map((p) => (
+                    <option key={p.slug} value={p.slug}>
+                      {p.name} {p.authenticated ? '✓' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="hm-projects__field">
+                <label className="hm-projects__label">Model</label>
+                <select
+                  className="hm-select"
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  disabled={saving}
+                >
+                  {currentProvider?.models.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="hm-projects__field">
+                <label className="hm-projects__label">Reasoning effort</label>
+                <select
+                  className="hm-select"
+                  value={selectedEffort}
+                  onChange={(e) => setSelectedEffort(e.target.value as ReasoningEffort)}
+                  disabled={saving}
+                >
+                  {REASONING_EFFORTS.map((effort) => (
+                    <option key={effort} value={effort}>
+                      {reasoningLabel(effort)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <label className="hm-settings-row hm-settings-row--checkbox">
+                <input
+                  type="checkbox"
+                  checked={selectedShowReasoning}
+                  onChange={(e) => setSelectedShowReasoning(e.target.checked)}
+                  disabled={saving}
+                />
+                <span>Show thinking / reasoning in chat</span>
+              </label>
+        </BottomSheet>
+      )}
+    </div>
+  );
+}

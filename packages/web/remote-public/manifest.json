@@ -1,0 +1,15 @@
+{
+  "id": "/hermes-remote-web/",
+  "name": "Hermes Remote Web (unofficial)",
+  "short_name": "Hermes Remote",
+  "lang": "ja",
+  "start_url": "/hermes-remote-web/",
+  "scope": "/hermes-remote-web/",
+  "display": "standalone",
+  "background_color": "#f4f6fc",
+  "theme_color": "#2540ff",
+  "icons": [
+    { "src": "/hermes-remote-web/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/hermes-remote-web/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

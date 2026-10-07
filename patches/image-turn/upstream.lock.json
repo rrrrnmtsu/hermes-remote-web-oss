@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/NousResearch/hermes-agent",
+  "upstreamBaseCommit": "e8c97320ac8691d4de92af49f98459f9ef9ddb08",
+  "baseCommit": "5b9d6c8dc643174a9358a672f2955066b4d12fbf",
+  "candidateCommit": "87520b3f47b11a729c1e4cf6b92f06a9f245f294",
+  "parentPatch": "../text-pilot/hermes-text-pilot.patch",
+  "parentPatchSha256": "17561906b168dbc2fc66d7a074e32a18d45e7f5d425d47abb1dd1be2c7c9e280",
+  "patchSha256": "b3fca80c4f1e97734848a908193b213ef685a85932f63ccba5dc88ce1cfc63fe",
+  "licenseSha256": "821556e6336796450ab852d375117b48a4887e71d255794fd6318d99982a5ab6",
+  "license": "MIT",
+  "copyright": "Copyright (c) 2025 Nous Research",
+  "status": "LOCAL_CANDIDATE_NOT_APPLIED",
+  "productionBackend": "e8c97320ac8691d4de92af49f98459f9ef9ddb08",
+  "files": [
+    {
+      "path": "agent/message_sanitization.py",
+      "originalSha256": "a9152961d1e36dc851fd76180bc2a8e600d0791812e7bf3d0cc8c5d1a28fb486",
+      "upstreamBaseSha256": "a9152961d1e36dc851fd76180bc2a8e600d0791812e7bf3d0cc8c5d1a28fb486",
+      "patchedSha256": "c3d4768abfd77223181c46c4c1b63da3a15cd6a2416051537356992ec2ddf341"
+    },
+    {
+      "path": "agent/turn_context.py",
+      "originalSha256": "b838c191eb44e8fd99a768bb782438b2b8751c775df67599dbc4b5892ea344ce",
+      "upstreamBaseSha256": "b838c191eb44e8fd99a768bb782438b2b8751c775df67599dbc4b5892ea344ce",
+      "patchedSha256": "eee041d0ad292dc84016b62c9fbfd674bd17406c2c6c68be86619e821cb23884"
+    },
+    {
+      "path": "agent/turn_recovery.py",
+      "originalSha256": "aed06c9c6f44df95da421296d266638b9f6af3474739ba90f2b7e80f22b0df03",
+      "upstreamBaseSha256": "aed06c9c6f44df95da421296d266638b9f6af3474739ba90f2b7e80f22b0df03",
+      "patchedSha256": "2965aec5bdc6a369474a42d7c9a65a4de71f794d627e0d6d2410a35b42613102"
+    },
+    {
+      "path": "apps/shared/src/gateway-contract.generated.ts",
+      "originalSha256": "fc05b2bca1b972eff444b2a2199e35978b98b33ac3c91714a1a7a96abdb0591e",
+      "upstreamBaseSha256": "fc05b2bca1b972eff444b2a2199e35978b98b33ac3c91714a1a7a96abdb0591e",
+      "patchedSha256": "648e869eeef95c558cb904a44572560ac51e06872755b27c20396dd7123aa4a6"
+    },
+    {
+      "path": "apps/shared/src/gateway-contract.openrpc.json",
+      "originalSha256": "fb99cca0dc4f79d4d0d1d2c0baa5eccc603504f6fcdbf436f0ad2ad3bdb8d0d2",
+      "upstreamBaseSha256": "fb99cca0dc4f79d4d0d1d2c0baa5eccc603504f6fcdbf436f0ad2ad3bdb8d0d2",
+      "patchedSha256": "210f563be03225f7d20654d3e3ae9c0068c0eef7f0504cebf059d51e2dce362e"
+    },
+    {
+      "path": "tests/tui_gateway/image_turn_harness.py",
+      "originalSha256": null,
+      "upstreamBaseSha256": null,
+      "patchedSha256": "d562b888b6799da620c3b8d1f421508664051780a50efcf4b1e2f47e11a17247"
+    },
+    {
+      "path": "tests/tui_gateway/test_image_turn_integration.py",
+      "originalSha256": null,
+      "upstreamBaseSha256": null,
+      "patchedSha256": "5b620397b7d02c2c7e9c532174e48239ea2216fe0fe660c1af024c6111bcaced"
+    },
+    {
+      "path": "tests/tui_gateway/test_image_turn_validation.py",
+      "originalSha256": null,
+      "upstreamBaseSha256": null,
+      "patchedSha256": "daae794922fb2238e491a0ea48135932f266d2e86f65016a5bc3c8b419b1f85b"
+    },
+    {
+      "path": "tui_gateway/contracts/liveness.py",
+      "originalSha256": "b46913c61f39784b2b78af1640d79409d4f3ed79e05ff9cb45e81e9bc4766692",
+      "upstreamBaseSha256": "b46913c61f39784b2b78af1640d79409d4f3ed79e05ff9cb45e81e9bc4766692",
+      "patchedSha256": "c2831b5802507713b91e293df699938fcedb958fd478f254860088df6628f408"
+    },
+    {
+      "path": "tui_gateway/contracts/prompt_voice.py",
+      "originalSha256": "29fc3910fe26d19a9cfa8168dbc636bc8033e07521266c55cf87d7d5d92be92f",
+      "upstreamBaseSha256": "29fc3910fe26d19a9cfa8168dbc636bc8033e07521266c55cf87d7d5d92be92f",
+      "patchedSha256": "849598d7d1a4592cbd30afe62b39aef2a8b1ad9a5e3cd0e256b1a473856bbe09"
+    },
+    {
+      "path": "tui_gateway/contracts/sessions.py",
+      "originalSha256": "0e7adddacd715788168e57d3ac80a25309b2185bdef251fc428cdbd4abc5a609",
+      "upstreamBaseSha256": "0e7adddacd715788168e57d3ac80a25309b2185bdef251fc428cdbd4abc5a609",
+      "patchedSha256": "b20c50a1ab6b263c4bf011c79fe50694deea53e930f7384be7bd02bc51e2b519"
+    },
+    {
+      "path": "tui_gateway/methods_prompt.py",
+      "originalSha256": "b22a460d2502e641553d17eff0163cc038e033d9f39df78099acdd53a5528ce9",
+      "upstreamBaseSha256": "b22a460d2502e641553d17eff0163cc038e033d9f39df78099acdd53a5528ce9",
+      "patchedSha256": "514e7ee899b58fab633fea8a3f7561cbb9f15d75ae9fc25ad804400e53066d08"
+    },
+    {
+      "path": "tui_gateway/methods_voice.py",
+      "originalSha256": "0a67be9277f3ee974d0e707df1b0bac208cbffa22e3f29bf20facd70d5306300",
+      "upstreamBaseSha256": "0a67be9277f3ee974d0e707df1b0bac208cbffa22e3f29bf20facd70d5306300",
+      "patchedSha256": "973ff14376830b0e985a84370b58e05c4aa9d37daae96c176490cb10c82f38ff"
+    },
+    {
+      "path": "tui_gateway/prompt_image_turn.py",
+      "originalSha256": null,
+      "upstreamBaseSha256": null,
+      "patchedSha256": "fc1ab4e6dca69e17d73fc4876994f3423009a30a801d4413fdcc9d1080e77157"
+    },
+    {
+      "path": "tui_gateway/prompt_turn.py",
+      "originalSha256": "6f2bf8c7b62fa7e36a0ed36edee290686e0c53a2829aa74558a3bcf8c7b28b46",
+      "upstreamBaseSha256": "6f2bf8c7b62fa7e36a0ed36edee290686e0c53a2829aa74558a3bcf8c7b28b46",
+      "patchedSha256": "e4385083be1265d56bb861fab4782bbd3c2ba85d07d3d04f367409ca201463f6"
+    },
+    {
+      "path": "tui_gateway/rpc_dispatch.py",
+      "originalSha256": "d81dd5b12e67305c5838c5a8b19a900a6aa2285beec5fd95454671051aaa22b1",
+      "upstreamBaseSha256": "d81dd5b12e67305c5838c5a8b19a900a6aa2285beec5fd95454671051aaa22b1",
+      "patchedSha256": "6a40199593f9ab475cc02e708e52e9d64c38319bfd7bb51dbcbfe89aa39c057a"
+    },
+    {
+      "path": "tui_gateway/session_auto_continue.py",
+      "originalSha256": "08365ffb118d4fd30696327452484f34a4fe5c3bd0b8e0e641ca3e7db9d5ff09",
+      "upstreamBaseSha256": "08365ffb118d4fd30696327452484f34a4fe5c3bd0b8e0e641ca3e7db9d5ff09",
+      "patchedSha256": "ff7f3149d86634caac3495d93ac8af0277de226a471e41b220c519fe407a910e"
+    },
+    {
+      "path": "tui_gateway/session_history.py",
+      "originalSha256": "0b774d0bf78666cc58cfe6e59f9c80933d6477fa7c4f605b18a0591cf6e9b23e",
+      "upstreamBaseSha256": "0b774d0bf78666cc58cfe6e59f9c80933d6477fa7c4f605b18a0591cf6e9b23e",
+      "patchedSha256": "c0f0267a779c3a809abeb5b89006ebf6fa6d148b672f558a318417a147cc8c42"
+    }
+  ]
+}

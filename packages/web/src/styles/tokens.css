@@ -1,0 +1,200 @@
+/* Hermes Mobile Design Tokens — CSS Variables */
+/* Prototype: /home/stasstep/PWAHermesprototype/hermes pwa design prototype */
+
+:root {
+  /* ── Fonts ──────────────────────────────────────────────────────── */
+  --hm-font-display: 'Bodoni Moda', Georgia, serif;
+  --hm-font-sans: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --hm-font-mono: 'JetBrains Mono', 'SF Mono', 'Cascadia Code', Consolas, monospace;
+
+  /* ── Surface ────────────────────────────────────────────────────── */
+  --hm-color-bg:        #f4f6fc;
+  --hm-color-surface:   #ffffff;
+  --hm-color-surface-2: #f5f7fd;
+  --hm-color-border:    #e7eaf3;
+
+  /* ── Text ───────────────────────────────────────────────────────── */
+  --hm-color-text:       #161a27;
+  --hm-color-text-2:     #2b3346;
+  --hm-color-text-muted: #6b7384;
+  --hm-color-text-faint: #9aa2b4;
+  --hm-color-text-secondary: #868fa1;
+  --hm-color-text-subtle: #c4cad8;
+
+  /* ── Primary (blue) ─────────────────────────────────────────────── */
+  --hm-color-primary:      #2540ff;
+  --hm-color-primary-tint: #eef1ff;
+  --hm-color-primary-text: #ffffff;
+
+  /* Backward-compat aliases used by existing .hm-* classes */
+  --hm-color-accent:      var(--hm-color-primary);
+  --hm-color-accent-weak: var(--hm-color-primary-tint);
+  --hm-color-on-accent:   var(--hm-color-primary-text);
+
+  /* ── Semantic ───────────────────────────────────────────────────── */
+  --hm-color-success:    #15a06a;
+  --hm-color-warning:    #d98a16;
+  --hm-color-danger:     #dc4b46;
+  --hm-color-running:    #2540ff;
+  --hm-color-success-strong: #065f46;
+  --hm-color-warning-strong: #92400e;
+  --hm-color-danger-strong:  #991b1b;
+
+  --hm-color-success-bg: #e3fbef;
+  --hm-color-warning-bg: #fff7ed;
+  --hm-color-danger-bg:  #fdeaea;
+  --hm-color-info-bg:    #e7f4fd;
+
+  /* ── Spacing (4 px base) ────────────────────────────────────────── */
+  --hm-space-1: 4px;
+  --hm-space-2: 8px;
+  --hm-space-3: 12px;
+  --hm-space-4: 16px;
+  --hm-space-5: 24px;
+  --hm-space-6: 32px;
+  --hm-space-8: 48px;
+
+  /* ── Radius ─────────────────────────────────────────────────────── */
+  --hm-radius-xs:   6px;
+  --hm-radius-sm:   8px;
+  --hm-radius-md:   11px;
+  --hm-radius-card: 14px;
+  --hm-radius-lg:   15px;
+  --hm-radius-xl:   16px;
+  --hm-radius-full: 999px;
+
+  /* ── Elevation ──────────────────────────────────────────────────── */
+  --hm-elev-1:     0 1px 2px rgba(20, 30, 60, 0.04), 0 1px 1px rgba(20, 30, 60, 0.03);
+  --hm-elev-2:     0 4px 12px rgba(20, 30, 60, 0.08);
+  --hm-elev-3:     0 6px 20px rgba(37, 64, 255, 0.07);
+  --hm-elev-sheet: 0 -8px 28px rgba(20, 30, 60, 0.14);
+  --hm-elev-drawer: 14px 0 40px rgba(15, 20, 40, 0.18);
+
+  /* ── Touch ──────────────────────────────────────────────────────── */
+  --hm-tap-min: 44px;
+
+  /* ── Typography ─────────────────────────────────────────────────── */
+  --hm-fs-display: 28px;
+  --hm-fs-title:   20px;
+  --hm-fs-heading: 16px;
+  --hm-fs-body:    15px;
+  --hm-fs-small:   13px;
+  --hm-fs-label:   11px;
+  --hm-fs-mono:    13px;
+
+  --hm-fw-regular:  400;
+  --hm-fw-medium:   500;
+  --hm-fw-semibold: 600;
+  --hm-fw-bold:     700;
+
+  /* ── Motion ─────────────────────────────────────────────────────── */
+  --hm-duration-fast:   150ms;
+  --hm-duration-normal: 220ms;
+  --hm-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ── Keyframes ──────────────────────────────────────────────────────── */
+@keyframes hm-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+@keyframes hm-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes hm-rise {
+  from { opacity: 0.35; transform: translateY(4px); }
+  to   { opacity: 1;    transform: translateY(0); }
+}
+@keyframes hm-fadein {
+  from { opacity: 0.3; }
+  to   { opacity: 1; }
+}
+@keyframes hm-fadeout {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes hm-slidein {
+  from { transform: translateX(-14px); opacity: 0.4; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes hm-slideout {
+  from { transform: translateX(0);     opacity: 1; }
+  to   { transform: translateX(-28px); opacity: 0.3; }
+}
+@keyframes hm-sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+@keyframes hm-sheet-down {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100%); }
+}
+@keyframes hm-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* ── Dark theme ─────────────────────────────────────────────────────── */
+:root[data-theme='dark'] {
+  --hm-color-bg:        #0e1116;
+  --hm-color-surface:   #161b22;
+  --hm-color-surface-2: #1c222b;
+  --hm-color-border:    #2a313c;
+
+  --hm-color-text:       #e6e9ee;
+  --hm-color-text-2:     #c8cdd8;
+  --hm-color-text-muted: #9aa3b0;
+  --hm-color-text-faint: #6b7382;
+
+  --hm-color-primary:      #5c7cff;
+  --hm-color-primary-tint: #1b2440;
+  --hm-color-primary-text: #0e1116;
+
+  --hm-color-success:    #51cf66;
+  --hm-color-warning:    #ffc14d;
+  --hm-color-danger:     #ff6b6b;
+  --hm-color-running:    #5c7cff;
+
+  --hm-color-success-bg: #11261a;
+  --hm-color-warning-bg: #2a2110;
+  --hm-color-danger-bg:  #2a1414;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --hm-color-bg:        #0e1116;
+    --hm-color-surface:   #161b22;
+    --hm-color-surface-2: #1c222b;
+    --hm-color-border:    #2a313c;
+
+    --hm-color-text:       #e6e9ee;
+    --hm-color-text-2:     #c8cdd8;
+    --hm-color-text-muted: #9aa3b0;
+    --hm-color-text-faint: #6b7382;
+
+    --hm-color-primary:      #5c7cff;
+    --hm-color-primary-tint: #1b2440;
+    --hm-color-primary-text: #0e1116;
+
+    --hm-color-success:    #51cf66;
+    --hm-color-warning:    #ffc14d;
+    --hm-color-danger:     #ff6b6b;
+    --hm-color-running:    #5c7cff;
+
+    --hm-color-success-bg: #11261a;
+    --hm-color-warning-bg: #2a2110;
+    --hm-color-danger-bg:  #2a1414;
+  }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

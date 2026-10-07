@@ -1,0 +1,477 @@
+// !$*UTF8*$!
+{
+  "archiveVersion" = 1;
+  "classes" = {
+  };
+  "objectVersion" = 56;
+  "objects" = {
+    "E8B92B2D30452B74B4F924E4" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "sourcecode.swift";
+      "path" = "App/AppDelegate.swift";
+      "sourceTree" = "<group>";
+    };
+    "4300995E1D645528DA0C80E2" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "text.plist.entitlements";
+      "path" = "App/HermesRemote.entitlements";
+      "sourceTree" = "<group>";
+    };
+    "E72685212AF966A85FF3F9E9" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "text.plist.xml";
+      "path" = "App/Info.plist";
+      "sourceTree" = "<group>";
+    };
+    "74EDD8F937B1D3635348E2D0" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "sourcecode.swift";
+      "path" = "App/NativeBridge.swift";
+      "sourceTree" = "<group>";
+    };
+    "891C434A803678BDE203836E" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "sourcecode.swift";
+      "path" = "App/WebShellViewController.swift";
+      "sourceTree" = "<group>";
+    };
+    "9C13E74C652C718C2BC9C512" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "text.plist.entitlements";
+      "path" = "ShareExtension/HermesRemoteShare.entitlements";
+      "sourceTree" = "<group>";
+    };
+    "B47E1912DF73A535128FAB3D" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "text.plist.xml";
+      "path" = "ShareExtension/Info.plist";
+      "sourceTree" = "<group>";
+    };
+    "CAD35054A8361FDDDDA0D4AB" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "sourcecode.swift";
+      "path" = "ShareExtension/ShareViewController.swift";
+      "sourceTree" = "<group>";
+    };
+    "07DDA529C0A07CDB051224A6" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "sourcecode.swift";
+      "path" = "Shared/KeychainVault.swift";
+      "sourceTree" = "<group>";
+    };
+    "7EA7E97109D434F5E19E0B6F" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "sourcecode.swift";
+      "path" = "Shared/NativePolicy.swift";
+      "sourceTree" = "<group>";
+    };
+    "12F3ADFDB65C71A9B4D51625" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "sourcecode.swift";
+      "path" = "Shared/SharedDraftStore.swift";
+      "sourceTree" = "<group>";
+    };
+    "D85C692848F817AFA76A637C" = {
+      "isa" = "PBXFileReference";
+      "lastKnownFileType" = "sourcecode.swift";
+      "path" = "Tests/NativePolicyTests.swift";
+      "sourceTree" = "<group>";
+    };
+    "8C68DEB3EAC1A48E6B2C5FA4" = {
+      "isa" = "PBXFileReference";
+      "explicitFileType" = "wrapper.application";
+      "path" = "HermesRemote.app";
+      "sourceTree" = "BUILT_PRODUCTS_DIR";
+      "includeInIndex" = 0;
+    };
+    "B633BB6C69D9886F33E4D474" = {
+      "isa" = "PBXFileReference";
+      "explicitFileType" = "wrapper.app-extension";
+      "path" = "HermesRemoteShare.appex";
+      "sourceTree" = "BUILT_PRODUCTS_DIR";
+      "includeInIndex" = 0;
+    };
+    "5CD06B6D7F3CC6D000633449" = {
+      "isa" = "PBXFileReference";
+      "explicitFileType" = "wrapper.cfbundle";
+      "path" = "HermesRemoteTests.xctest";
+      "sourceTree" = "BUILT_PRODUCTS_DIR";
+      "includeInIndex" = 0;
+    };
+    "0A3E27B8CA818264D75C8D81" = {
+      "isa" = "PBXGroup";
+      "name" = "Products";
+      "children" = ("8C68DEB3EAC1A48E6B2C5FA4", "B633BB6C69D9886F33E4D474", "5CD06B6D7F3CC6D000633449");
+      "sourceTree" = "<group>";
+    };
+    "EC6AE75C017423A0C5A951A8" = {
+      "isa" = "PBXGroup";
+      "children" = ("E8B92B2D30452B74B4F924E4", "4300995E1D645528DA0C80E2", "E72685212AF966A85FF3F9E9", "74EDD8F937B1D3635348E2D0", "891C434A803678BDE203836E", "9C13E74C652C718C2BC9C512", "B47E1912DF73A535128FAB3D", "CAD35054A8361FDDDDA0D4AB", "07DDA529C0A07CDB051224A6", "7EA7E97109D434F5E19E0B6F", "12F3ADFDB65C71A9B4D51625", "D85C692848F817AFA76A637C", "0A3E27B8CA818264D75C8D81");
+      "sourceTree" = "<group>";
+    };
+    "184B519F8E1416CCE38CFFD7" = {
+      "isa" = "XCBuildConfiguration";
+      "name" = "Debug";
+      "buildSettings" = {
+        "CLANG_ENABLE_MODULES" = "YES";
+        "SWIFT_VERSION" = "5.0";
+        "IPHONEOS_DEPLOYMENT_TARGET" = "16.4";
+        "SDKROOT" = "iphoneos";
+        "TARGETED_DEVICE_FAMILY" = "1";
+        "HERMES_APPROVED_ORIGIN" = "";
+        "HERMES_APP_GROUP" = "group.net.sakura.hermesremote";
+        "HERMES_KEYCHAIN_GROUP" = "net.sakura.hermesremote.shared";
+      };
+    };
+    "A824290273A346217D9BE6F4" = {
+      "isa" = "XCBuildConfiguration";
+      "name" = "Release";
+      "buildSettings" = {
+        "CLANG_ENABLE_MODULES" = "YES";
+        "SWIFT_VERSION" = "5.0";
+        "IPHONEOS_DEPLOYMENT_TARGET" = "16.4";
+        "SDKROOT" = "iphoneos";
+        "TARGETED_DEVICE_FAMILY" = "1";
+        "HERMES_APPROVED_ORIGIN" = "";
+        "HERMES_APP_GROUP" = "group.net.sakura.hermesremote";
+        "HERMES_KEYCHAIN_GROUP" = "net.sakura.hermesremote.shared";
+      };
+    };
+    "9F6B1A7BCFF26D263B843F95" = {
+      "isa" = "XCConfigurationList";
+      "buildConfigurations" = ("184B519F8E1416CCE38CFFD7", "A824290273A346217D9BE6F4");
+      "defaultConfigurationIsVisible" = 0;
+      "defaultConfigurationName" = "Release";
+    };
+    "8153E321A58C07D333F2B74C" = {
+      "isa" = "XCBuildConfiguration";
+      "name" = "Debug";
+      "buildSettings" = {
+        "CLANG_ENABLE_MODULES" = "YES";
+        "SWIFT_VERSION" = "5.0";
+        "IPHONEOS_DEPLOYMENT_TARGET" = "16.4";
+        "SDKROOT" = "iphoneos";
+        "TARGETED_DEVICE_FAMILY" = "1";
+        "HERMES_APPROVED_ORIGIN" = "";
+        "HERMES_APP_GROUP" = "group.net.sakura.hermesremote";
+        "HERMES_KEYCHAIN_GROUP" = "net.sakura.hermesremote.shared";
+        "PRODUCT_NAME" = "$(TARGET_NAME)";
+        "GENERATE_INFOPLIST_FILE" = "NO";
+        "CODE_SIGN_STYLE" = "Manual";
+        "SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+        "PRODUCT_BUNDLE_IDENTIFIER" = "net.sakura.hermesremote";
+        "INFOPLIST_FILE" = "App/Info.plist";
+        "CODE_SIGN_ENTITLEMENTS" = "App/HermesRemote.entitlements";
+        "ENABLE_TESTABILITY" = "YES";
+        "LD_RUNPATH_SEARCH_PATHS" = "$(inherited) @executable_path/Frameworks";
+      };
+    };
+    "634D271E06686C0D4BA0F058" = {
+      "isa" = "XCBuildConfiguration";
+      "name" = "Release";
+      "buildSettings" = {
+        "CLANG_ENABLE_MODULES" = "YES";
+        "SWIFT_VERSION" = "5.0";
+        "IPHONEOS_DEPLOYMENT_TARGET" = "16.4";
+        "SDKROOT" = "iphoneos";
+        "TARGETED_DEVICE_FAMILY" = "1";
+        "HERMES_APPROVED_ORIGIN" = "";
+        "HERMES_APP_GROUP" = "group.net.sakura.hermesremote";
+        "HERMES_KEYCHAIN_GROUP" = "net.sakura.hermesremote.shared";
+        "PRODUCT_NAME" = "$(TARGET_NAME)";
+        "GENERATE_INFOPLIST_FILE" = "NO";
+        "CODE_SIGN_STYLE" = "Manual";
+        "SWIFT_OPTIMIZATION_LEVEL" = "-O";
+        "PRODUCT_BUNDLE_IDENTIFIER" = "net.sakura.hermesremote";
+        "INFOPLIST_FILE" = "App/Info.plist";
+        "CODE_SIGN_ENTITLEMENTS" = "App/HermesRemote.entitlements";
+        "ENABLE_TESTABILITY" = "NO";
+        "LD_RUNPATH_SEARCH_PATHS" = "$(inherited) @executable_path/Frameworks";
+      };
+    };
+    "A2B4EADB2CC088BC887D5881" = {
+      "isa" = "XCConfigurationList";
+      "buildConfigurations" = ("8153E321A58C07D333F2B74C", "634D271E06686C0D4BA0F058");
+      "defaultConfigurationIsVisible" = 0;
+      "defaultConfigurationName" = "Release";
+    };
+    "AFCF1B13696BE25795C42815" = {
+      "isa" = "XCBuildConfiguration";
+      "name" = "Debug";
+      "buildSettings" = {
+        "CLANG_ENABLE_MODULES" = "YES";
+        "SWIFT_VERSION" = "5.0";
+        "IPHONEOS_DEPLOYMENT_TARGET" = "16.4";
+        "SDKROOT" = "iphoneos";
+        "TARGETED_DEVICE_FAMILY" = "1";
+        "HERMES_APPROVED_ORIGIN" = "";
+        "HERMES_APP_GROUP" = "group.net.sakura.hermesremote";
+        "HERMES_KEYCHAIN_GROUP" = "net.sakura.hermesremote.shared";
+        "PRODUCT_NAME" = "$(TARGET_NAME)";
+        "GENERATE_INFOPLIST_FILE" = "NO";
+        "CODE_SIGN_STYLE" = "Manual";
+        "SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+        "PRODUCT_BUNDLE_IDENTIFIER" = "net.sakura.hermesremote.share";
+        "INFOPLIST_FILE" = "ShareExtension/Info.plist";
+        "CODE_SIGN_ENTITLEMENTS" = "ShareExtension/HermesRemoteShare.entitlements";
+        "APPLICATION_EXTENSION_API_ONLY" = "YES";
+        "SKIP_INSTALL" = "YES";
+        "LD_RUNPATH_SEARCH_PATHS" = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+      };
+    };
+    "39B411DA0E58A5B65901A419" = {
+      "isa" = "XCBuildConfiguration";
+      "name" = "Release";
+      "buildSettings" = {
+        "CLANG_ENABLE_MODULES" = "YES";
+        "SWIFT_VERSION" = "5.0";
+        "IPHONEOS_DEPLOYMENT_TARGET" = "16.4";
+        "SDKROOT" = "iphoneos";
+        "TARGETED_DEVICE_FAMILY" = "1";
+        "HERMES_APPROVED_ORIGIN" = "";
+        "HERMES_APP_GROUP" = "group.net.sakura.hermesremote";
+        "HERMES_KEYCHAIN_GROUP" = "net.sakura.hermesremote.shared";
+        "PRODUCT_NAME" = "$(TARGET_NAME)";
+        "GENERATE_INFOPLIST_FILE" = "NO";
+        "CODE_SIGN_STYLE" = "Manual";
+        "SWIFT_OPTIMIZATION_LEVEL" = "-O";
+        "PRODUCT_BUNDLE_IDENTIFIER" = "net.sakura.hermesremote.share";
+        "INFOPLIST_FILE" = "ShareExtension/Info.plist";
+        "CODE_SIGN_ENTITLEMENTS" = "ShareExtension/HermesRemoteShare.entitlements";
+        "APPLICATION_EXTENSION_API_ONLY" = "YES";
+        "SKIP_INSTALL" = "YES";
+        "LD_RUNPATH_SEARCH_PATHS" = "$(inherited) @executable_path/Frameworks @executable_path/../../Frameworks";
+      };
+    };
+    "D0800333E175D80223F9A373" = {
+      "isa" = "XCConfigurationList";
+      "buildConfigurations" = ("AFCF1B13696BE25795C42815", "39B411DA0E58A5B65901A419");
+      "defaultConfigurationIsVisible" = 0;
+      "defaultConfigurationName" = "Release";
+    };
+    "B4EFE698DF056964F20333D0" = {
+      "isa" = "XCBuildConfiguration";
+      "name" = "Debug";
+      "buildSettings" = {
+        "CLANG_ENABLE_MODULES" = "YES";
+        "SWIFT_VERSION" = "5.0";
+        "IPHONEOS_DEPLOYMENT_TARGET" = "16.4";
+        "SDKROOT" = "iphoneos";
+        "TARGETED_DEVICE_FAMILY" = "1";
+        "HERMES_APPROVED_ORIGIN" = "";
+        "HERMES_APP_GROUP" = "group.net.sakura.hermesremote";
+        "HERMES_KEYCHAIN_GROUP" = "net.sakura.hermesremote.shared";
+        "PRODUCT_NAME" = "$(TARGET_NAME)";
+        "GENERATE_INFOPLIST_FILE" = "YES";
+        "CODE_SIGN_STYLE" = "Manual";
+        "SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+        "PRODUCT_BUNDLE_IDENTIFIER" = "net.sakura.hermesremote.tests";
+        "TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/HermesRemote.app/HermesRemote";
+        "BUNDLE_LOADER" = "$(TEST_HOST)";
+        "LD_RUNPATH_SEARCH_PATHS" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+      };
+    };
+    "D176F0175A0C41E9588AEBCD" = {
+      "isa" = "XCBuildConfiguration";
+      "name" = "Release";
+      "buildSettings" = {
+        "CLANG_ENABLE_MODULES" = "YES";
+        "SWIFT_VERSION" = "5.0";
+        "IPHONEOS_DEPLOYMENT_TARGET" = "16.4";
+        "SDKROOT" = "iphoneos";
+        "TARGETED_DEVICE_FAMILY" = "1";
+        "HERMES_APPROVED_ORIGIN" = "";
+        "HERMES_APP_GROUP" = "group.net.sakura.hermesremote";
+        "HERMES_KEYCHAIN_GROUP" = "net.sakura.hermesremote.shared";
+        "PRODUCT_NAME" = "$(TARGET_NAME)";
+        "GENERATE_INFOPLIST_FILE" = "YES";
+        "CODE_SIGN_STYLE" = "Manual";
+        "SWIFT_OPTIMIZATION_LEVEL" = "-O";
+        "PRODUCT_BUNDLE_IDENTIFIER" = "net.sakura.hermesremote.tests";
+        "TEST_HOST" = "$(BUILT_PRODUCTS_DIR)/HermesRemote.app/HermesRemote";
+        "BUNDLE_LOADER" = "$(TEST_HOST)";
+        "LD_RUNPATH_SEARCH_PATHS" = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+      };
+    };
+    "B2C0F9A18310E1E3F91D1EFE" = {
+      "isa" = "XCConfigurationList";
+      "buildConfigurations" = ("B4EFE698DF056964F20333D0", "D176F0175A0C41E9588AEBCD");
+      "defaultConfigurationIsVisible" = 0;
+      "defaultConfigurationName" = "Release";
+    };
+    "6DC1CBE1284E87CAC8A80656" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "7EA7E97109D434F5E19E0B6F";
+    };
+    "13E0F42CC56F6E7E1451CDDC" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "07DDA529C0A07CDB051224A6";
+    };
+    "F2B3F24BD8F70DAF29B8AC23" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "12F3ADFDB65C71A9B4D51625";
+    };
+    "0AD84FAEAEAFEE7B1DD3FD21" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "E8B92B2D30452B74B4F924E4";
+    };
+    "0DBCA6786A809DE06CE4D01C" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "891C434A803678BDE203836E";
+    };
+    "E0C3248D1CB58DACE40C6737" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "74EDD8F937B1D3635348E2D0";
+    };
+    "6EB53A29BAE2F5DFFFC4D284" = {
+      "isa" = "PBXSourcesBuildPhase";
+      "buildActionMask" = 2147483647;
+      "files" = ("6DC1CBE1284E87CAC8A80656", "13E0F42CC56F6E7E1451CDDC", "F2B3F24BD8F70DAF29B8AC23", "0AD84FAEAEAFEE7B1DD3FD21", "0DBCA6786A809DE06CE4D01C", "E0C3248D1CB58DACE40C6737");
+      "runOnlyForDeploymentPostprocessing" = 0;
+    };
+    "29248FEFD881EDDE4987C022" = {
+      "isa" = "PBXFrameworksBuildPhase";
+      "buildActionMask" = 2147483647;
+      "files" = ();
+      "runOnlyForDeploymentPostprocessing" = 0;
+    };
+    "7EC54E9A4B4EDA233ED08F28" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "B633BB6C69D9886F33E4D474";
+      "settings" = {
+        "ATTRIBUTES" = ("CodeSignOnCopy", "RemoveHeadersOnCopy");
+      };
+    };
+    "20EF7739E8423F114899B767" = {
+      "isa" = "PBXCopyFilesBuildPhase";
+      "buildActionMask" = 2147483647;
+      "dstPath" = "";
+      "dstSubfolderSpec" = 13;
+      "files" = ("7EC54E9A4B4EDA233ED08F28");
+      "runOnlyForDeploymentPostprocessing" = 0;
+      "name" = "Embed App Extensions";
+    };
+    "56B2B906C1245CB5CF7CE499" = {
+      "isa" = "PBXNativeTarget";
+      "buildConfigurationList" = "A2B4EADB2CC088BC887D5881";
+      "buildPhases" = ("6EB53A29BAE2F5DFFFC4D284", "29248FEFD881EDDE4987C022", "20EF7739E8423F114899B767");
+      "buildRules" = ();
+      "dependencies" = ("AA430BD6712B7024954B1C5C");
+      "name" = "HermesRemote";
+      "productName" = "HermesRemote";
+      "productReference" = "8C68DEB3EAC1A48E6B2C5FA4";
+      "productType" = "com.apple.product-type.application";
+    };
+    "FE9D094EC5D05626B08AD65C" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "7EA7E97109D434F5E19E0B6F";
+    };
+    "1355BFF1C2045A21DAEEFBCB" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "07DDA529C0A07CDB051224A6";
+    };
+    "C6CD61AA3E84AF9BC58F2A43" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "12F3ADFDB65C71A9B4D51625";
+    };
+    "87633D10CF867C239A655CC1" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "CAD35054A8361FDDDDA0D4AB";
+    };
+    "A186DA284710087E417AEB95" = {
+      "isa" = "PBXSourcesBuildPhase";
+      "buildActionMask" = 2147483647;
+      "files" = ("FE9D094EC5D05626B08AD65C", "1355BFF1C2045A21DAEEFBCB", "C6CD61AA3E84AF9BC58F2A43", "87633D10CF867C239A655CC1");
+      "runOnlyForDeploymentPostprocessing" = 0;
+    };
+    "3B48E086FD784AA89AEFE82E" = {
+      "isa" = "PBXFrameworksBuildPhase";
+      "buildActionMask" = 2147483647;
+      "files" = ();
+      "runOnlyForDeploymentPostprocessing" = 0;
+    };
+    "4F0B27B7E58C5399FE85EA8C" = {
+      "isa" = "PBXNativeTarget";
+      "buildConfigurationList" = "D0800333E175D80223F9A373";
+      "buildPhases" = ("A186DA284710087E417AEB95", "3B48E086FD784AA89AEFE82E");
+      "buildRules" = ();
+      "dependencies" = ();
+      "name" = "HermesRemoteShare";
+      "productName" = "HermesRemoteShare";
+      "productReference" = "B633BB6C69D9886F33E4D474";
+      "productType" = "com.apple.product-type.app-extension";
+    };
+    "7B8E45C307EA659FF166AA9B" = {
+      "isa" = "PBXBuildFile";
+      "fileRef" = "D85C692848F817AFA76A637C";
+    };
+    "5CB97A6A5C30CD581F85525D" = {
+      "isa" = "PBXSourcesBuildPhase";
+      "buildActionMask" = 2147483647;
+      "files" = ("7B8E45C307EA659FF166AA9B");
+      "runOnlyForDeploymentPostprocessing" = 0;
+    };
+    "9C3ED95C7C1D5D95B925A6C2" = {
+      "isa" = "PBXFrameworksBuildPhase";
+      "buildActionMask" = 2147483647;
+      "files" = ();
+      "runOnlyForDeploymentPostprocessing" = 0;
+    };
+    "203BA933CF5724D6A9F1625C" = {
+      "isa" = "PBXNativeTarget";
+      "buildConfigurationList" = "B2C0F9A18310E1E3F91D1EFE";
+      "buildPhases" = ("5CB97A6A5C30CD581F85525D", "9C3ED95C7C1D5D95B925A6C2");
+      "buildRules" = ();
+      "dependencies" = ("F205B3D166B29FFD55400940");
+      "name" = "HermesRemoteTests";
+      "productName" = "HermesRemoteTests";
+      "productReference" = "5CD06B6D7F3CC6D000633449";
+      "productType" = "com.apple.product-type.bundle.unit-test";
+    };
+    "A0BB8E76B4B19C26FE43CE8D" = {
+      "isa" = "PBXContainerItemProxy";
+      "containerPortal" = "244210E48437B6556980A702";
+      "proxyType" = 1;
+      "remoteGlobalIDString" = "4F0B27B7E58C5399FE85EA8C";
+      "remoteInfo" = "HermesRemoteShare";
+    };
+    "AA430BD6712B7024954B1C5C" = {
+      "isa" = "PBXTargetDependency";
+      "target" = "4F0B27B7E58C5399FE85EA8C";
+      "targetProxy" = "A0BB8E76B4B19C26FE43CE8D";
+    };
+    "53085DA4209402D0352C1A42" = {
+      "isa" = "PBXContainerItemProxy";
+      "containerPortal" = "244210E48437B6556980A702";
+      "proxyType" = 1;
+      "remoteGlobalIDString" = "56B2B906C1245CB5CF7CE499";
+      "remoteInfo" = "HermesRemote";
+    };
+    "F205B3D166B29FFD55400940" = {
+      "isa" = "PBXTargetDependency";
+      "target" = "56B2B906C1245CB5CF7CE499";
+      "targetProxy" = "53085DA4209402D0352C1A42";
+    };
+    "244210E48437B6556980A702" = {
+      "isa" = "PBXProject";
+      "attributes" = {
+        "LastUpgradeCheck" = "1600";
+        "TargetAttributes" = {
+          "203BA933CF5724D6A9F1625C" = {
+            "TestTargetID" = "56B2B906C1245CB5CF7CE499";
+          };
+        };
+      };
+      "buildConfigurationList" = "9F6B1A7BCFF26D263B843F95";
+      "compatibilityVersion" = "Xcode 14.0";
+      "developmentRegion" = "ja";
+      "knownRegions" = ("ja", "Base");
+      "mainGroup" = "EC6AE75C017423A0C5A951A8";
+      "productRefGroup" = "0A3E27B8CA818264D75C8D81";
+      "projectDirPath" = "";
+      "projectRoot" = "";
+      "targets" = ("56B2B906C1245CB5CF7CE499", "4F0B27B7E58C5399FE85EA8C", "203BA933CF5724D6A9F1625C");
+    };
+  };
+  "rootObject" = "244210E48437B6556980A702";
+}

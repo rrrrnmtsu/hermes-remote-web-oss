@@ -1,0 +1,25 @@
+name: Build release candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 24.18.0
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: npm run typecheck && npm run lint && npm test -- --maxWorkers=1 --minWorkers=1 && npm run test:oss
+      - run: npm run build && npm run verify:pwa && npm run verify:pack && npm run package:release
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: oss-release-candidate
+          path: output/public-release/
+# Publication is a reviewed maintainer action. This workflow never changes a
+# production service, activates an opt-in or claims physical-device acceptance.

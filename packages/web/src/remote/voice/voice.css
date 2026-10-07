@@ -1,0 +1,9 @@
+.remote-confirm.remote-voice-panel { width: min(calc(var(--remote-width, 100vw) - 16px), 740px); max-height: calc(var(--remote-height, 100dvh) - 16px); min-width: 0; overflow: auto; padding: clamp(8px, calc(var(--remote-height, 100dvh) * .03), 16px); }
+.remote-voice-panel[open] { display: flex; flex-direction: column; }
+.remote-voice-panel > .remote-sheet-heading { flex: 0 0 auto; }
+.remote-voice-scroll { flex: 1 1 auto; min-height: 0; min-width: 0; overflow: auto; overscroll-behavior: contain; overflow-wrap: anywhere; padding-bottom: 4px; }
+.remote-voice-panel textarea { font-size: max(16px, 1rem); min-width: 0; width: 100%; min-height: clamp(80px, calc(var(--remote-height, 100dvh) * .25), 12rem); max-height: calc(var(--remote-height, 100dvh) * .45); box-sizing: border-box; margin-block: .5rem; padding: .75rem; color: inherit; background: transparent; border: 1px solid var(--remote-line, #687181); border-radius: .75rem; }
+.remote-voice-panel button { min-width: 44px; min-height: 44px; }
+.remote-voice-scroll button { max-width: 100%; overflow-wrap: anywhere; }
+.remote-voice-panel label { display: grid; gap: .45rem; min-width: 0; }
+.remote-voice-interim { white-space: pre-wrap; overflow-wrap: anywhere; max-height: min(8rem, calc(var(--remote-height, 100dvh) * .25)); overflow: auto; }

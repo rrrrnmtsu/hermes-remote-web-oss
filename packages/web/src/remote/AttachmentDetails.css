@@ -1,0 +1,8 @@
+.remote-attachment-detail .remote-sheet-heading { position: sticky; top: -16px; z-index: 1; padding-block: 8px; background: var(--remote-bg); }
+.remote-attachment-filename { overflow-wrap: anywhere; margin-block: 8px; }
+.remote-attachment-image-preview { display: block; max-width: 100%; width: 100%; height: auto; max-height: min(45vh, calc(var(--remote-height) * .45)); object-fit: contain; border-radius: 12px; }
+.remote-attachment-text-preview { padding: 12px; max-height: min(16rem, calc(var(--remote-height) * .4)); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--remote-surface); border-radius: 12px; font-size: 1rem; line-height: 1.6; }
+.remote-attachment-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 12px; font-size: .875rem; margin-block: 16px; }
+.remote-attachment-facts dt { color: var(--remote-muted); }
+.remote-attachment-facts dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 340px) { .remote-attachment-facts { grid-template-columns: minmax(0, 1fr); gap: 4px; } .remote-attachment-facts dd { margin-bottom: 8px; } }

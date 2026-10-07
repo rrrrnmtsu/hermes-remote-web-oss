@@ -1,0 +1,1413 @@
+diff --git a/agent/message_sanitization.py b/agent/message_sanitization.py
+index 1377f5de8b..0ff1fe8fd0 100644
+--- a/agent/message_sanitization.py
++++ b/agent/message_sanitization.py
+@@ -430,6 +430,8 @@ def strip_images_for_rejecting_model(agent: Any, api_messages: Any) -> bool:
+     """
+     if _provider_model_key(agent) not in agent._image_rejecting_models:
+         return False
++    if getattr(agent, "_image_bound_turn", False):
++        raise ValueError("The selected model previously rejected images; this image turn cannot become text-only")
+     return isinstance(api_messages, list) and _strip_images_from_messages(api_messages)
+ 
+ 
+diff --git a/agent/turn_context.py b/agent/turn_context.py
+index ac00c87229..dace5fbbce 100644
+--- a/agent/turn_context.py
++++ b/agent/turn_context.py
+@@ -1046,6 +1046,8 @@ def build_turn_context(
+ 
+     _preview_text = summarize_user_message_for_log(user_message)
+     _msg_preview = _preview_text[:80] + ("..." if len(_preview_text) > 80 else "")
++    if getattr(agent, "_image_bound_turn", False):
++        _msg_preview = "[image-bound turn; content omitted]"
+     _turn_fmt = (
+         "conversation turn: session=%s model=%s provider=%s platform=%s history=%d msg=%r"
+     )
+diff --git a/agent/turn_recovery.py b/agent/turn_recovery.py
+index 5fdb162785..187c501437 100644
+--- a/agent/turn_recovery.py
++++ b/agent/turn_recovery.py
+@@ -242,6 +242,9 @@ def recover_before_classification(
+     build_api_request strips images from that model's requests only), and the Bedrock
+     AnthropicBedrock SDK streaming fallback. Returns ``(retry_now, active_system_prompt)``;
+     the prompt may be ASCII-sanitized in place."""
++    if getattr(agent, "_image_bound_turn", False):
++        # An explicitly image-bound turn must fail visibly, never retry after dropping its image.
++        return False, active_system_prompt
+     if isinstance(api_error, UnicodeEncodeError) and getattr(agent, '_unicode_sanitization_passes', 0) < 2:
+         _recovered, active_system_prompt = _recover_unicode_encode_error(
+             agent, api_error, messages, api_messages, api_kwargs, active_system_prompt
+diff --git a/apps/shared/src/gateway-contract.generated.ts b/apps/shared/src/gateway-contract.generated.ts
+index ad6b88f504..f35169d6ee 100644
+--- a/apps/shared/src/gateway-contract.generated.ts
++++ b/apps/shared/src/gateway-contract.generated.ts
+@@ -1826,6 +1826,7 @@ export interface PingResult {
+ }
+ export interface GatewayCapabilitiesResult {
+   per_session_exclusive_submit: boolean
++  image_turn_version?: 1 | null
+ }
+ export interface ClientCapabilitiesParams {
+   server_requests?: boolean
+@@ -2606,10 +2607,22 @@ export interface PetScaleResult {
+   ok: boolean
+   scale: number
+ }
++export interface ImageTurnCapabilities {
++  version: 1
++  enabled: boolean
++  model_vision?: boolean | null
++  reason: string
++  max_raw_bytes: number
++  max_frame_bytes: number
++  max_text_bytes: number
++  max_edge: number
++  max_pixels: number
++}
+ /** ``text`` is normally a string; the relay / hosted paths may hand a structured (parts list) payload, and the busy path renders it. Truncation (rewind / edit / regenerate) needs explicit consent: ``confirm_truncate`` plus one durable target (``truncate_before_row_id`` preferred, ``truncate_before_message_id``, or the legacy ``truncate_before_user_ordinal``). */
+ export interface PromptSubmitParams {
+   session_id: string
+   profile?: string | null
++  image?: PromptTurnImage | null
+   text?: unknown
+   display_kind?: string | null
+   interrupted?: boolean | null
+@@ -2624,8 +2637,12 @@ export interface PromptSubmitParams {
+   confirm_empty_truncate?: boolean | null
+   rebind_survivor_row_ids?: number[] | null
+ }
+-/** ``status`` is absent only on the typed-stop-phrase reply (``voice_stopped``). After a truncation the survivor row ids let the client rebind its cached ``rowId``s (``None`` map entries: drop the cached id). ``turn_isolation`` marks a compute-host dispatch. */
++export interface PromptTurnImage {
++  content_base64: string
++  filename: string
++}
+ export interface PromptSubmitResult {
++  image_turn?: ImageTurnReceipt | null
+   status?: PromptSubmitStatus | null
+   voice_stopped?: boolean | null
+   user_row_id?: number | null
+@@ -2633,6 +2650,13 @@ export interface PromptSubmitResult {
+   survivor_row_id_map?: Record<string, number | null> | null
+   turn_isolation?: boolean | null
+ }
++export interface ImageTurnReceipt {
++  receipt_id: string
++  format: 'JPEG' | 'PNG'
++  width: number
++  height: number
++  bytes: number
++}
+ export type PromptSubmitStatus = 'streaming' | 'queued' | 'steered' | 'redirected'
+ export interface ClipboardPasteParams {
+   session_id: string
+@@ -3049,6 +3073,7 @@ export interface InflightTurn {
+   assistant?: string
+   streaming?: boolean
+   user?: string
++  user_row_id?: number | null
+   display_kind?: string | null
+   display_metadata?: Record<string, unknown> | null
+   corrections?: string[] | null
+@@ -5047,6 +5072,8 @@ export interface RpcMethods {
+   'image.detach': { params: ImageDetachParams; result: ImageDetachResult }
+   /** Generate an image through the tool's provider dispatcher and hand the renderer a data URL. */
+   'image.generate': { params: ImageGenerateParams; result: ImageGenerateResult }
++  /** Read-only, scoped image-turn limits/policy; no credential resolution or provider probe. */
++  'image.turn_capabilities': { params: SessionParams; result: ImageTurnCapabilities }
+   /** Recognise a terminal file drop pasted into the composer and turn it into an attachment. */
+   'input.detect_drop': { params: InputDetectDropParams; result: InputDetectDropResult }
+   /** Session/message counts over the last ``days`` for the (optionally scoped) profile store. */
+@@ -5466,6 +5493,7 @@ export const RPC_METHODS = [
+   'image.attach_bytes',
+   'image.detach',
+   'image.generate',
++  'image.turn_capabilities',
+   'input.detect_drop',
+   'insights.get',
+   'learning.delete',
+diff --git a/apps/shared/src/gateway-contract.openrpc.json b/apps/shared/src/gateway-contract.openrpc.json
+index b0f98535e9..f09f9ecaff 100644
+--- a/apps/shared/src/gateway-contract.openrpc.json
++++ b/apps/shared/src/gateway-contract.openrpc.json
+@@ -1554,6 +1554,24 @@
+         }
+       }
+     },
++    {
++      "name": "image.turn_capabilities",
++      "summary": "Read-only, scoped image-turn limits/policy; no credential resolution or provider probe.",
++      "params": [
++        {
++          "name": "params",
++          "schema": {
++            "$ref": "#/components/schemas/SessionParams"
++          }
++        }
++      ],
++      "result": {
++        "name": "result",
++        "schema": {
++          "$ref": "#/components/schemas/ImageTurnCapabilities"
++        }
++      }
++    },
+     {
+       "name": "input.detect_drop",
+       "summary": "Recognise a terminal file drop pasted into the composer and turn it into an attachment.",
+@@ -14077,6 +14095,19 @@
+           "per_session_exclusive_submit": {
+             "title": "Per Session Exclusive Submit",
+             "type": "boolean"
++          },
++          "image_turn_version": {
++            "anyOf": [
++              {
++                "const": 1,
++                "type": "integer"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "default": null,
++            "title": "Image Turn Version"
+           }
+         },
+         "required": [
+@@ -16190,6 +16221,106 @@
+         "title": "ImageGenerateResult",
+         "type": "object"
+       },
++      "ImageTurnCapabilities": {
++        "additionalProperties": false,
++        "properties": {
++          "version": {
++            "const": 1,
++            "title": "Version",
++            "type": "integer"
++          },
++          "enabled": {
++            "title": "Enabled",
++            "type": "boolean"
++          },
++          "model_vision": {
++            "anyOf": [
++              {
++                "type": "boolean"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "default": null,
++            "title": "Model Vision"
++          },
++          "reason": {
++            "title": "Reason",
++            "type": "string"
++          },
++          "max_raw_bytes": {
++            "title": "Max Raw Bytes",
++            "type": "integer"
++          },
++          "max_frame_bytes": {
++            "title": "Max Frame Bytes",
++            "type": "integer"
++          },
++          "max_text_bytes": {
++            "title": "Max Text Bytes",
++            "type": "integer"
++          },
++          "max_edge": {
++            "title": "Max Edge",
++            "type": "integer"
++          },
++          "max_pixels": {
++            "title": "Max Pixels",
++            "type": "integer"
++          }
++        },
++        "required": [
++          "version",
++          "enabled",
++          "reason",
++          "max_raw_bytes",
++          "max_frame_bytes",
++          "max_text_bytes",
++          "max_edge",
++          "max_pixels"
++        ],
++        "title": "ImageTurnCapabilities",
++        "type": "object"
++      },
++      "ImageTurnReceipt": {
++        "additionalProperties": false,
++        "properties": {
++          "receipt_id": {
++            "title": "Receipt Id",
++            "type": "string"
++          },
++          "format": {
++            "enum": [
++              "JPEG",
++              "PNG"
++            ],
++            "title": "Format",
++            "type": "string"
++          },
++          "width": {
++            "title": "Width",
++            "type": "integer"
++          },
++          "height": {
++            "title": "Height",
++            "type": "integer"
++          },
++          "bytes": {
++            "title": "Bytes",
++            "type": "integer"
++          }
++        },
++        "required": [
++          "receipt_id",
++          "format",
++          "width",
++          "height",
++          "bytes"
++        ],
++        "title": "ImageTurnReceipt",
++        "type": "object"
++      },
+       "InflightTurn": {
+         "additionalProperties": false,
+         "description": "``session_auto_continue._inflight_snapshot``: the live (or retained failed) turn a reconnecting\nclient rebuilds its bubbles from.",
+@@ -16209,6 +16340,18 @@
+             "title": "User",
+             "type": "string"
+           },
++          "user_row_id": {
++            "anyOf": [
++              {
++                "type": "integer"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "default": null,
++            "title": "User Row Id"
++          },
+           "display_kind": {
+             "anyOf": [
+               {
+@@ -26151,6 +26294,17 @@
+             "default": null,
+             "title": "Profile"
+           },
++          "image": {
++            "anyOf": [
++              {
++                "$ref": "#/components/schemas/PromptTurnImage"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "default": null
++          },
+           "text": {
+             "default": "",
+             "title": "Text"
+@@ -26311,8 +26465,18 @@
+       },
+       "PromptSubmitResult": {
+         "additionalProperties": false,
+-        "description": "``status`` is absent only on the typed-stop-phrase reply (``voice_stopped``). After a\ntruncation the survivor row ids let the client rebind its cached ``rowId``s (``None`` map\nentries: drop the cached id). ``turn_isolation`` marks a compute-host dispatch.",
+         "properties": {
++          "image_turn": {
++            "anyOf": [
++              {
++                "$ref": "#/components/schemas/ImageTurnReceipt"
++              },
++              {
++                "type": "null"
++              }
++            ],
++            "default": null
++          },
+           "status": {
+             "anyOf": [
+               {
+@@ -26418,6 +26582,29 @@
+         "title": "PromptSubmitStatus",
+         "type": "string"
+       },
++      "PromptTurnImage": {
++        "additionalProperties": false,
++        "properties": {
++          "content_base64": {
++            "maxLength": 6990508,
++            "minLength": 1,
++            "title": "Content Base64",
++            "type": "string"
++          },
++          "filename": {
++            "maxLength": 120,
++            "minLength": 1,
++            "title": "Filename",
++            "type": "string"
++          }
++        },
++        "required": [
++          "content_base64",
++          "filename"
++        ],
++        "title": "PromptTurnImage",
++        "type": "object"
++      },
+       "QueuedPrompt": {
+         "additionalProperties": false,
+         "properties": {
+diff --git a/tests/tui_gateway/image_turn_harness.py b/tests/tui_gateway/image_turn_harness.py
+new file mode 100644
+index 0000000000..420f31090f
+--- /dev/null
++++ b/tests/tui_gateway/image_turn_harness.py
+@@ -0,0 +1,96 @@
++"""Disposable real gateway/agent with synthetic authentication and SDK HTTP transport only."""
++from contextlib import ExitStack
++import base64
++import builtins
++import hashlib
++import json
++import io
++import socket
++import threading
++from unittest.mock import patch
++
++
++def install(home):
++    """Must be entered before importing the real gateway. No production credential/home reads."""
++    from toolsets import TOOLSETS
++    config = {"model": {"default": "synthetic-vision", "provider": "anthropic", "context_length": 200000, "supports_vision": True},
++        "agent": {"image_input_mode": "native", "environment_probe": False, "disabled_toolsets": list(TOOLSETS), "max_turns": 1},
++        "platform_toolsets": {"cli": []}, "mcp_servers": {}, "compression": {"enabled": False},
++        "memory": {"memory_enabled": False, "user_profile_enabled": False}, "background_review": {"enabled": False},
++        "auxiliary": {"title_generation": {"enabled": False, "model_upgrade_enabled": False}},
++        "notifications": {"enabled": False}, "ephemeral_system_prompt": "Synthetic image integration. Reply briefly."}
++    home.mkdir(parents=True, exist_ok=True)
++    (home / "config.yaml").write_text(json.dumps(config))
++    records = []
++    gate = threading.Event(); gate.set()
++    stack = ExitStack()
++    def guarded_open(original):
++        def read(file, *args, **kwargs):
++            path = str(file)
++            if path.endswith(("/.codex/auth.json", "/.claude/.credentials.json")):
++                raise AssertionError("CLI credential files are forbidden in candidate integration")
++            return original(file, *args, **kwargs)
++        return read
++    stack.enter_context(patch.object(builtins, "open", guarded_open(builtins.open)))
++    stack.enter_context(patch.object(io, "open", guarded_open(io.open)))
++    real_connect = socket.socket.connect
++    def loopback_only(sock, address):
++        if sock.family in (socket.AF_INET, socket.AF_INET6) and address[0] not in ("127.0.0.1", "::1"):
++            raise AssertionError("External network forbidden in image integration")
++        return real_connect(sock, address)
++    stack.enter_context(patch.object(socket.socket, "connect", loopback_only))
++    real_connect_ex = socket.socket.connect_ex
++    def loopback_ex(sock, address):
++        if sock.family in (socket.AF_INET, socket.AF_INET6) and address[0] not in ("127.0.0.1", "::1"):
++            raise AssertionError("External network forbidden in image integration")
++        return real_connect_ex(sock, address)
++    stack.enter_context(patch.object(socket.socket, "connect_ex", loopback_ex))
++    # The provider identity is synthetic. This path never invokes native/CLI credential resolvers.
++    from hermes_cli import runtime_provider
++    stack.enter_context(patch.object(runtime_provider, "resolve_runtime_provider", lambda **kw: {
++        "provider": "anthropic", "requested_provider": "anthropic", "model": "synthetic-vision",
++        "api_mode": "anthropic_messages", "api_key": "DEMO-not-a-real-key", "base_url": "https://api.anthropic.com"}))
++    from tui_gateway import server
++    from hermes_constants import set_hermes_home_override
++    set_hermes_home_override(home)
++    server._hermes_home = home
++    original = server._make_agent
++    def make_agent(*args, **kwargs):
++        import anthropic
++        import httpx
++        agent = original(*args, **kwargs)
++        assert agent.tools == [], "Fixture must disable effective tools"
++        assert agent.skip_context_files and agent._memory_store is None
++        assert agent.__class__.__name__ == "AIAgent"
++        def respond(request):
++            body = json.loads(request.content)
++            if request.url.path.endswith("count_tokens"):
++                return httpx.Response(200, json={"input_tokens": 42})
++            gate.wait(10)
++            parts = [part for message in body.get("messages", []) for part in
++                     (message.get("content") if isinstance(message.get("content"), list) else [])]
++            images = [part for part in parts if part.get("type") == "image"]
++            current = next((m for m in reversed(body.get("messages", [])) if m.get("role") == "user"), {})
++            current_images = [part for part in current.get("content", []) if isinstance(part, dict) and part.get("type") == "image"]
++            texts = [part["text"] for part in parts if part.get("type") == "text"]
++            records.append({"session": agent.session_id, "image_count": len(images),
++                "image_hashes": [hashlib.sha256(base64.b64decode(part["source"]["data"])).hexdigest() for part in images],
++                "last_text": "\n".join(texts), "tools": len(body.get("tools", [])), "model": body["model"],
++                "current_turn_image_hashes": [hashlib.sha256(base64.b64decode(part["source"]["data"])).hexdigest() for part in current_images]})
++            if getattr(agent, "_DEMO_reject_image", False):
++                return httpx.Response(400, json={"type": "error", "error": {
++                    "type": "invalid_request_error", "message": "image input is not supported"}})
++            return httpx.Response(200, json={"id": "msg_synthetic", "type": "message", "role": "assistant",
++                "model": body["model"], "content": [{"type": "text", "text": "合成画像受付OK"}],
++                "stop_reason": "end_turn", "stop_sequence": None, "usage": {"input_tokens": 42, "output_tokens": 6}})
++        client = anthropic.Anthropic(api_key="DEMO-not-a-real-key", max_retries=0, timeout=3600,
++            http_client=httpx.Client(transport=httpx.MockTransport(respond)))
++        agent._create_request_anthropic_client = lambda **kw: client
++        agent._close_request_anthropic_client = lambda *a, **kw: None
++        agent._disable_streaming = True
++        agent._api_max_retries = 1
++        agent._auto_recovery_cycles = 0
++        stack.callback(client.close)
++        return agent
++    stack.enter_context(patch.object(server, "_make_agent", make_agent))
++    return stack, server, records, gate
+diff --git a/tests/tui_gateway/test_image_turn_integration.py b/tests/tui_gateway/test_image_turn_integration.py
+new file mode 100644
+index 0000000000..33167d1ddf
+--- /dev/null
++++ b/tests/tui_gateway/test_image_turn_integration.py
+@@ -0,0 +1,199 @@
++"""Actual RPC/session/decoder/admission/turn/AIAgent/SDK paths. Only SDK HTTP generation is synthetic."""
++import base64
++import hashlib
++import json
++import time
++from concurrent.futures import ThreadPoolExecutor
++
++import pytest
++from tests.tui_gateway.test_image_turn_validation import payload
++
++
++@pytest.fixture
++def real_gateway(tmp_path, monkeypatch):
++    home = tmp_path / "isolated"
++    monkeypatch.setenv("HOME", str(tmp_path))
++    monkeypatch.setenv("HERMES_HOME", str(home))
++    monkeypatch.setenv("HERMES_IGNORE_RULES", "1")
++    from tests.tui_gateway.image_turn_harness import install
++    stack, server, records, gate = install(home)
++    class Transport:
++        auth_identity = {"user_id": "DEMO-user", "provider": "DEMO"}
++        closed = False
++        def __init__(self): self.frames = []
++        def write(self, frame): self.frames.append(frame); return True
++        def close(self): self.closed = True
++    transport = Transport()
++    def rpc(method, params=None):
++        from tui_gateway.transport import bind_transport, reset_transport
++        token = bind_transport(transport)
++        try: return server.handle_request({"jsonrpc": "2.0", "id": "DEMO", "method": method, "params": params or {}})
++        finally: reset_transport(token)
++    def create():
++        reply = rpc("session.create", {"close_on_disconnect": False})
++        assert "result" in reply, reply
++        return reply["result"]["session_id"]
++    try:
++        yield server, records, gate, rpc, create, home, transport
++    finally:
++        gate.set()
++        for session in list(server._sessions.values()):
++            thread = session.get("_run_thread")
++            if thread: thread.join(12)
++            if session.get("agent"): session["agent"].close()
++        server._sessions.clear()
++        stack.close()
++
++
++def wait_done(server, sid):
++    deadline = time.monotonic() + 15
++    while server._sessions[sid].get("running") and time.monotonic() < deadline: time.sleep(.02)
++    thread = server._sessions[sid].get("_run_thread")
++    if thread: thread.join(1)
++    assert not server._sessions[sid].get("running")
++
++
++@pytest.mark.parametrize("fmt", ["PNG", "JPEG"])
++def test_real_turn_image_and_text_binding_and_saved_history(real_gateway, fmt):
++    server, records, gate, rpc, create, home, transport = real_gateway
++    sid = create(); image = payload(fmt); text = "合成画像の日本語本文です。"
++    assert rpc("image.turn_capabilities", {"session_id": sid})["result"]["enabled"]
++    result = rpc("prompt.submit", {"session_id": sid, "text": text, "image": image})
++    assert result["result"]["image_turn"]["format"] == fmt, result
++    wait_done(server, sid)
++    assert len(records) == 1, transport.frames
++    assert records[0]["image_count"] == 1 and text in records[0]["last_text"]
++    assert records[0]["image_hashes"] == [hashlib.sha256(base64.b64decode(image["content_base64"])).hexdigest()]
++    assert records[0]["tools"] == 0 and server._sessions[sid]["attached_images"] == []
++    key = server._sessions[sid]["session_key"]
++    resumed = rpc("session.resume", {"session_id": key, "lazy": True, "inline_images": False, "close_on_disconnect": False})
++    assert "合成画像受付OK" in json.dumps(resumed, ensure_ascii=False), resumed
++    assert len([m for m in resumed["result"]["messages"] if m.get("role") == "user"]) == 1, resumed["result"]["messages"]
++    assert next(m for m in resumed["result"]["messages"] if m.get("role") == "user")["text"] == text
++
++
++def test_competing_desktop_image_and_text_and_cancel_cannot_steal(real_gateway):
++    server, records, gate, rpc, create, home, transport = real_gateway
++    sid = create(); gate.clear()
++    accepted = rpc("prompt.submit", {"session_id": sid, "text": "先の本文", "image": payload()})
++    assert "image_turn" in accepted["result"]
++    snapshot = rpc("session.activate", {"session_id": sid})["result"]
++    assert snapshot["inflight"]["user_row_id"] == accepted["result"]["user_row_id"]
++    for method, params in [("prompt.submit", {"text": "別端末の本文"}),
++                           ("image.attach_bytes", payload()), ("image.detach", {"path": "foreign.png"})]:
++        assert rpc(method, {"session_id": sid, **params})["error"]["code"] == 4009
++    gate.set(); wait_done(server, sid); assert len(records) == 1 and "先の本文" in records[0]["last_text"]
++
++
++def test_provider_image_rejection_never_retries_as_text_only(real_gateway):
++    server, records, gate, rpc, create, home, transport = real_gateway
++    sid = create()
++    assert server._sessions[sid]["agent_ready"].wait(15)
++    agent = server._sessions[sid]["agent"]
++    agent._DEMO_reject_image = True
++    # Two attempts would expose the legacy image-stripping recovery branch if it were still enabled.
++    agent._api_max_retries = 2
++    reply = rpc("prompt.submit", {"session_id": sid, "text": "画像付きの固定本文", "image": payload()})
++    assert "image_turn" in reply["result"]
++    wait_done(server, sid)
++    assert records and all(record["image_count"] == 1 for record in records)
++    assert not server._sessions[sid]["attached_images"]
++    assert any(frame.get("params", {}).get("type") == "message.complete" and
++               frame["params"].get("payload", {}).get("status") == "error" for frame in transport.frames)
++
++
++def test_fallback_policy_disables_only_image_bound_turns(real_gateway):
++    server, records, gate, rpc, create, home, transport = real_gateway
++    sid = create()
++    config = json.loads((home / "config.yaml").read_text())
++    config["fallback_providers"] = [{"provider": "anthropic", "model": "DEMO-other-model"}]
++    (home / "config.yaml").write_text(json.dumps(config))
++    caps = rpc("image.turn_capabilities", {"session_id": sid})["result"]
++    assert not caps["enabled"] and caps["reason"] == "fallback_configured"
++    assert rpc("prompt.submit", {"session_id": sid, "text": "本文", "image": payload()})["error"]["code"] == 4130
++    assert not records
++
++
++def test_external_network_and_cli_credentials_are_blocked(real_gateway):
++    import socket
++    with socket.socket() as client:
++        with pytest.raises(AssertionError, match="External network forbidden"):
++            client.connect(("192.0.2.1", 443))
++    from pathlib import Path
++    with pytest.raises(AssertionError, match="CLI credential files are forbidden"):
++        Path("/root/.codex/auth.json").read_text()
++
++
++def test_legacy_pending_and_invalid_image_are_never_consumed(real_gateway):
++    server, records, gate, rpc, create, home, transport = real_gateway
++    sid = create(); session = server._sessions[sid]; session["attached_images"] = ["DEMO-foreign-original"]
++    assert rpc("prompt.submit", {"session_id": sid, "text": "本文", "image": payload()})["error"]["code"] == 4132
++    assert session["attached_images"] == ["DEMO-foreign-original"] and not records
++    assert rpc("prompt.submit", {"session_id": sid, "text": "画像を指定しないWeb本文", "image": None})["error"]["code"] == 4132
++    assert session["attached_images"] == ["DEMO-foreign-original"]
++    session["attached_images"] = []
++    image = payload(); image["filename"] = "spoof.jpg"
++    assert rpc("prompt.submit", {"session_id": sid, "text": "本文", "image": image})["error"]["code"] == 4131
++    assert not records and not list(home.rglob("turn-uploads"))
++    image = payload(); image["attachment_id"] = "someone-else"
++    assert rpc("prompt.submit", {"session_id": sid, "text": "本文", "image": image})["error"]["code"] == 4000
++
++
++def test_two_sessions_concurrent_create_only_files_and_no_restart_queue(real_gateway):
++    server, records, gate, rpc, create, home, transport = real_gateway
++    a, b = create(), create()
++    with ThreadPoolExecutor(2) as pool:
++        results = list(pool.map(lambda sid: rpc("prompt.submit", {"session_id": sid, "text": "本文 " + sid, "image": payload()}), [a, b]))
++    assert all("image_turn" in result.get("result", {}) for result in results), results
++    wait_done(server, a); wait_done(server, b)
++    files = list(home.rglob("turn-uploads/*/*.png")); assert len(files) == 2 and len({p.name for p in files}) == 2
++    assert len(records) == 2 and len({r["session"] for r in records}) == 2
++    # A fresh live session has no pending state, even with retained originals on disk.
++    for session in list(server._sessions.values()):
++        server._release_active_session_slot(session)
++    server._sessions.clear()  # Real loss of the gateway's live-session memory, with stored originals retained.
++    fresh = create(); assert server._sessions[fresh]["attached_images"] == []
++    rpc("prompt.submit", {"session_id": fresh, "text": "画像なしの後続本文"}); wait_done(server, fresh)
++    assert records[-1]["image_count"] == 0
++
++
++def test_text_pilot_policy_refuses_image_without_generation(real_gateway):
++    server, records, gate, rpc, create, home, transport = real_gateway
++    sid = create()
++    cfg = json.loads((home / "config.yaml").read_text()); cfg["agent"]["text_pilot"] = {"model": "synthetic-vision", "max_input_tokens": 3072, "max_output_tokens": 512}
++    (home / "config.yaml").write_text(json.dumps(cfg))
++    assert rpc("image.turn_capabilities", {"session_id": sid})["result"]["reason"] == "text_pilot"
++    assert rpc("prompt.submit", {"session_id": sid, "text": "本文", "image": payload()})["error"]["code"] == 4130
++    assert not records
++
++
++@pytest.mark.parametrize("case", ["empty", "broken", "format", "encoded_limit", "text_limit", "frame_limit"])
++def test_bad_image_envelope_enters_real_handler_but_never_generates_or_queues(real_gateway, case):
++    server, records, gate, rpc, create, home, transport = real_gateway
++    sid = create(); image = payload(); text = "本文"
++    if case == "empty": image["content_base64"] = ""
++    if case == "broken": image["content_base64"] = base64.b64encode(b"\x89PNG\r\n\x1a\n").decode()
++    if case == "format": image["content_base64"] = base64.b64encode(b"GIF89a").decode()
++    if case == "encoded_limit": image["content_base64"] = "A" * 6990509
++    if case == "text_limit": text = "あ" * 22000
++    if case == "frame_limit": text = "a" * (8 * 1048576)
++    result = rpc("prompt.submit", {"session_id": sid, "text": text, "image": image})
++    assert result["error"]["code"] == 4131
++    assert not records and not server._sessions[sid]["attached_images"] and not list(home.rglob("turn-uploads"))
++
++
++def test_authenticated_user_and_explicit_profile_cannot_cross_scopes(real_gateway):
++    server, records, gate, rpc, create, home, transport = real_gateway
++    sid = create()
++    from hermes_cli.profiles import get_profile_dir
++    secondary = get_profile_dir("image-secondary")
++    assert str(secondary).startswith(str(home.parent)), "Test profile must stay in the disposable home"
++    secondary.mkdir(parents=True, exist_ok=True)
++    (secondary / "config.yaml").write_text((home / "config.yaml").read_text())
++    b = rpc("session.create", {"profile": "image-secondary", "close_on_disconnect": False})["result"]["session_id"]
++    for target, profile in [(sid, "image-secondary"), (b, "default")]:
++        result = rpc("prompt.submit", {"profile": profile, "session_id": target, "text": "本文", "image": payload()})
++        assert result["error"]["code"] == 4130
++    transport.auth_identity = {"user_id": "DEMO-foreign", "provider": "DEMO"}
++    assert rpc("prompt.submit", {"session_id": sid, "text": "本文", "image": payload()})["error"]["code"] == 4130
++    assert not records
+diff --git a/tests/tui_gateway/test_image_turn_validation.py b/tests/tui_gateway/test_image_turn_validation.py
+new file mode 100644
+index 0000000000..557614e4eb
+--- /dev/null
++++ b/tests/tui_gateway/test_image_turn_validation.py
+@@ -0,0 +1,66 @@
++"""Strict still-image boundary: never trust filenames or leave a rejected image queued."""
++import base64
++import io
++import struct
++import zlib
++
++import pytest
++from PIL import Image
++
++from tui_gateway.prompt_image_turn import validate, ImageTurnError, RAW_LIMIT, store
++
++
++def payload(fmt="PNG", size=(3, 2)):
++    stream = io.BytesIO()
++    Image.new("RGB", size, "blue").save(stream, format=fmt)
++    return {"filename": "synthetic.png" if fmt == "PNG" else "synthetic.jpg",
++            "content_base64": base64.b64encode(stream.getvalue()).decode()}
++
++
++@pytest.mark.parametrize("fmt", ["PNG", "JPEG"])
++def test_validated_original_bytes_create_only_and_session_scoped(tmp_path, fmt):
++    item = payload(fmt)
++    image = validate(item, "日本語の合成画像です。")
++    assert (image["width"], image["height"], image["format"]) == (3, 2, fmt)
++    a, first = store({"session_key": "a"}, "live-a", image, tmp_path / "images")
++    b, second = store({"session_key": "b"}, "live-b", image, tmp_path / "images")
++    c, third = store({"session_key": "a"}, "live-a", image, tmp_path / "images")
++    assert a != b != c and a.parent != b.parent and a.parent == c.parent
++    assert a.read_bytes() == b.read_bytes() == base64.b64decode(item["content_base64"])
++    assert a.stat().st_mode & 0o777 == 0o600
++    assert first["receipt_id"] != second["receipt_id"] != third["receipt_id"]
++
++
++@pytest.mark.parametrize("case", ["empty", "base64", "encoded_limit", "raw_limit", "extension", "path", "gif", "svg", "webp", "broken", "edge", "pixels", "text", "array", "animation"])
++def test_invalid_images_fail_before_storage(tmp_path, case):
++    before = set(tmp_path.iterdir())
++    item = payload()
++    text = "合成本文"
++    if case == "empty": item["content_base64"] = ""
++    if case == "base64": item["content_base64"] = "#not-base64"
++    if case == "encoded_limit": item["content_base64"] = "A" * (4 * ((RAW_LIMIT + 2) // 3) + 1)
++    if case == "raw_limit": item["content_base64"] = base64.b64encode(b"x" * (RAW_LIMIT + 1)).decode()
++    if case == "extension": item["filename"] = "spoof.jpg"
++    if case == "path": item["filename"] = "../outside.png"
++    if case in {"gif", "svg", "webp"}: item["content_base64"] = base64.b64encode({"gif": b"GIF89a", "svg": b"<svg/>", "webp": b"RIFF\x00\x00\x00\x00WEBP"}[case]).decode()
++    if case == "broken": item["content_base64"] = base64.b64encode(base64.b64decode(item["content_base64"])[:-6]).decode()
++    if case in {"edge", "pixels"}:
++        data = bytearray(base64.b64decode(item["content_base64"]))
++        data[16:24] = struct.pack(">II", 8193 if case == "edge" else 5000, 1 if case == "edge" else 4000)
++        data[29:33] = struct.pack(">I", zlib.crc32(data[12:29]))
++        item["content_base64"] = base64.b64encode(data).decode()
++    if case == "text": text = "あ" * 22000
++    if case == "array": item = []
++    if case == "animation":
++        stream = io.BytesIO(); Image.new("RGB", (3, 2)).save(stream, format="PNG", save_all=True, append_images=[Image.new("RGB", (3, 2), "blue")])
++        item["content_base64"] = base64.b64encode(stream.getvalue()).decode()
++    with pytest.raises(ImageTurnError): validate(item, text)
++    assert set(tmp_path.iterdir()) == before
++
++
++def test_full_pixel_decode_rejects_corrupt_payload_with_valid_header():
++    item = payload()
++    data = bytearray(base64.b64decode(item["content_base64"]))
++    data[48] ^= 255
++    item["content_base64"] = base64.b64encode(data).decode()
++    with pytest.raises(ImageTurnError): validate(item, "壊れた画像")
+diff --git a/tui_gateway/contracts/liveness.py b/tui_gateway/contracts/liveness.py
+index a0fe309f4a..3944a90194 100644
+--- a/tui_gateway/contracts/liveness.py
++++ b/tui_gateway/contracts/liveness.py
+@@ -2,6 +2,8 @@
+ 
+ from __future__ import annotations
+ 
++from typing import Literal
++
+ from .base import Params, Result
+ from .registry import method
+ 
+@@ -20,6 +22,7 @@ method("ping", params=PingParams, result=PingResult,
+ 
+ class GatewayCapabilitiesResult(Result):
+     per_session_exclusive_submit: bool
++    image_turn_version: Literal[1] | None = None
+ 
+ 
+ method("gateway.capabilities", params=PingParams, result=GatewayCapabilitiesResult,
+diff --git a/tui_gateway/contracts/prompt_voice.py b/tui_gateway/contracts/prompt_voice.py
+index d257e0a25e..65b52c9c81 100644
+--- a/tui_gateway/contracts/prompt_voice.py
++++ b/tui_gateway/contracts/prompt_voice.py
+@@ -7,6 +7,8 @@ and voice / wake-word control (``methods_voice.py``).
+ 
+ from __future__ import annotations
+ 
++from typing import Literal
++
+ from pydantic import Field
+ 
+ from .base import JsonValue, Params, Result, WireEnum
+@@ -23,12 +25,44 @@ class ClientSurface(WireEnum):
+     voice_live = "voice-live"
+ 
+ 
++class PromptTurnImage(Params):
++    content_base64: str = Field(min_length=1, max_length=6990508)
++    filename: str = Field(min_length=1, max_length=120)
++
++
++class ImageTurnReceipt(Result):
++    receipt_id: str
++    format: Literal["JPEG", "PNG"]
++    width: int
++    height: int
++    bytes: int
++
++
++class ImageTurnCapabilities(Result):
++    version: Literal[1]
++    enabled: bool
++    model_vision: bool | None = None
++    reason: str
++    max_raw_bytes: int
++    max_frame_bytes: int
++    max_text_bytes: int
++    max_edge: int
++    max_pixels: int
++
++
++method("image.turn_capabilities", params=SessionParams, result=ImageTurnCapabilities,
++       doc="Read-only, scoped image-turn limits/policy; no credential resolution or provider probe.")
++
++
+ class PromptSubmitParams(SessionParams):
+     """``text`` is normally a string; the relay / hosted paths may hand a structured (parts list)
+     payload, and the busy path renders it. Truncation (rewind / edit / regenerate) needs explicit
+     consent: ``confirm_truncate`` plus one durable target (``truncate_before_row_id`` preferred,
+     ``truncate_before_message_id``, or the legacy ``truncate_before_user_ordinal``)."""
+ 
++    # Absent: legacy pending queue. Null: explicitly no image; reject legacy pending.
++    # Object: bind exactly this image and text at the idle-session admission boundary.
++    image: PromptTurnImage | None = None
+     text: JsonValue = ""
+     display_kind: str | None = None  # only "hidden" is honoured; anything else renders as a user row
+     interrupted: bool | None = None  # client-side barge-in: the turn's model message carries the note
+@@ -59,6 +93,7 @@ class PromptSubmitStatus(WireEnum):
+ 
+ 
+ class PromptSubmitResult(Result):
++    image_turn: ImageTurnReceipt | None = None
+     """``status`` is absent only on the typed-stop-phrase reply (``voice_stopped``). After a
+     truncation the survivor row ids let the client rebind its cached ``rowId``s (``None`` map
+     entries: drop the cached id). ``turn_isolation`` marks a compute-host dispatch."""
+diff --git a/tui_gateway/contracts/sessions.py b/tui_gateway/contracts/sessions.py
+index 074aeb7716..84db30ad10 100644
+--- a/tui_gateway/contracts/sessions.py
++++ b/tui_gateway/contracts/sessions.py
+@@ -33,6 +33,7 @@ class InflightTurn(Result):
+     assistant: str = ""
+     streaming: bool = False
+     user: str = ""
++    user_row_id: int | None = None
+     display_kind: str | None = None
+     display_metadata: dict[str, JsonValue] | None = None
+     corrections: list[str] | None = None
+diff --git a/tui_gateway/methods_prompt.py b/tui_gateway/methods_prompt.py
+index 743ae91cbf..5fa0fd2acb 100644
+--- a/tui_gateway/methods_prompt.py
++++ b/tui_gateway/methods_prompt.py
+@@ -536,7 +536,7 @@ def _storage_error_data(failure, raw) -> dict:
+     return {"code": failure.code, "cause": failure.cause, "details": storage_failure_details(raw)}
+ 
+ 
+-def _persist_session_row_for_submit(rid, session, text=None, display_kind=None):
++def _persist_session_row_for_submit(rid, session, text=None, display_kind=None, display_metadata=None):
+     """Lazily persist the DB row now that the user sent a message (a branch becomes real
+     here), then the message itself (#111868: a freeze during the first build must leave a
+     resumable transcript); the error reply is the only user-visible signal (desktop maps it to a toast)."""
+@@ -551,7 +551,10 @@ def _persist_session_row_for_submit(rid, session, text=None, display_kind=None):
+                 data=_storage_error_data(failure, _db_error))
+         else:
+             _persist_branch_seed(session)
+-            _persist_submit_user_row(session, text, display_kind)
++            if display_metadata:
++                _persist_submit_user_row(session, text, display_kind, display_metadata)
++            else:
++                _persist_submit_user_row(session, text, display_kind)
+             return None
+     except Exception as exc:
+         failure = describe_storage_failure(exc)
+@@ -580,38 +583,44 @@ def _persist_session_row_for_submit(rid, session, text=None, display_kind=None):
+ 
+ 
+ def _run_after_agent_ready(
+-    rid, sid, session, text, display_kind, display_metadata, hosted_terminal_callback, turn_author=None
++    rid, sid, session, text, display_kind, display_metadata, hosted_terminal_callback, turn_author=None, image_paths=None, image_turn_token=None
+ ):
+-    """Turn thread body: patient wait for a deferred build (a slow build must not eat the
+-    accepted in-flight message), then run."""
+-    # The wait delivers the prompt when the still-running build completes, honors a cancel promptly, notices
+-    # the user once past the slow threshold, and only errors when the build itself fails or the bounded cap
+-    # expires. See #63078.
+-    err = _wait_agent_for_prompt(session, rid, sid)
+-    if err:
+-        # Terminal frame + retained snapshot (not a bare "error" event): the snapshot is
+-        # the only way resume shows this to a disconnected client.
+-        _emit_terminal_turn_error(
+-            sid, session, (err.get("error") or {}).get("message", "agent initialization failed"),
+-            error_surface={"layer": "runtime", "code": "agent_init_failed", "retryable": True})
+-        with session["history_lock"]:
+-            session["running"] = False
+-            session["last_active"] = time.time()
+-        _emit("session.info", sid, _session_info(session.get("agent"), session))
+-        return
+-    with session["history_lock"]:
+-        if session.get("_turn_cancel_requested") or not session.get("running"):
+-            session["running"] = False
+-            _clear_inflight_turn(session)
+-            # Without this emit the turn vanishes silently after {"status": "streaming"}.
+-            _emit("error", sid, {"message": (
+-                "Turn cancelled before the agent was ready"
+-                if session.get("_turn_cancel_requested")
+-                else "Session no longer running before the agent was ready")})
++    """Wait for the real agent, then run the exclusively admitted, immutable turn."""
++    try:
++        # The wait delivers the prompt when the still-running build completes, honors a cancel promptly, notices
++        # the user once past the slow threshold, and only errors when the build itself fails or the bounded cap
++        # expires. See #63078.
++        err = _wait_agent_for_prompt(session, rid, sid)
++        if err:
++            # Terminal frame + retained snapshot (not a bare "error" event): the snapshot is
++            # the only way resume shows this to a disconnected client.
++            _emit_terminal_turn_error(
++                sid, session, (err.get("error") or {}).get("message", "agent initialization failed"),
++                error_surface={"layer": "runtime", "code": "agent_init_failed", "retryable": True})
++            with session["history_lock"]:
++                session["running"] = False
++                session["last_active"] = time.time()
++            _emit("session.info", sid, _session_info(session.get("agent"), session))
+             return
+-    _run_prompt_submit(
+-        rid, sid, session, text, display_kind=display_kind, display_metadata=display_metadata,
+-        terminal_callback=hosted_terminal_callback, turn_author=turn_author)
++        with session["history_lock"]:
++            if session.get("_turn_cancel_requested") or not session.get("running"):
++                session["running"] = False
++                _clear_inflight_turn(session)
++                # Without this emit the turn vanishes silently after {"status": "streaming"}.
++                _emit("error", sid, {"message": (
++                    "Turn cancelled before the agent was ready"
++                    if session.get("_turn_cancel_requested")
++                    else "Session no longer running before the agent was ready")})
++                return
++        _run_prompt_submit(
++            rid, sid, session, text, display_kind=display_kind, display_metadata=display_metadata,
++            terminal_callback=hosted_terminal_callback, turn_author=turn_author, image_paths=image_paths)
++    finally:
++        if image_turn_token:
++            with session["history_lock"]:
++                if session.get("_image_turn_active") == image_turn_token:
++                    session.pop("_image_turn_active", None)
++                    session.pop("_image_turn_route", None)
+ 
+ 
+ _TRUNCATION_PARAMS = (
+@@ -619,11 +628,16 @@ _TRUNCATION_PARAMS = (
+ 
+ 
+ def _lock_in_submit_turn(
+-    rid, sid, session, text, params, has_truncation, requested_rebind_ids, hosted_task, display_kind):
++    rid, sid, session, text, params, has_truncation, requested_rebind_ids, hosted_task, display_kind, image_upload=None, atomic_turn=False):
+     """Under ``history_lock``: refuse watch-child races / malformed truncation, apply the
+     cut, mark the turn running + in flight.  Returns ``(err, survivor_fields)``."""
+     fields = {}
+     with _session_turn_admission(session) as admitted:
++        # One critical section shared by Web and legacy clients.
++        if session.get("running"):
++            return _err(rid, 4009, "session busy"), fields
++        if atomic_turn and session.get("attached_images"):
++            return _err(rid, 4132, "legacy pending images must be resolved by their owner first"), fields
+         if not admitted:
+             return _err(rid, 5035, "backend is retiring; reconnect to continue"), fields
+         # A watch session's run lives in the PARENT turn (own running flag False); typing
+@@ -641,6 +655,16 @@ def _lock_in_submit_turn(
+                 rid, sid, session, params, requested_rebind_ids)
+             if err is not None:
+                 return err, {}
++        if image_upload is not None:
++            from tui_gateway.prompt_image_turn import store, ImageTurnError
++            try:
++                path, fields["image_turn"] = store(session, sid, image_upload, _session_images_dir(session))
++                image_upload["path"] = path
++                session["_image_turn_route"] = image_upload["route"]
++            except (ImageTurnError, OSError):
++                return _err(rid, 4133, "image storage failed or reached its bounded capacity"), {}
++        if atomic_turn:
++            session["_image_turn_active"] = uuid.uuid4().hex
+         session["running"] = True
+         session["_turn_cancel_requested"] = False
+         session["last_active"] = time.time()
+@@ -659,6 +683,9 @@ def _(rid, params: dict) -> dict:
+     from hermes_cli.input_sanitize import sanitize_user_prompt_text
+     sid = params.get("session_id", "")
+     raw_text = params.get("text", "")
++    atomic_turn = "image" in params
++    image_payload = params.get("image")
++    image_upload = None
+     text = sanitize_user_prompt_text(raw_text) if isinstance(raw_text, str) else raw_text
+     # Off-screen sends (widget intents) type the row so no client renders a bubble;
+     # whitelisted to "hidden" — this RPC must not mint kinds.
+@@ -669,7 +696,7 @@ def _(rid, params: dict) -> dict:
+         if isinstance(title_preview, str) and title_preview.strip()
+         else None
+     )
+-    if (stopped := _typed_stop_phrase_response(rid, text)) is not None:
++    if image_payload is None and (stopped := _typed_stop_phrase_response(rid, text)) is not None:
+         return stopped
+     if params.get("interrupted"):
+         # Client-side barge-in: latch so this turn's model message carries the note.
+@@ -678,6 +705,26 @@ def _(rid, params: dict) -> dict:
+     session, err = _sess_nowait(params, rid)
+     if err:
+         return err
++    if image_payload is not None:
++        from tui_gateway.prompt_image_turn import validate, capabilities, route, ImageTurnError
++        from hermes_cli.config import load_config_readonly
++        if set(params) - {"session_id", "profile", "text", "image"}:
++            return _err(rid, 4130, "image turns do not support queue, steering, truncation or hosted inputs")
++        home = _profile_home(params.get("profile")) if params.get("profile") else None
++        if params.get("profile") and Path(home or _hermes_home).resolve() != _session_home(session).resolve():
++            return _err(rid, 4130, "image profile and session disagree")
++        if session.get("auth_user_id") and _transport_auth_user_id(current_transport()) != session["auth_user_id"]:
++            return _err(rid, 4130, "image session belongs to a different authenticated user")
++        with _session_profile_runtime_scope(session):
++            image_config = load_config_readonly() or {}
++            policy = capabilities(session, image_config)
++        if not policy["enabled"]:
++            return _err(rid, 4130, "image turns require a confirmed native-vision policy; text-pilot refuses images")
++        try:
++            image_upload = validate(image_payload, text)
++            image_upload["route"] = route(session, image_config)
++        except ImageTurnError:
++            return _err(rid, 4131, "invalid image data, size, dimensions, filename or text")
+     from tools.bot_relay import DeliveryAuthor
+ 
+     # Only the relay handler can build a DeliveryAuthor. A dict here is a client claiming a sender.
+@@ -711,6 +758,8 @@ def _(rid, params: dict) -> dict:
+         # `/work fix it` sends nine literal chars.
+         text = _expand_skill_invocation_for_replay(text, str(session.get("session_key") or ""))
+     turn_isolation = _session_uses_compute_host(session, _load_dashboard_process_isolation_config())
++    if image_upload is not None and turn_isolation:
++        return _err(rid, 4130, "image turns do not support isolated compute workers")
+     if internal_hosted_submit and turn_isolation:
+         return _err(rid, 4121, "hosted room turns do not support isolated compute workers yet")
+     # Re-bind to the current transport: streaming must stay on the active websocket even
+@@ -730,6 +779,8 @@ def _(rid, params: dict) -> dict:
+         with session["history_lock"]:
+             if not session.get("running"):
+                 break
++            if atomic_turn or session.get("_image_turn_active"):
++                return _err(rid, 4009, "image turn requires exclusive idle-session admission")
+             if internal_hosted_submit:
+                 return _err(rid, 4091, "hosted room member session is busy")
+             busy_transport = t or session.get("transport")
+@@ -751,7 +802,7 @@ def _(rid, params: dict) -> dict:
+         {r for r in raw_rebind_ids if isinstance(r, int) and not isinstance(r, bool)}
+         if isinstance(raw_rebind_ids, list) else None)
+     err, survivor_fields = _lock_in_submit_turn(
+-        rid, sid, session, text, params, has_truncation, requested_rebind_ids, hosted_task, display_kind)
++        rid, sid, session, text, params, has_truncation, requested_rebind_ids, hosted_task, display_kind, image_upload, atomic_turn)
+     if err is not None:
+         return err
+     if turn_isolation:
+@@ -775,18 +826,33 @@ def _(rid, params: dict) -> dict:
+         logger.warning(
+             "compute-host dispatch failed for session %s; falling back inline: %s", sid,
+             isolated_response["error"].get("message", "unknown error"))
+-    if (err := _persist_session_row_for_submit(rid, session, text, display_kind)) is not None:
++    if image_upload is not None:
++        display_kind = "image_turn"
++        display_metadata = {"image_turn_text": text, "image_receipt_id": survivor_fields["image_turn"]["receipt_id"]}
++    persist_error = (_persist_session_row_for_submit(rid, session, text, display_kind, display_metadata)
++                     if image_upload is not None else _persist_session_row_for_submit(rid, session, text, display_kind))
++    if (err := persist_error) is not None:
++        if image_upload is not None:
++            image_upload["path"].unlink(missing_ok=True)
++        if atomic_turn:
++            session.pop("_image_turn_active", None)
++            session.pop("_image_turn_route", None)
+         return err
+     # Capture before starting the worker: it consumes the staging dict and may finish before the RPC returns.
+     staged_user = session.get("_submit_user_row") or {}
+     if isinstance(staged_user.get("_row_id"), int):
+         survivor_fields["user_row_id"] = staged_user["_row_id"]
++        with session["history_lock"]:
++            if isinstance(session.get("inflight_turn"), dict):
++                session["inflight_turn"]["user_row_id"] = staged_user["_row_id"]
+     # A completed FAILED build must not wedge the session: rebuild, don't replay it.
+     if not _restart_completed_failed_agent_build(sid, session, session.get("agent_ready")):
+         _start_agent_build(sid, session)
+     run_thread = threading.Thread(
+         target=lambda: _run_after_agent_ready(
+-            rid, sid, session, text, display_kind, display_metadata, hosted_terminal_callback, turn_author),
++            rid, sid, session, text, display_kind, display_metadata, hosted_terminal_callback, turn_author,
++            [str(image_upload["path"])] if image_upload is not None else [] if atomic_turn else None,
++            session.get("_image_turn_active") if atomic_turn else None),
+         daemon=True)
+     # Handle lets session.interrupt tell a live turn from a stuck `running` flag.
+     session["_run_thread"] = run_thread
+@@ -794,7 +860,20 @@ def _(rid, params: dict) -> dict:
+     return _ok(rid, {"status": "streaming", **survivor_fields})
+ 
+ 
++def _legacy_image_transaction(handler):
++    def guarded(rid, params):
++        session, err = _sess_nowait(params, rid)
++        if err:
++            return err
++        with session["history_lock"]:
++            if session.get("_image_turn_active"):
++                return _err(rid, 4009, "image-bound turn active; legacy image mutation refused")
++            return handler(rid, params)
++    return guarded
++
++
+ @method("clipboard.paste")
++@_legacy_image_transaction
+ def _(rid, params: dict) -> dict:
+     session, err = _sess_building(params, rid)
+     if err:
+@@ -819,6 +898,7 @@ def _(rid, params: dict) -> dict:
+ 
+ 
+ @method("image.attach")
++@_legacy_image_transaction
+ def _(rid, params: dict) -> dict:
+     session, err = _sess_building(params, rid)
+     if err:
+@@ -847,6 +927,7 @@ def _(rid, params: dict) -> dict:
+ 
+ 
+ @method("image.attach_bytes")
++@_legacy_image_transaction
+ def _(rid, params: dict) -> dict:
+     """Attach an image from base64 bytes (remote client); reply mirrors ``image.attach``.
+     ``filename``/``ext`` hint the extension, else magic bytes decide (fallback ``.png``)."""
+@@ -878,6 +959,7 @@ def _(rid, params: dict) -> dict:
+ 
+ 
+ @method("pdf.attach")
++@_legacy_image_transaction
+ def _(rid, params: dict) -> dict:
+     """Attach a PDF by rendering each page to PNG (``pdftoppm``; 5028 if missing) and
+     queuing the pages as images.  Host ``path`` or base64 ``content_base64``."""
+@@ -959,6 +1041,7 @@ def _(rid, params: dict) -> dict:
+ 
+ 
+ @method("image.detach")
++@_legacy_image_transaction
+ def _(rid, params: dict) -> dict:
+     session, err = _sess_building(params, rid)
+     if err:
+@@ -1361,3 +1444,20 @@ def _approval_respond_session_fallback(params: dict):
+ def register(server) -> None:
+     """Publish this module's helpers + handlers onto ``server``, rebound to its globals."""
+     bind_module(globals(), server, skip=("_",))
++
++
++@method("image.turn_capabilities")
++@_profile_scoped
++def _(rid, params: dict) -> dict:
++    from tui_gateway.prompt_image_turn import capabilities
++    from hermes_cli.config import load_config_readonly
++    session, err = _sess_nowait(params, rid)
++    if err:
++        return err
++    home = _profile_home(params.get("profile")) if params.get("profile") else None
++    if params.get("profile") and Path(home or _hermes_home).resolve() != _session_home(session).resolve():
++        return _err(rid, 4130, "image profile and session disagree")
++    if session.get("auth_user_id") and _transport_auth_user_id(current_transport()) != session["auth_user_id"]:
++        return _err(rid, 4130, "image session belongs to a different authenticated user")
++    with _session_profile_runtime_scope(session):
++        return _ok(rid, capabilities(session, load_config_readonly() or {}))
+diff --git a/tui_gateway/methods_voice.py b/tui_gateway/methods_voice.py
+index 5f7b9c03c0..48031f53e4 100644
+--- a/tui_gateway/methods_voice.py
++++ b/tui_gateway/methods_voice.py
+@@ -436,7 +436,7 @@ def _(rid, params: dict) -> dict:
+     """What THIS BUILD enforces (a client withholds unless advertised), sourced from the enforcing
+     module, never config: a believed-but-absent capability is worse."""
+     from hermes_cli.active_sessions import PER_SESSION_EXCLUSIVE_SUBMIT
+-    return _ok(rid, {"per_session_exclusive_submit": bool(PER_SESSION_EXCLUSIVE_SUBMIT)})
++    return _ok(rid, {"per_session_exclusive_submit": bool(PER_SESSION_EXCLUSIVE_SUBMIT), "image_turn_version": 1})
+ 
+ 
+ @method("client.capabilities")
+diff --git a/tui_gateway/prompt_image_turn.py b/tui_gateway/prompt_image_turn.py
+new file mode 100644
+index 0000000000..c9f1ea1c12
+--- /dev/null
++++ b/tui_gateway/prompt_image_turn.py
+@@ -0,0 +1,133 @@
++"""One bounded image, owned by a prompt turn rather than the legacy pending queue."""
++from __future__ import annotations
++
++import base64
++import hashlib
++import io
++import os
++from pathlib import Path
++import uuid
++import warnings
++
++RAW_LIMIT = 5 * 1024 * 1024
++FRAME_LIMIT = 8 * 1024 * 1024
++TEXT_LIMIT = 64 * 1024
++MAX_EDGE = 8192
++MAX_PIXELS = 16_000_000
++SESSION_STORAGE_LIMIT = 50 * 1024 * 1024
++
++
++class ImageTurnError(ValueError):
++    pass
++
++
++def route(session: dict, config: dict) -> tuple[str, str]:
++    """Pin the existing route without resolving or reading credentials."""
++    model_cfg = config.get("model") or {}
++    agent = session.get("agent")
++    override = session.get("model_override")
++    model = getattr(agent, "model", None) or (override.get("model") if isinstance(override, dict) else override) or model_cfg.get("default", "")
++    provider = getattr(agent, "provider", None) or (override.get("provider") if isinstance(override, dict) else None) or model_cfg.get("provider", "")
++    return str(provider), str(model)
++
++
++def capabilities(session: dict, config: dict) -> dict:
++    """Offline policy only: never probe a provider or resolve credentials for a capability read."""
++    from agent.image_routing import _supports_vision_override
++    from hermes_cli.fallback_config import get_fallback_chain
++    agent_cfg = config.get("agent") or {}
++    agent = session.get("agent")
++    provider, model = route(session, config)
++    vision = _supports_vision_override(config, provider, model)
++    pilot = bool(agent_cfg.get("text_pilot")) or getattr(agent, "_text_pilot", None) is not None
++    fallback = bool(get_fallback_chain(config) or getattr(agent, "_fallback_chain", None))
++    enabled = not pilot and not fallback and vision is True and agent_cfg.get("image_input_mode") == "native"
++    return {"version": 1, "enabled": enabled, "model_vision": vision,
++            "reason": "text_pilot" if pilot else "fallback_configured" if fallback else "" if enabled else "native_vision_unconfirmed",
++            "max_raw_bytes": RAW_LIMIT, "max_frame_bytes": FRAME_LIMIT,
++            "max_text_bytes": TEXT_LIMIT, "max_edge": MAX_EDGE, "max_pixels": MAX_PIXELS}
++
++
++def validate(payload: dict, text: str) -> dict:
++    """Bound encoded data before decoding; verify container and fully decode within pixel limits."""
++    from PIL import Image, ImageFile, UnidentifiedImageError
++    if not isinstance(text, str) or not text.strip() or len(text.encode("utf-8")) > TEXT_LIMIT:
++        raise ImageTurnError("Image turns require text of at most 65536 UTF-8 bytes")
++    if not isinstance(payload, dict):
++        raise ImageTurnError("Image payload must be an object")
++    if ImageFile.LOAD_TRUNCATED_IMAGES:
++        raise ImageTurnError("Strict decoder policy is unavailable")
++    encoded = payload.get("content_base64")
++    filename = payload.get("filename")
++    if (not isinstance(encoded, str) or not encoded or len(encoded) > 4 * ((RAW_LIMIT + 2) // 3)
++            or not isinstance(filename, str) or not 0 < len(filename) <= 120
++            or "/" in filename or "\\" in filename or "\x00" in filename):
++        raise ImageTurnError("Invalid bounded image payload")
++    try:
++        data = base64.b64decode(encoded, validate=True)
++    except (ValueError, TypeError):
++        raise ImageTurnError("Invalid image base64") from None
++    if not 0 < len(data) <= RAW_LIMIT:
++        raise ImageTurnError("Image exceeds the raw size limit")
++    if data.startswith(b"\x89PNG\r\n\x1a\n"):
++        fmt, suffix = "PNG", ".png"
++        # APNG is outside the single still-image contract, including a single animated frame.
++        cursor = 8
++        kind = b""
++        while cursor + 12 <= len(data):
++            size = int.from_bytes(data[cursor:cursor + 4], "big")
++            if size > len(data) - cursor - 12:
++                raise ImageTurnError("Broken PNG container")
++            kind = data[cursor + 4:cursor + 8]
++            if kind == b"acTL":
++                raise ImageTurnError("Animated images are unsupported")
++            cursor += size + 12
++            if kind == b"IEND":
++                break
++        if cursor != len(data) or kind != b"IEND":
++            raise ImageTurnError("Broken PNG container")
++    elif data.startswith(b"\xff\xd8\xff") and data.endswith(b"\xff\xd9"):
++        fmt, suffix = "JPEG", ".jpg"
++    else:
++        raise ImageTurnError("Only actual JPEG and PNG data are supported")
++    extension = Path(filename).suffix.lower()
++    if extension not in ({".jpg", ".jpeg"} if fmt == "JPEG" else {".png"}):
++        raise ImageTurnError("Filename extension and actual image format disagree")
++    try:
++        with warnings.catch_warnings():
++            warnings.simplefilter("error", Image.DecompressionBombWarning)
++            with Image.open(io.BytesIO(data), formats=[fmt]) as image:
++                width, height = image.size
++                if (image.format != fmt or width <= 0 or height <= 0 or max(width, height) > MAX_EDGE
++                        or width * height > MAX_PIXELS or getattr(image, "n_frames", 1) != 1):
++                    raise ImageTurnError("Image dimensions exceed the still-image limits")
++                image.verify()
++            with Image.open(io.BytesIO(data), formats=[fmt]) as decoded:
++                decoded.load()  # verify alone cannot establish that all pixels decode.
++    except (UnidentifiedImageError, OSError, SyntaxError, ValueError, Image.DecompressionBombWarning, Image.DecompressionBombError):
++        raise ImageTurnError("Image is corrupt or exceeds decoder limits") from None
++    return {"data": data, "format": fmt, "suffix": suffix, "width": width, "height": height}
++
++
++def store(session: dict, session_id: str, image: dict, images_root: Path) -> tuple[Path, dict]:
++    """Called under history_lock after admission checks. Create-only private per-session storage."""
++    root = images_root / "turn-uploads"
++    directory = root / hashlib.sha256(str(session.get("session_key") or session_id).encode()).hexdigest()
++    for path in (images_root, root, directory):
++        if path.is_symlink():
++            raise ImageTurnError("Image storage symlinks are unsupported")
++        path.mkdir(mode=0o700, parents=True, exist_ok=True)
++    used = sum(p.stat().st_size for p in directory.iterdir() if p.is_file())
++    if used + len(image["data"]) > SESSION_STORAGE_LIMIT:
++        raise ImageTurnError("This live session's 50 MiB image storage limit was reached")
++    receipt = uuid.uuid4().hex
++    path = directory / (receipt + image["suffix"])
++    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
++    try:
++        with os.fdopen(fd, "wb") as stream:
++            stream.write(image["data"])
++    except BaseException:
++        path.unlink(missing_ok=True)  # Only the new, still-unreferenced file owned by this call.
++        raise
++    return path, {"receipt_id": receipt, "format": image["format"], "width": image["width"],
++                  "height": image["height"], "bytes": len(image["data"])}
+diff --git a/tui_gateway/prompt_turn.py b/tui_gateway/prompt_turn.py
+index e55cc66fe9..86b2f7e183 100644
+--- a/tui_gateway/prompt_turn.py
++++ b/tui_gateway/prompt_turn.py
+@@ -214,6 +214,13 @@ def _route_turn_images(agent, prompt: Any, images: list[str]) -> Any:
+     """Run message for a turn with attached images: "native" content parts, or "text" path
+     references the agent analyzes in-loop (never blocking submit on vision calls).
+     Decision table: agent/image_routing.py."""
++    if getattr(agent, "_image_bound_turn", False):
++        from agent.image_routing import build_native_content_parts
++        from tui_gateway.prompt_image_turn import ImageTurnError
++        parts, skipped = build_native_content_parts(prompt, images)
++        if skipped or sum(part.get("type") == "image_url" for part in parts) != 1:
++            raise ImageTurnError("The admitted image could not be prepared; text-only fallback is forbidden")
++        return parts
+     try:
+         from agent.image_routing import build_native_content_parts, decide_image_input_mode
+         from hermes_cli.config import load_config as _tui_load_config
+@@ -691,6 +698,13 @@ def _prepare_turn_input(sid: str, session: dict, st: _TurnRun, text: Any, images
+     _sync_bot_capabilities(sid, session)  # Bot Chat: adopt Settings->Capabilities edits
+     _adopt_out_of_band_turns(session)
+     st.agent = agent = session["agent"]
++    if images and session.get("_image_turn_route"):
++        from tui_gateway.prompt_image_turn import capabilities, route, ImageTurnError
++        from hermes_cli.config import load_config_readonly
++        config = load_config_readonly() or {}
++        if not capabilities(session, config)["enabled"] or route(session, config) != session["_image_turn_route"]:
++            raise ImageTurnError("Image turn route or native-vision policy changed before generation")
++        agent._image_bound_turn = True
+     # Snapshot after the model sync: a deferred switch's history mutation belongs to this turn.
+     with session["history_lock"]:
+         st.history = list(session["history"])
+@@ -1158,7 +1172,7 @@ def _run_prompt_submit(
+         st = _TurnRun(
+             session["agent"], session.pop("one_turn_model_restore", None), terminal_callback,
+             receipt_committed=terminal_callback is None)
+-        st.marker_key = _record_turn_marker(session, text, auto_continue=terminal_callback is None,
++        st.marker_key = _record_turn_marker(session, text, auto_continue=terminal_callback is None and not session.get("_image_turn_active"),
+             notification_category=(display_metadata or {}).get("notification_category"))
+         goal_followup = None
+         try:
+@@ -1187,6 +1201,7 @@ def _run_prompt_submit(
+         except Exception as e:
+             _recover_turn_exception(sid, session, st, e)
+         finally:
++            st.agent._image_bound_turn = False
+             _finish_turn(sid, session, st)
+             _current_runtime_session_record.reset(runtime_session_token)
+             reset_transport(transport_token)
+diff --git a/tui_gateway/rpc_dispatch.py b/tui_gateway/rpc_dispatch.py
+index b2a2587c42..c3db758ada 100644
+--- a/tui_gateway/rpc_dispatch.py
++++ b/tui_gateway/rpc_dispatch.py
+@@ -19,6 +19,11 @@ def _handle_admitted_request(req: dict) -> dict | None:
+     if isinstance(normalized, dict):
+         return normalized
+     rid, method, params = normalized
++    if method == "prompt.submit" and params.get("image") is not None:
++        from tui_gateway.prompt_image_turn import FRAME_LIMIT
++        # Bound the complete image-turn envelope before any image decode/storage.
++        if len(json.dumps(req, ensure_ascii=False).encode("utf-8")) > FRAME_LIMIT:
++            return _err(rid, 4131, "image turn exceeds the bounded RPC envelope")
+     if not (fn := _methods.get(method)):
+         return _err(rid, -32601, f"unknown method: {method} — the client and the Hermes backend are out of sync "
+                     "(different versions); run `hermes update` and restart both")
+diff --git a/tui_gateway/session_auto_continue.py b/tui_gateway/session_auto_continue.py
+index a3bdedf7a4..494b5fae8e 100644
+--- a/tui_gateway/session_auto_continue.py
++++ b/tui_gateway/session_auto_continue.py
+@@ -530,6 +530,8 @@ def _inflight_snapshot(session: dict) -> dict | None:
+     if not (user or assistant or streaming or error):
+         return None
+     snapshot = {"assistant": assistant, "streaming": streaming, "user": user}
++    if isinstance(turn.get("user_row_id"), int):
++        snapshot["user_row_id"] = turn["user_row_id"]
+     if isinstance(display_kind := turn.get("display_kind"), str) and display_kind:
+         snapshot["display_kind"] = display_kind
+     if isinstance(display_metadata := turn.get("display_metadata"), dict):
+diff --git a/tui_gateway/session_history.py b/tui_gateway/session_history.py
+index 0c61dcd1dd..14ac176ee7 100644
+--- a/tui_gateway/session_history.py
++++ b/tui_gateway/session_history.py
+@@ -299,7 +299,10 @@ def _history_to_messages(history: list[dict], *, profile_home=None, image_urls:
+         # display_kind="hidden": model-facing scaffolding the "[System:" sniff does not catch.
+         if role not in _HISTORY_ROLES or m.get("display_kind") == "hidden":
+             continue
+-        content_text = _user_image_display_text(m.get("content")) if role == "user" else None
++        metadata = m.get("display_metadata") or {}
++        caption = metadata.get("image_turn_text") if isinstance(metadata, dict) else None
++        content_text = (caption if role == "user" and m.get("display_kind") == "image_turn" and isinstance(caption, str)
++                        else _user_image_display_text(m.get("content")) if role == "user" else None)
+         if content_text is None:
+             content_text = _coerce_message_text(m.get("content"), image_urls=image_urls)
+         if _is_display_hidden_marker(role, content_text):

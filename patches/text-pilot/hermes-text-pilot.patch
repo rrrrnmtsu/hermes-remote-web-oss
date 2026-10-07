@@ -1,0 +1,787 @@
+diff --git a/agent/agent_init.py b/agent/agent_init.py
+index 60997e229c..03a3c88048 100644
+--- a/agent/agent_init.py
++++ b/agent/agent_init.py
+@@ -1109,6 +1109,11 @@ def _init_fallback_chain(agent, fallback_model):
+ 
+ 
+ def _load_tools(agent, enabled_toolsets, disabled_toolsets):
++    if getattr(agent, "_text_pilot", None) is not None:
++        agent.tools, agent.valid_tool_names = [], set()
++        agent._tool_snapshot_generation = 0
++        agent._kanban_worker_guidance = ""
++        return
+     # A multiplexed gateway may have switched HERMES_HOME since model_tools was imported;
+     # make sure this profile's plugins are discovered before the tool snapshot.
+     try:
+@@ -1974,7 +1979,7 @@ def _compressor_max_tokens(agent):
+ 
+ 
+ def _build_context_engine(agent, _agent_cfg, cs, _custom_providers, _effective_context_length, session_db):
+-    _selected_engine = _select_context_engine(_agent_cfg)
++    _selected_engine = None if getattr(agent, "_text_pilot", None) else _select_context_engine(_agent_cfg)
+     if _selected_engine is not None:
+         agent.context_compressor = _selected_engine
+         # External engines own compaction policy — the host threshold (and its Codex
+@@ -2412,6 +2417,22 @@ def init_agent(
+ ):
+     _install_safe_stdio()
+ 
++    from hermes_cli.config import load_config_readonly
++    from agent.text_pilot import TextPilot
++    _pilot_cfg = load_config_readonly() or {}
++    agent._text_pilot = TextPilot.from_config(_pilot_cfg)
++    if agent._text_pilot is not None:
++        enabled_toolsets, disabled_toolsets = [], []
++        skip_context_files = skip_memory = skip_background_review = True
++        load_soul_identity = save_trajectories = verbose_logging = False
++        max_tokens = agent._text_pilot.max_output_tokens
++        reasoning_config = {"enabled": False}
++        service_tier = None
++        fallback_model = prefill_messages = ephemeral_system_prompt = None
++        request_overrides = {}
++        max_iterations = 1
++        quiet_mode = True
++
+     _params = locals()
+     for _name in _PASSTHROUGH_PARAMS:
+         setattr(agent, _name, _params[_name])
+@@ -2450,6 +2471,8 @@ def init_agent(
+     agent.acp_args = list(acp_args or args or [])
+     _resolve_api_mode(agent, api_mode, provider_name, base_url)
+     _finalize_routing(agent, api_mode, credential_pool)
++    if agent._text_pilot is not None:
++        agent._text_pilot.validate_route(agent.provider, agent.api_mode, agent.model, agent.base_url)
+ 
+     # Platform callbacks are stored under their parameter names verbatim.
+     for _cb in _CALLBACK_PARAMS:
+@@ -2471,7 +2494,11 @@ def init_agent(
+     agent._fast_mode_unavailable_models = set()
+ 
+     _init_prompt_cache_config(agent)
++    if agent._text_pilot is not None:
++        agent._use_prompt_caching = agent._use_native_cache_layout = False
+     _init_turn_state(agent, run_budget_seconds)
++    if agent._text_pilot is not None:
++        agent._skip_mcp_refresh = True
+     _setup_logging(agent)
+     _set_defaults(agent, _STREAM_STATE)
+     _build_client(agent, api_key, base_url, fallback_model)
+@@ -2491,8 +2518,14 @@ def init_agent(
+ 
+     _apply_display_config(agent, _agent_cfg, platform)
+     _init_memory(agent, _agent_cfg, skip_memory, platform, memory_manager=memory_manager)
++    if agent._text_pilot is not None:
++        _agent_cfg = {**_agent_cfg, "agent": {**(_agent_cfg.get("agent") or {}),
++            "environment_probe": False, "api_max_retries": 1, "auto_recovery_cycles": 0,
++            "intent_ack_continuation": False}}
+     _apply_agent_section(agent, _agent_cfg)
+     cs = _parse_compression_config(agent, _agent_cfg)
++    if agent._text_pilot is not None:
++        cs.enabled = cs.micro_compact = cs.codex_app_server_auto = cs.codex_responses_native = False
+     _config_context_length, _custom_providers, _effective_context_length, _model_cfg = _resolve_context_length(
+         agent, _agent_cfg, base_url
+     )
+diff --git a/agent/auxiliary_client.py b/agent/auxiliary_client.py
+index 0129a25755..ec817a70c7 100644
+--- a/agent/auxiliary_client.py
++++ b/agent/auxiliary_client.py
+@@ -2618,6 +2618,8 @@ def _relay_sync_completion(
+     client: Any, kwargs: dict[str, Any], *, provider: str | None = None,
+     api_mode: str | None = None, create: Callable[[dict[str, Any]], Any] | None = None,
+ ) -> Any:
++    from agent.text_pilot import reject_auxiliary_for_text_pilot
++    reject_auxiliary_for_text_pilot()
+     from agent.auxiliary_wire import prepare_chat_messages
+ 
+     kwargs = prepare_chat_messages(client, kwargs)
+@@ -2648,6 +2650,8 @@ async def _relay_async_completion(
+     client: Any, kwargs: dict[str, Any], *, provider: str | None = None,
+     api_mode: str | None = None, create: Callable[[dict[str, Any]], Any] | None = None,
+ ) -> Any:
++    from agent.text_pilot import reject_auxiliary_for_text_pilot
++    reject_auxiliary_for_text_pilot()
+     from agent.auxiliary_wire import prepare_chat_messages
+ 
+     kwargs = prepare_chat_messages(client, kwargs)
+@@ -2673,6 +2677,8 @@ async def _relay_async_completion(
+ def _relay_sync_stream(
+     client: Any, kwargs: dict[str, Any], *, provider: str | None = None, api_mode: str | None = None
+ ) -> Any:
++    from agent.text_pilot import reject_auxiliary_for_text_pilot
++    reject_auxiliary_for_text_pilot()
+     from agent.auxiliary_wire import prepare_chat_messages
+ 
+     kwargs = prepare_chat_messages(client, kwargs)
+diff --git a/agent/chat_completion_helpers.py b/agent/chat_completion_helpers.py
+index 5c114ec4be..086e516eda 100644
+--- a/agent/chat_completion_helpers.py
++++ b/agent/chat_completion_helpers.py
+@@ -3489,6 +3489,8 @@ class _StreamingCall(StreamingWaitMonitor):
+         def _open_anthropic_stream(next_api_kwargs: dict[str, Any]):
+             final_kwargs = dict(next_api_kwargs)
+             sanitize_anthropic_kwargs(final_kwargs, log_prefix=getattr(self.agent, "log_prefix", ""))
++            if getattr(self.agent, "_text_pilot", None) is not None:
++                self.agent._text_pilot.admit(self.agent, request_client, final_kwargs)
+             manager = request_client.messages.stream(**final_kwargs)
+             _stream_context["manager"] = manager
+             return normalize_stream_usage(manager.__enter__())
+diff --git a/agent/client_lifecycle.py b/agent/client_lifecycle.py
+index bf65b6edaf..e5b22c6703 100644
+--- a/agent/client_lifecycle.py
++++ b/agent/client_lifecycle.py
+@@ -1013,9 +1013,12 @@ class ClientLifecycleMixin:
+         # Strips Responses-only kwargs that leak in under an api_mode-flip race.
+         from agent.anthropic_adapter import create_anthropic_message
+         # on_response: rate-limit + credits state live in response headers, which the parsed Message drops.
++        if getattr(self, "_text_pilot", None) is not None:
++            self._text_pilot.admit(self, client or self._anthropic_client, api_kwargs)
+         return create_anthropic_message(
+             client or self._anthropic_client, api_kwargs, log_prefix=getattr(self, "log_prefix", ""),
+-            prefer_stream=not bool(getattr(self, "_disable_streaming", False)),
++            prefer_stream=(getattr(self, "_text_pilot", None) is None
++                           and not bool(getattr(self, "_disable_streaming", False))),
+             on_response=self._capture_anthropic_response_headers,
+         )
+ 
+diff --git a/agent/conversation_loop.py b/agent/conversation_loop.py
+index b88367a796..791f0db2fc 100644
+--- a/agent/conversation_loop.py
++++ b/agent/conversation_loop.py
+@@ -1715,6 +1715,8 @@ def run_conversation(
+     ``{turn_id, current_turn_user_idx}`` pair is stamped beside the exact ``messages`` it
+     addresses, after every history rewrite including post-turn micro-compaction.
+     """
++    if getattr(agent, "_text_pilot", None) is not None:
++        agent._text_pilot.begin_turn()
+     from agent.turn_context import export_current_turn_boundary
+     from tools.vision_tools_history_budget import native_turn_images
+ 
+diff --git a/agent/system_prompt.py b/agent/system_prompt.py
+index c010d59bc4..4bf6055061 100644
+--- a/agent/system_prompt.py
++++ b/agent/system_prompt.py
+@@ -801,6 +801,10 @@ def build_system_prompt(agent: Any, system_message: Optional[str] = None) -> str
+     """Assemble the full prompt; cached on ``agent._cached_system_prompt`` and
+     only rebuilt after compression.  Tiers are ordered stable -> context ->
+     volatile so implicit longest-prefix caches keep the unchanged scaffold."""
++    if getattr(agent, "_text_pilot", None) is not None:
++        from agent.text_pilot import PILOT_SYSTEM_PROMPT
++        agent._cached_system_prompt_static = PILOT_SYSTEM_PROMPT
++        return PILOT_SYSTEM_PROMPT
+     parts = build_system_prompt_parts(agent, system_message=system_message)
+     agent._cached_system_prompt_static = parts["stable"]
+     # Surface context-file truncation warnings in chat, not only in logs.
+diff --git a/agent/text_pilot.py b/agent/text_pilot.py
+new file mode 100644
+index 0000000000..846cec753a
+--- /dev/null
++++ b/agent/text_pilot.py
+@@ -0,0 +1,118 @@
++"""Opt-in, single-attempt text turns for a bounded private acceptance pilot.
++
++This is an agent policy, not another execution engine. Ordinary profiles keep
++their existing behavior. Physical requests, including stream recovery, share
++one reservation; an uncertain attempt never refunds that reservation.
++"""
++
++from dataclasses import dataclass, field
++import threading
++from urllib.parse import urlsplit
++
++
++class TextPilotError(ValueError):
++    """A pilot limit failed before another generation could be dispatched."""
++
++
++@dataclass
++class TextPilot:
++    model: str
++    max_input_tokens: int
++    max_output_tokens: int
++    _attempted: bool = field(default=False, init=False)
++    _lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
++
++    @classmethod
++    def from_config(cls, config):
++        agent_section = config.get("agent") or {}
++        section = agent_section.get("text_pilot") if isinstance(agent_section, dict) else None
++        if section is None or section is False:
++            from hermes_constants import get_hermes_home
++            if get_hermes_home().name == "remote-web-smoke":
++                raise TextPilotError("The reserved smoke profile requires its text-pilot policy")
++            return None
++        if not isinstance(section, dict) or set(section) != {
++            "model", "max_input_tokens", "max_output_tokens",
++        }:
++            raise TextPilotError("Invalid agent.text_pilot policy")
++        model = section["model"]
++        if not isinstance(model, str) or not model.strip():
++            raise TextPilotError("A pilot must pin one existing text model")
++        for key in ("max_input_tokens", "max_output_tokens"):
++            if type(section[key]) is not int or section[key] <= 0:
++                raise TextPilotError("Pilot token limits must be positive integers")
++        # Six manually admitted turns fit inside the user's total 30,000-token
++        # allowance. Actual remaining token/cost admission is still checked by
++        # the operator before each explicit UI send, never inferred from a UUID.
++        # count_tokens is an estimate, so leave a further 1,024-token reserve
++        # instead of claiming it is an exact usage/billing measurement.
++        if section["max_input_tokens"] + section["max_output_tokens"] + 1024 > 5000:
++            raise TextPilotError("A pilot turn, including headroom, may reserve at most 5,000 tokens")
++        return cls(model.strip(), section["max_input_tokens"], section["max_output_tokens"])
++
++    def validate_route(self, provider, api_mode, model, base_url):
++        url = urlsplit(str(base_url or "https://api.anthropic.com"))
++        if (provider != "anthropic" or api_mode != "anthropic_messages"
++                or model != self.model or url.scheme != "https"
++                or url.hostname != "api.anthropic.com" or url.port not in (None, 443)
++                or url.username or url.password or url.query or url.fragment
++                or url.path.rstrip("/") not in ("", "/v1")):
++            raise TextPilotError("Text pilot requires its pinned native Anthropic route")
++
++    def begin_turn(self):
++        with self._lock:
++            self._attempted = False
++
++    def admit(self, agent, client, kwargs):
++        if getattr(agent, "_interrupt_requested", False):
++            raise InterruptedError("Text pilot interrupted before generation")
++        self.validate_route(agent.provider, agent.api_mode, agent.model, agent.base_url)
++        self.validate_route(agent.provider, agent.api_mode, agent.model, str(client.base_url))
++        with self._lock:
++            if self._attempted:
++                raise TextPilotError("Text pilot permits no retry or automatic continuation")
++            self._attempted = True
++        if getattr(client, "max_retries", None) != 0:
++            raise TextPilotError("Text pilot requires SDK retries disabled")
++        if (kwargs.get("model") != self.model or kwargs.get("tools")
++                or kwargs.get("speed") or kwargs.get("service_tier") not in (None, "standard_only")
++                or type(kwargs.get("max_tokens")) is not int
++                or not 0 < kwargs["max_tokens"] <= self.max_output_tokens
++                or (kwargs.get("thinking") or {}).get("type") not in (None, "disabled")):
++            raise TextPilotError("Text pilot request changed its tool, model or output limit")
++        messages = kwargs.get("messages")
++        if not isinstance(messages, list) or not messages:
++            raise TextPilotError("Text pilot requires plain text messages")
++        for message in messages:
++            content = message.get("content")
++            if message.get("role") not in ("user", "assistant"):
++                raise TextPilotError("Text pilot forbids tool history")
++            if isinstance(content, str):
++                continue
++            if not isinstance(content, list) or any(
++                not isinstance(block, dict) or block.get("type") != "text"
++                or not isinstance(block.get("text"), str) for block in content
++            ):
++                raise TextPilotError("Text pilot forbids non-text content")
++        # The provider counts the actual native request before generation. A
++        # missing/failed count fails closed; no local character estimate admits
++        # a paid call. count_tokens is not a generation and SDK retries are 0.
++        count_args = {"model": self.model, "messages": messages}
++        if kwargs.get("system") is not None:
++            count_args["system"] = kwargs["system"]
++        counted = client.messages.count_tokens(**count_args)
++        if getattr(agent, "_interrupt_requested", False):
++            raise InterruptedError("Text pilot interrupted while counting input")
++        tokens = getattr(counted, "input_tokens", None)
++        if type(tokens) is not int or not 0 < tokens <= self.max_input_tokens:
++            raise TextPilotError("Text pilot input exceeds its admitted token limit")
++
++
++def reject_auxiliary_for_text_pilot():
++    from hermes_cli.config import load_config_readonly
++
++    if TextPilot.from_config(load_config_readonly() or {}) is not None:
++        raise TextPilotError("Text pilot disables auxiliary model calls")
++
++
++PILOT_SYSTEM_PROMPT = "You are a text assistant in an isolated acceptance test. Answer the user's synthetic text briefly."
+diff --git a/agent/turn_api_call.py b/agent/turn_api_call.py
+index 04c0a27d9c..1b43dc5c78 100644
+--- a/agent/turn_api_call.py
++++ b/agent/turn_api_call.py
+@@ -130,7 +130,7 @@ def perform_api_call(
+         if _model_request_active is not None:
+             _model_request_active.set()
+     try:
+-        response = run_llm_execution_middleware(
++        response = _perform_api_call(api_kwargs) if getattr(agent, "_text_pilot", None) else run_llm_execution_middleware(
+             api_kwargs, _perform_api_call, original_request=_original_api_kwargs,
+             task_id=effective_task_id, turn_id=turn_id, api_request_id=api_request_id,
+             session_id=agent.session_id or "", platform=agent.platform or "", model=agent.model,
+diff --git a/agent/turn_api_error.py b/agent/turn_api_error.py
+index 90c095df3f..807df141de 100644
+--- a/agent/turn_api_error.py
++++ b/agent/turn_api_error.py
+@@ -79,6 +79,15 @@ def handle_api_error(
+     if agent.thinking_callback:
+         agent.thinking_callback("")
+ 
++    if getattr(agent, "_text_pilot", None) is not None:
++        message = "Text pilot stopped after its single attempt; no automatic retry was sent."
++        agent._persist_session(messages, conversation_history)
++        return _verdict("return", {
++            "final_response": message, "messages": messages, "api_calls": api_call_count,
++            "completed": False, "failed": True, "error": message,
++            "failure_reason": "text_pilot_limit", "failure_retryable": False,
++        })
++
+     _recovered, active_system_prompt = recover_before_classification(
+         agent, api_error, messages=messages, api_messages=api_messages, api_kwargs=api_kwargs,
+         active_system_prompt=active_system_prompt,
+diff --git a/agent/turn_api_request.py b/agent/turn_api_request.py
+index 1be4db0a62..6046b919a7 100644
+--- a/agent/turn_api_request.py
++++ b/agent/turn_api_request.py
+@@ -125,6 +125,8 @@ def build_api_request(
+     # Messages were scrubbed above; this walk covers the rest of the payload (tool descriptions,
+     # extra_body, kwargs strings) — see sanitize_outbound_kwargs for the #50959 rationale.
+     sanitize_outbound_kwargs(agent, api_kwargs)
++    if getattr(agent, "_text_pilot", None) is not None:
++        return ApiRequestBuild("fallthrough", api_messages, None, [], api_kwargs, dict(api_kwargs), [])
+     if agent.api_mode == "codex_responses":
+         api_kwargs = agent._get_transport().preflight_kwargs(
+             api_kwargs, allow_stream=False, is_github_responses=agent._is_copilot_url(),
+diff --git a/run_agent.py b/run_agent.py
+index b352845053..6e2a7d563b 100644
+--- a/run_agent.py
++++ b/run_agent.py
+@@ -1329,6 +1329,9 @@ class AIAgent(
+         The segment planner splits the batch into runs of parallel-safe calls (read-only, non-overlapping file
+         targets, opted-in MCP) separated by sequential barriers, run in emission order.
+         """
++        if getattr(self, "_text_pilot", None) is not None:
++            from agent.text_pilot import TextPilotError
++            raise TextPilotError("Text pilot disables all tool execution")
+         tool_calls = assistant_message.tool_calls
+         args = (assistant_message, messages, effective_task_id, api_call_count)
+         self._executing_tools = True  # allow _vprint during tool execution even with stream consumers
+diff --git a/tests/agent/test_text_pilot.py b/tests/agent/test_text_pilot.py
+new file mode 100644
+index 0000000000..93ce5f2999
+--- /dev/null
++++ b/tests/agent/test_text_pilot.py
+@@ -0,0 +1,100 @@
++"""Private text-pilot bounds at the real SDK request boundary, without network."""
++
++import asyncio
++import json
++from types import SimpleNamespace
++
++import anthropic
++import httpx
++import pytest
++
++from agent.text_pilot import TextPilot, TextPilotError, PILOT_SYSTEM_PROMPT
++
++
++def policy_config(model="claude-sonnet-5"):
++    return {"model": {"default": model, "provider": "anthropic", "context_length": 200000},
++            "agent": {"text_pilot": {"model": model, "max_input_tokens": 3072, "max_output_tokens": 128}},
++            "auxiliary": {"title_generation": {"enabled": False, "model_upgrade_enabled": False}},
++            "background_review": {"enabled": False}, "mcp_servers": {}}
++
++
++def sdk_client(seen, count=42):
++    def respond(request):
++        seen.append((request.url.path, json.loads(request.content)))
++        if request.url.path.endswith("/count_tokens"):
++            return httpx.Response(200, json={"input_tokens": count})
++        return httpx.Response(200, json={"id": "msg_fixture", "type": "message", "role": "assistant",
++            "model": "claude-sonnet-5", "content": [{"type": "text", "text": "合成応答"}],
++            "stop_reason": "end_turn", "stop_sequence": None, "usage": {"input_tokens": 42, "output_tokens": 5}})
++    return anthropic.Anthropic(api_key="fixture-only", max_retries=0,
++        http_client=httpx.Client(transport=httpx.MockTransport(respond)))
++
++
++def request_kwargs():
++    return {"model": "claude-sonnet-5", "max_tokens": 128, "system": PILOT_SYSTEM_PROMPT,
++            "messages": [{"role": "user", "content": "短い合成テキスト"}]}
++
++
++@pytest.mark.parametrize("violation", ["retry", "oversize", "sdk_retry", "route", "model", "tools", "thinking", "image", "limit", "stop_before", "stop_during_count"])
++def test_physical_request_fails_closed_without_a_generation(violation):
++    policy = TextPilot.from_config(policy_config())
++    agent = SimpleNamespace(provider="anthropic", api_mode="anthropic_messages", model=policy.model,
++                            base_url="https://api.anthropic.com")
++    seen = []
++    client = sdk_client(seen, count=3073 if violation == "oversize" else 42)
++    kwargs = request_kwargs()
++    if violation == "retry":
++        policy.admit(agent, client, kwargs)
++    elif violation == "sdk_retry":
++        client.max_retries = 1
++    elif violation == "route":
++        agent.base_url = "https://api.anthropic.com.invalid"
++    elif violation == "model":
++        kwargs["model"] = "other-model"
++    elif violation == "tools":
++        kwargs["tools"] = [{"name": "terminal"}]
++    elif violation == "thinking":
++        kwargs["thinking"] = {"type": "enabled", "budget_tokens": 1024}
++    elif violation == "image":
++        kwargs["messages"][0]["content"] = [{"type": "image", "source": {"type": "base64"}}]
++    elif violation == "limit":
++        kwargs["max_tokens"] = 129
++    elif violation == "stop_before":
++        agent._interrupt_requested = True
++    elif violation == "stop_during_count":
++        count = client.messages.count_tokens
++        def counted_then_interrupted(**args):
++            result = count(**args)
++            agent._interrupt_requested = True
++            return result
++        client.messages.count_tokens = counted_then_interrupted
++    try:
++        with pytest.raises(InterruptedError if violation.startswith("stop_") else TextPilotError):
++            policy.admit(agent, client, kwargs)
++        assert all(path.endswith("count_tokens") for path, _ in seen)
++    finally:
++        client.close()
++
++
++def test_auxiliary_paths_follow_the_profile_a_b_a(tmp_path):
++    from hermes_constants import set_hermes_home_override, reset_hermes_home_override
++    from agent.auxiliary_client import _relay_sync_completion, _relay_async_completion, _relay_sync_stream
++    from agent.text_pilot import reject_auxiliary_for_text_pilot
++    homes = [tmp_path / name for name in ("ordinary", "pilot")]
++    for home, config in zip(homes, [{}, policy_config()]):
++        home.mkdir()
++        (home / "config.yaml").write_text(json.dumps(config))
++    for home in [homes[0], homes[1], homes[0]]:
++        token = set_hermes_home_override(home)
++        try:
++            if home == homes[1]:
++                with pytest.raises(TextPilotError):
++                    _relay_sync_completion(None, {})
++                with pytest.raises(TextPilotError):
++                    _relay_sync_stream(None, {})
++                with pytest.raises(TextPilotError):
++                    asyncio.run(_relay_async_completion(None, {}))
++            else:
++                assert reject_auxiliary_for_text_pilot() is None
++        finally:
++            reset_hermes_home_override(token)
+diff --git a/tests/agent/test_text_pilot_integration.py b/tests/agent/test_text_pilot_integration.py
+new file mode 100644
+index 0000000000..745afcce0a
+--- /dev/null
++++ b/tests/agent/test_text_pilot_integration.py
+@@ -0,0 +1,131 @@
++"""Real AIAgent construction and turn paths with isolated homes and native SDK fixtures."""
++
++import json
++import socket
++from types import SimpleNamespace
++
++import pytest
++
++from tests.agent.test_text_pilot import policy_config, sdk_client
++from agent.text_pilot import TextPilotError, PILOT_SYSTEM_PROMPT
++
++
++@pytest.fixture(autouse=True)
++def deny_real_network(monkeypatch):
++    def denied(*args, **kwargs):
++        raise AssertionError("Real network is forbidden in the isolated text-pilot tests")
++    monkeypatch.setattr(socket.socket, "connect", denied)
++    monkeypatch.setattr(socket.socket, "connect_ex", denied)
++
++
++@pytest.mark.parametrize("outcome", ["success", "connection_loss", "output_limit", "count_failure",
++    "stream_success", "stream_loss", "stream_empty", "stream_tool"])
++def test_real_agent_never_retries_or_executes_tools(tmp_path, monkeypatch, outcome):
++    from run_agent import AIAgent
++    from hermes_constants import set_hermes_home_override, reset_hermes_home_override
++    import httpx
++
++    home = tmp_path / "pilot"
++    home.mkdir()
++    (home / "config.yaml").write_text(json.dumps(policy_config()))
++    for name in ("MEMORY.md", "USER.md", "SOUL.md", "AGENTS.md"):
++        (home / name).write_text("SYNTHETIC_PRIVATE_SENTINEL")
++    token = set_hermes_home_override(home)
++    seen = []
++    client = sdk_client(seen)
++    agent = None
++    try:
++        agent = AIAgent(model="claude-sonnet-5", provider="anthropic", api_mode="anthropic_messages",
++            api_key="fixture-only", base_url="https://api.anthropic.com", cwd=str(home), quiet_mode=True,
++            enabled_toolsets=["hermes-cli"], prefill_messages=[{"role": "user", "content": "SYNTHETIC_PRIVATE_SENTINEL"}])
++        assert agent.tools == [] and agent.valid_tool_names == set()
++        assert agent.skip_context_files and agent.skip_background_review
++        assert agent._memory_store is None and agent._memory_manager is None
++        assert agent.prefill_messages == [] and agent.max_tokens == 128
++        assert not agent.compression_enabled and agent._skip_mcp_refresh
++        assert agent._build_system_prompt() == PILOT_SYSTEM_PROMPT
++        assert agent._api_max_retries == 1 and agent._auto_recovery_cycles == 0
++
++        def respond(request):
++            payload = json.loads(request.content)
++            seen.append((request.url.path, payload))
++            if request.url.path.endswith("count_tokens"):
++                if outcome == "count_failure":
++                    return httpx.Response(503, json={"error": {"type": "overloaded_error", "message": "fixture"}})
++                return httpx.Response(200, json={"input_tokens": 42})
++            if outcome == "connection_loss":
++                raise httpx.ConnectError("fixture connection lost", request=request)
++            if outcome.startswith("stream_"):
++                message = {"id": "msg_fixture", "type": "message", "role": "assistant",
++                    "model": "claude-sonnet-5", "content": [], "stop_reason": None, "stop_sequence": None,
++                    "usage": {"input_tokens": 42, "output_tokens": 0}}
++                events = [{"type": "message_start", "message": message}]
++                if outcome == "stream_tool":
++                    events += [{"type": "content_block_start", "index": 0, "content_block":
++                        {"type": "tool_use", "id": "tool_fixture", "name": "terminal", "input": {}}},
++                        {"type": "content_block_stop", "index": 0}]
++                elif outcome != "stream_empty":
++                    events += [{"type": "content_block_start", "index": 0,
++                        "content_block": {"type": "text", "text": ""}},
++                        {"type": "content_block_delta", "index": 0,
++                        "delta": {"type": "text_delta", "text": "合成応答"}},
++                        {"type": "content_block_stop", "index": 0}]
++                if outcome != "stream_loss":
++                    events += [{"type": "message_delta", "delta":
++                        {"stop_reason": "tool_use" if outcome == "stream_tool" else "end_turn", "stop_sequence": None},
++                        "usage": {"output_tokens": 5}}, {"type": "message_stop"}]
++                wire = "".join(f"event: {event['type']}\ndata: {json.dumps(event)}\n\n" for event in events)
++                return httpx.Response(200, headers={"content-type": "text/event-stream"}, content=wire)
++            return httpx.Response(200, json={"id": "msg_fixture", "type": "message", "role": "assistant",
++                "model": "claude-sonnet-5", "content": [{"type": "text", "text": "合成応答"}],
++                "stop_reason": "max_tokens" if outcome == "output_limit" else "end_turn", "stop_sequence": None,
++                "usage": {"input_tokens": 42, "output_tokens": 5}})
++
++        client._client = httpx.Client(transport=httpx.MockTransport(respond))
++        monkeypatch.setattr(agent, "_create_request_anthropic_client", lambda **kwargs: client)
++        monkeypatch.setattr(agent, "_close_request_anthropic_client", lambda *args, **kwargs: None)
++        agent._disable_streaming = not outcome.startswith("stream_")
++        deltas = []
++        agent.stream_delta_callback = deltas.append
++        result = agent.run_conversation("日本語の合成テキストに短く答えてください")
++        generations = [body for path, body in seen if not path.endswith("count_tokens")]
++        assert len(generations) == (0 if outcome == "count_failure" else 1)
++        for body in generations:
++            assert body["max_tokens"] == 128 and not body.get("tools")
++            assert "SYNTHETIC_PRIVATE_SENTINEL" not in json.dumps(body)
++        if outcome in {"connection_loss", "count_failure"}:
++            assert result.get("failed") is True
++        if outcome in {"success", "stream_success"}:
++            assert result.get("failed", False) is False and "合成応答" in result["final_response"]
++        if outcome == "stream_success":
++            assert "合成応答" in "".join(deltas)
++        with pytest.raises(TextPilotError):
++            agent._execute_tool_calls(SimpleNamespace(tool_calls=[SimpleNamespace()]), [], "fixture")
++    finally:
++        if agent:
++            agent.close()
++        client.close()
++        reset_hermes_home_override(token)
++
++
++def test_real_construction_policy_is_scoped_a_b_a(tmp_path):
++    from run_agent import AIAgent
++    from hermes_constants import set_hermes_home_override, reset_hermes_home_override
++    homes = [tmp_path / name for name in ("pilot_a", "pilot_b")]
++    for home, cap in zip(homes, [64, 128]):
++        home.mkdir()
++        cfg = policy_config()
++        cfg["agent"]["text_pilot"]["max_output_tokens"] = cap
++        (home / "config.yaml").write_text(json.dumps(cfg))
++    for home, cap in [(homes[0], 64), (homes[1], 128), (homes[0], 64)]:
++        token = set_hermes_home_override(home)
++        agent = None
++        try:
++            agent = AIAgent(model="claude-sonnet-5", provider="anthropic", api_mode="anthropic_messages",
++                api_key="fixture-only", base_url="https://api.anthropic.com", quiet_mode=True)
++            assert agent.max_tokens == cap and agent._text_pilot.max_output_tokens == cap
++            assert agent.tools == [] and agent._build_system_prompt() == PILOT_SYSTEM_PROMPT
++        finally:
++            if agent:
++                agent.close()
++            reset_hermes_home_override(token)
+diff --git a/tests/tui_gateway/test_text_pilot_construction.py b/tests/tui_gateway/test_text_pilot_construction.py
+new file mode 100644
+index 0000000000..16286dcffb
+--- /dev/null
++++ b/tests/tui_gateway/test_text_pilot_construction.py
+@@ -0,0 +1,79 @@
++"""Gateway text-pilot construction uses each real profile config and no fallback."""
++
++import pytest
++import json
++
++from tests.agent.test_text_pilot import policy_config
++from tests.agent.test_text_pilot_integration import deny_real_network as deny_real_network
++
++
++def test_gateway_builds_the_isolated_policy_a_b_a(tmp_path, monkeypatch):
++    from tui_gateway import server
++    from hermes_constants import set_hermes_home_override, reset_hermes_home_override
++    from hermes_cli import runtime_provider
++    from hermes_state import SessionDB
++    from agent.text_pilot import PILOT_SYSTEM_PROMPT
++
++    def fixture_runtime(**kwargs):
++        return {"provider": "anthropic", "requested_provider": "anthropic", "api_mode": "anthropic_messages",
++                "api_key": "fixture-only", "base_url": "https://api.anthropic.com"}
++    def forbidden(*args, **kwargs):
++        raise AssertionError("Pilot must not read startup skills or resolve enabled toolsets")
++    monkeypatch.setattr(runtime_provider, "resolve_runtime_provider", fixture_runtime)
++    monkeypatch.setattr(server, "_startup_system_prompt", forbidden)
++    monkeypatch.setattr(server, "_load_enabled_toolsets", forbidden)
++    monkeypatch.setattr(server, "_load_disabled_toolsets", forbidden)
++    monkeypatch.setattr(server, "_start_notification_poller", forbidden)
++    monkeypatch.setattr(server, "_notify_session_boundary", forbidden)
++    homes = [tmp_path / name for name in ("pilot_a", "pilot_b")]
++    for home, cap in zip(homes, [64, 128]):
++        home.mkdir()
++        cfg = policy_config()
++        cfg["agent"]["text_pilot"]["max_output_tokens"] = cap
++        (home / "config.yaml").write_text(json.dumps(cfg))
++    for home, cap in [(homes[0], 64), (homes[1], 128), (homes[0], 64)]:
++        token = set_hermes_home_override(home)
++        db = SessionDB(home / "state.db")
++        agent = None
++        try:
++            agent = server._make_agent("pilot-fixture", "pilot-fixture", session_db=db)
++            assert agent.max_tokens == cap and agent.tools == []
++            assert agent._memory_store is None and agent.skip_context_files
++            assert agent._build_system_prompt() == PILOT_SYSTEM_PROMPT
++            assert not agent._fallback_chain and agent._skip_mcp_refresh
++            server._start_session_services("fixture", "fixture", {"agent": agent})
++            server._schedule_mcp_late_refresh("fixture", agent)
++        finally:
++            if agent:
++                agent.close()
++            db.close()
++            reset_hermes_home_override(token)
++
++
++def test_gateway_does_not_resolve_a_fallback_for_a_pilot(tmp_path, monkeypatch):
++    from tui_gateway import server
++    from hermes_constants import set_hermes_home_override, reset_hermes_home_override
++    from hermes_cli import runtime_provider
++    from hermes_cli.auth import AuthError
++    from agent.text_pilot import TextPilot, TextPilotError
++
++    home = tmp_path / "remote-web-smoke"
++    home.mkdir()
++    (home / "config.yaml").write_text(json.dumps(policy_config()))
++    token = set_hermes_home_override(home)
++    calls = []
++    def unavailable(**kwargs):
++        calls.append(kwargs)
++        raise AuthError("Fixture primary is unavailable")
++    def forbidden():
++        raise AssertionError("No automatic fallback may be consulted")
++    monkeypatch.setattr(runtime_provider, "resolve_runtime_provider", unavailable)
++    monkeypatch.setattr(server, "_load_fallback_model", forbidden)
++    try:
++        with pytest.raises(AuthError):
++            server._resolve_runtime_with_fallback({"requested": "anthropic"})
++        assert len(calls) == 1
++        with pytest.raises(TextPilotError):
++            TextPilot.from_config({})
++    finally:
++        reset_hermes_home_override(token)
+diff --git a/tui_gateway/server.py b/tui_gateway/server.py
+index 9a557d52e3..80a9883077 100644
+--- a/tui_gateway/server.py
++++ b/tui_gateway/server.py
+@@ -1055,6 +1055,8 @@ def _wire_session_agent(sid: str, key: str, agent) -> bool:
+ 
+ def _start_session_services(sid: str, key: str, current: dict) -> None:
+     """Start the notification poller and fire the session-reset boundary hook."""
++    if getattr(current.get("agent"), "_text_pilot", None) is not None:
++        return
+     with _sessions_lock:
+         if (rec := _sessions.get(sid)) is not None:
+             rec["_notif_stop"] = _start_notification_poller(sid, rec)
+@@ -1099,7 +1101,7 @@ def _announce_built_agent(sid: str, key: str, current: dict, agent) -> None:
+         info["config_warning"] = cfg_warn
+         logger.warning(cfg_warn)
+     _emit("session.info", sid, info)
+-    _schedule_mcp_late_refresh(sid, agent)  # servers slower than the bounded discovery wait land here
++    _schedule_mcp_late_refresh(sid, agent)
+ 
+ 
+ def _finish_agent_build(sid: str, key: str, current: dict, *, notify_registered: bool, scopes, session_db) -> None:
+@@ -1166,7 +1168,9 @@ def _start_agent_build(sid: str, session: dict) -> None:
+                 session_db = _open_profile_session_db(profile_home)
+             try:
+                 from tui_gateway.entry import ensure_mcp_discovery_started
+-                ensure_mcp_discovery_started()
++                from agent.text_pilot import TextPilot
++                if TextPilot.from_config(_load_cfg()) is None:
++                    ensure_mcp_discovery_started()
+             except Exception:
+                 logger.warning("MCP discovery startup failed", exc_info=True)
+             try:
+@@ -2431,6 +2435,8 @@ def _schedule_mcp_late_refresh(sid: str, agent) -> None:
+     ``mcp_discovery_timeout``, so a slow server's tools would be missing all session): a daemon joins discovery,
+     rebuilds like ``/reload-mcp`` and re-emits ``session.info``. Only pre-first-turn (nothing cached to
+     invalidate); afterwards late tools need an explicit, consent-gated ``/reload-mcp``."""
++    if getattr(agent, "_text_pilot", None) is not None:
++        return
+     try:
+         from tui_gateway.entry import mcp_discovery_in_flight, join_mcp_discovery
+     except Exception:
+@@ -2474,6 +2480,9 @@ def _resolve_runtime_with_fallback(resolve_kwargs: dict | None = None) -> _Runti
+     try:
+         return _RuntimeFallbackResolution(resolve_runtime_provider(**(resolve_kwargs or {})), None, False)
+     except AuthError as primary_exc:
++        from agent.text_pilot import TextPilot
++        if TextPilot.from_config(_load_cfg()) is not None:
++            raise
+         for entry in _load_fallback_model() or []:
+             fb_provider = str(entry.get("provider") or "").strip() if isinstance(entry, dict) else ""
+             fb_model = str(entry.get("model") or "").strip() if isinstance(entry, dict) else ""
+@@ -2617,16 +2626,19 @@ def _make_agent(
+     if synthetic is not None:
+         return synthetic
+     from run_agent import AIAgent
++    from agent.text_pilot import TextPilot
++    cfg = _load_cfg()
++    pilot = TextPilot.from_config(cfg)
+     # MCP discovery runs in a daemon thread (a dead server can't freeze the shell); the agent snapshots its tool
+     # list once, so briefly wait for in-flight discovery. Dashboard /api/ws uses mcp_startup; TUI stdio uses entry.
+-    for _mod in ("hermes_cli.mcp_startup", "tui_gateway.entry"):
++    for _mod in (() if pilot else ("hermes_cli.mcp_startup", "tui_gateway.entry")):
+         with contextlib.suppress(Exception):
+             importlib.import_module(_mod).wait_for_mcp_discovery()
+-    cfg = _load_cfg()
+     # Load hooks alongside the same profile config used to construct this agent.
+     from agent.shell_hooks import register_from_config
+-    register_from_config(cfg)
+-    system_prompt = _startup_system_prompt(cfg, session_id or key)
++    if pilot is None:
++        register_from_config(cfg)
++    system_prompt = None if pilot else _startup_system_prompt(cfg, session_id or key)
+     model, runtime = _resolve_agent_model_runtime(model_override, provider_override)
+     fallback_notice = runtime.pop("_fallback_notice", None)
+     _pr = _load_provider_routing()
+@@ -2644,8 +2656,8 @@ def _make_agent(
+         reasoning_config=(
+             reasoning_config_override if reasoning_config_override is not None else _load_reasoning_config(str(model or ""))),
+         service_tier=service_tier_override if service_tier_override is not None else _load_service_tier(),
+-        enabled_toolsets=_load_enabled_toolsets(platform),
+-        disabled_toolsets=_load_disabled_toolsets(),
++        enabled_toolsets=[] if pilot else _load_enabled_toolsets(platform),
++        disabled_toolsets=[] if pilot else _load_disabled_toolsets(),
+         # OpenRouter provider_routing prefs (gateway + CLI parity).
+         providers_allowed=_pr.get("only"), providers_ignored=_pr.get("ignore"), providers_order=_pr.get("order"),
+         provider_sort=_pr.get("sort"), provider_require_parameters=_pr.get("require_parameters", False),
+@@ -2657,10 +2669,11 @@ def _make_agent(
+         session_db=session_db if session_db is not None else _get_db(), ephemeral_system_prompt=system_prompt or None,
+         checkpoints_enabled=is_truthy_value(os.environ.get("HERMES_TUI_CHECKPOINTS")),
+         pass_session_id=is_truthy_value(os.environ.get("HERMES_TUI_PASS_SESSION_ID")),
+-        skip_context_files=ignore_rules, skip_memory=ignore_rules, fallback_model=_load_fallback_model(),
++        skip_context_files=ignore_rules, skip_memory=ignore_rules,
++        fallback_model=None if pilot else _load_fallback_model(),
+         # The resolved provider's request body (a custom entry's extra_body), as the CLI/cron/gateway pass it.
+         request_overrides=runtime.get("request_overrides"),
+-        prefill_messages=_load_prefill_messages() or None, **_agent_cbs(sid))
++        prefill_messages=None if pilot else _load_prefill_messages() or None, **_agent_cbs(sid))
+     if context_cwd_is_launch_artifact is None:
+         context_cwd_is_launch_artifact = _context_cwd_is_launch_artifact(session)
+     agent._context_cwd_is_launch_artifact = bool(context_cwd_is_launch_artifact)

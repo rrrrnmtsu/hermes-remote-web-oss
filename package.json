@@ -1,0 +1,93 @@
+{
+  "name": "hermes-remote-web",
+  "version": "2.0.0-preview.1",
+  "description": "Japanese single-user mobile Web client for an existing same-origin Hermes Dashboard",
+  "type": "module",
+  "license": "MIT",
+  "author": "Stanislav Stepchenko",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rrrrnmtsu/hermes-remote-web-oss.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rrrrnmtsu/hermes-remote-web-oss/issues"
+  },
+  "homepage": "https://github.com/rrrrnmtsu/hermes-remote-web-oss#readme",
+  "files": [
+    "LICENSE",
+    "NOTICE",
+    "THIRD_PARTY_NOTICES.md",
+    "upstream.lock.json"
+  ],
+  "engines": {
+    "node": "24.18.x"
+  },
+  "keywords": [
+    "hermes",
+    "pwa",
+    "mobile",
+    "ai",
+    "agent",
+    "dashboard-plugin"
+  ],
+  "workspaces": [
+    "packages/core",
+    "packages/web",
+    "packages/tab"
+  ],
+  "scripts": {
+    "build": "node scripts/build-remote.mjs",
+    "typecheck": "tsc -b packages/core/tsconfig.json packages/web/tsconfig.json packages/tab/tsconfig.json",
+    "lint": "eslint packages/ --ext .ts,.tsx",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest",
+    "verify:pwa": "node scripts/verify-remote.mjs",
+    "verify:pack": "node scripts/verify-remote.mjs",
+    "test:remote": "vitest run packages/core/src/stores/remote.test.ts packages/core/src/transport/remote-gateway.test.ts packages/core/src/transport/official-replay.test.ts packages/web/src/remote/remote.test.tsx --maxWorkers=1 --minWorkers=1",
+    "e2e:remote": "node scripts/e2e-remote.mjs",
+    "e2e:chat-ux": "node scripts/e2e-chat-ux.mjs",
+    "e2e:daily-ui": "node scripts/e2e-daily-ui.mjs",
+    "e2e:quote-image": "node scripts/build-image-fixture.mjs && node scripts/e2e-quote-image.mjs",
+    "e2e:sidebar": "node scripts/e2e-sidebar.mjs",
+    "e2e:interactions": "node scripts/e2e-interactions-review.mjs --phase=after && node scripts/e2e-interactions-review.mjs --phase=after --suite=critical",
+    "e2e:next-phase": "node scripts/e2e-next-phase.mjs",
+    "test:oss": "node --test scripts/oss/*.test.mjs",
+    "e2e:oss-guide": "node scripts/oss/e2e-guide.mjs",
+    "package:release": "python3 scripts/oss/package-release.py"
+  },
+  "dependencies": {
+    "mdast-util-from-markdown": "2.0.3",
+    "mdast-util-to-hast": "13.2.1",
+    "qrcode-generator": "^1.5.2",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-markdown": "^10.1.0",
+    "zustand": "^4.5.0"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "@vitest/coverage-v8": "3.2.6",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.0",
+    "happy-dom": "^20.10.2",
+    "jsdom": "^29.1.1",
+    "playwright": "1.62.1",
+    "prettier": "^3.2.0",
+    "typescript": "^5.4.0",
+    "vite": "6.4.3",
+    "vitest": "3.2.6"
+  },
+  "private": true,
+  "overrides": {
+    "tinypool": "2.1.2"
+  }
+}
