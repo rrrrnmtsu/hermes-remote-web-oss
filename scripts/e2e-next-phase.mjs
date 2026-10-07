@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { chromium, webkit } from 'playwright';
 import { startFixture } from './fixture-server.mjs';
@@ -114,8 +114,10 @@ for (const [engine, type] of [['webkit', webkit], ['chromium', chromium]]) {
       assert.equal(await input.inputValue(), draft);
       assert.equal(fixture.state.submissions, 0);
     });
-    const imageName = readdirSync(join(release, 'assets')).find(name => /^image-turn-.*\.png$/.test(name)); assert.ok(imageName);
-    await page.getByLabel('JPEGまたはPNGを1枚選択', { exact: true }).setInputFiles(join(release, 'assets', imageName));
+    // Use the neutral app icon, independently of retained historical proof galleries.
+    await page.getByLabel('JPEGまたはPNGを1枚選択', { exact: true }).setInputFiles({
+      name: 'DEMO.png', mimeType: 'image/png', buffer: readFileSync(join(release, 'icons', 'icon-192.png')),
+    });
     await page.getByRole('region', { name: '選択した画像', exact: true }).waitFor();
     await click('画像の詳細と注意を確認');
     const imageDialog = page.getByRole('dialog', { name: phase === 'after' ? '画像の詳細' : '入力の補助', exact: true });
