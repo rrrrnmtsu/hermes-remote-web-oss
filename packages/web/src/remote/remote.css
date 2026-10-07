@@ -230,6 +230,16 @@ details[open] > summary::before { transform: rotate(45deg); }
 .remote-sheet-heading button { background: transparent; flex-shrink: 0; white-space: nowrap; }
 .remote-menu-action { display: block; width: 100%; text-align: left; margin: 4px 0; background: transparent; }
 .remote-menu-action:hover, .remote-session:hover { background: var(--remote-surface); }
+.remote-quick-navigation-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; position: sticky; top: -16px; padding-bottom: 8px; background: var(--remote-surface); z-index: 1; }
+.remote-quick-navigation-heading h2 { margin: 0; overflow-wrap: anywhere; }
+.remote-quick-navigation > .remote-search { margin: 4px 0; background: var(--remote-bg); }
+.remote-quick-navigation > p { margin: 8px 0; }
+.remote-quick-navigation-results { list-style: none; margin: 0; padding: 0; }
+.remote-quick-navigation-results .remote-menu-action { background: var(--remote-bg); margin: 4px 0; min-height: 48px; }
+.remote-quick-navigation-results strong, .remote-quick-navigation-results span { display: block; overflow-wrap: anywhere; }
+.remote-quick-navigation-results .remote-meta { margin-top: 4px; }
+.remote-sidebar-navigate { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; margin: 8px 0; }
+.remote-sidebar-navigate span { min-width: 0; overflow-wrap: anywhere; }
 .remote-session-details { padding: 0 12px; color: var(--remote-muted); }
 .remote-session-details dl { font-size: .8125rem; }
 .remote-return-chat { display: inline-flex; align-items: center; gap: 8px; background: transparent; margin-bottom: 16px; }

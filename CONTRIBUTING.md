@@ -21,6 +21,9 @@ Do not remove failing tests, relax verifiers or broaden skips to pass.
 
 Use dedicated branches, preserve shared work, and sign off commits with the DCO.
 Describe the resulting behavior, scope, tests and unverified cases.
+Refresh current file hashes in `SOURCE_PROVENANCE.json` and `SOURCE_SHA256SUMS`
+when changing public source; retain original source hashes and notices. CI checks
+the checksum inventory with `sha256sum --check SOURCE_SHA256SUMS`.
 AI-assisted contributions are welcome; contributors remain responsible for
 provenance, review and correctness.
 

@@ -21,6 +21,9 @@ The default is page-memory content. Plaintext display keys:
 
 No credential, ticket, transcript, draft, attachment bytes/name, search term or
 conversation ID is written to plaintext browser storage.
+Quick-navigation queries are also page memory only and discarded on close or
+scope/auth changes. Navigation does not grant notification, storage or microphone
+consent, or execute send/approval/stop/model/profile writes.
 Explicit Markdown/artifact download leaves content in a selected file.
 Browser save requests do not prove OS completion or revoke existing copies.
 

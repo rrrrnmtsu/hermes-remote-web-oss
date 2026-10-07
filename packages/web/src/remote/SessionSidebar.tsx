@@ -2,9 +2,10 @@ import type { RemoteController, RemoteSession, RemoteState } from '../../../core
 import { RemoteIcon } from './RemoteIcon';
 import { executionLabels, scopeBusyReason, sessionDate } from './remote-labels';
 
-export function SessionSidebar({ state, controller, scopeBusy, search, onSearch, onFilter, onOpen, onCurrent, onList, onDismiss }: {
+export function SessionSidebar({ state, controller, scopeBusy, search, onSearch, onFilter, onOpen, onCurrent, onList, onDismiss, onNavigate }: {
   state: RemoteState; controller: RemoteController; scopeBusy: boolean; search: string;
   onSearch(value: string): void; onFilter(id: string): void; onOpen(id?: string): void; onCurrent(): void; onList(): void; onDismiss?: () => void;
+  onNavigate?: () => void;
 }) {
   const selected = state.projects.find(project => project.id === state.selectedProjectId);
   const query = search.trim().toLocaleLowerCase('ja-JP');
@@ -20,6 +21,9 @@ export function SessionSidebar({ state, controller, scopeBusy, search, onSearch,
     <div className="remote-sidebar-heading"><h2>セッション</h2>
       {onDismiss && <button autoFocus className="remote-icon-button" aria-label="サイドバーを閉じる" onClick={onDismiss}>×</button>}
     </div>
+    {onNavigate && <button className="remote-sidebar-navigate" aria-haspopup="dialog" aria-keyshortcuts="Meta+K Control+K" onClick={onNavigate}>
+      <RemoteIcon name="search" /><span>クイックナビゲーション</span>
+    </button>}
     <label className="remote-sidebar-profile"><span>profile</span><select aria-label="サイドバーのprofile" value={state.profile}
       disabled={scopeBusy || state.connection !== 'connected'} onChange={event => { onSearch(''); void controller.selectProfile(event.target.value); }}>
       {(state.profiles.length ? state.profiles : [state.profile]).map(profile => <option key={profile}>{profile}</option>)}

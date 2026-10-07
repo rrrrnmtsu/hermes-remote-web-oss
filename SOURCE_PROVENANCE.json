@@ -13,7 +13,8 @@
   "modifications": [
     "Existing licensed R01\u2013R22 derivative retained",
     "OSS setup guide, allowlisted diagnostics, static operator and public documentation",
-    "Curated public source-only plugin stub and metadata; upstream assets/private operators omitted"
+    "Curated public source-only plugin stub and metadata; upstream assets/private operators omitted",
+    "Post-publication quick navigation over existing destinations/read panels; memory-only queries, unchanged RPC/backend contracts"
   ],
   "files": [
     {
@@ -48,8 +49,9 @@
       "file": ".github/workflows/ci.yml",
       "source": "docs/oss-public/ci.yml",
       "sourceSha256": "cee12c3594c0b402fbe85dcaa9e7e00a9b9a35343385f541edb31cc331a570be",
-      "sha256": "cee12c3594c0b402fbe85dcaa9e7e00a9b9a35343385f541edb31cc331a570be",
-      "modifiedDuringExport": false
+      "sha256": "ff4546364e9820468c3e161790b5f10b1b82258ba57054837aa93f5445f3245a",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": ".github/workflows/release.yml",
@@ -83,8 +85,9 @@
       "file": "CONTRIBUTING.md",
       "source": "docs/oss-public/CONTRIBUTING.md",
       "sourceSha256": "49cbdd0ededee6a6d8a139469055f785b9c72e74718cc7d4576ed237692965bb",
-      "sha256": "49cbdd0ededee6a6d8a139469055f785b9c72e74718cc7d4576ed237692965bb",
-      "modifiedDuringExport": false
+      "sha256": "4a3ac59527d65635ce09d51b473bd9d215a2acba21b376f47445225ae0a4e09f",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "LICENSE",
@@ -104,15 +107,17 @@
       "file": "README.ja.md",
       "source": "docs/oss-public/README.ja.md",
       "sourceSha256": "05ba9b9eb9cc5ebf3f8bf8c63e5ea589bfb0d9c3d8886b6f21a033cb3782e03e",
-      "sha256": "05ba9b9eb9cc5ebf3f8bf8c63e5ea589bfb0d9c3d8886b6f21a033cb3782e03e",
-      "modifiedDuringExport": false
+      "sha256": "e3cf86cc001d1642dfb0fe6ae5d9afc92d85852e5918a18484e1a0cf716e108b",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "README.md",
       "source": "docs/oss-public/README.md",
       "sourceSha256": "c27e43dfe203a7064e60c8284cdd3b4a85eb6d020981d01fe543e561be03c6cd",
-      "sha256": "c27e43dfe203a7064e60c8284cdd3b4a85eb6d020981d01fe543e561be03c6cd",
-      "modifiedDuringExport": false
+      "sha256": "1a0c6c28314c52ab7e2d3c981ed730d5b51625d4f24e57b93ab120698a0b00a4",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "SECURITY.md",
@@ -168,8 +173,17 @@
       "file": "docs/OSS_ROADMAP.md",
       "source": "docs/OSS_ROADMAP.md",
       "sourceSha256": "2c05358499fed1e0b719f4c7cd6b70e77730552ae1135be4420af0c3a21fa214",
-      "sha256": "2c05358499fed1e0b719f4c7cd6b70e77730552ae1135be4420af0c3a21fa214",
-      "modifiedDuringExport": false
+      "sha256": "f7a36eb74f2e13d145b85cb31129193beefd3a577d365f5acb7b518f112cf2bb",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
+    },
+    {
+      "file": "docs/QUICK_NAVIGATION.md",
+      "source": "docs/QUICK_NAVIGATION.md",
+      "sourceSha256": "f1f6ef11eadb0d52ec7efc2e447a2396b3230c4386fb3ba7c80d417800c4f16e",
+      "sha256": "f1f6ef11eadb0d52ec7efc2e447a2396b3230c4386fb3ba7c80d417800c4f16e",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
     },
     {
       "file": "docs/REMOTE_CONTRACT.md",
@@ -189,15 +203,17 @@
       "file": "docs/REMOTE_USAGE.md",
       "source": "docs/oss-public/REMOTE_USAGE.md",
       "sourceSha256": "f52735452b20a982ca328a42382ca70af675a50a05f09abbe3bbcec1962f30b1",
-      "sha256": "f52735452b20a982ca328a42382ca70af675a50a05f09abbe3bbcec1962f30b1",
-      "modifiedDuringExport": false
+      "sha256": "f16c2a71f8605e8610af8d7009cb9419ff644e6ef2c86beda43d62f7214cfc95",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "docs/SECURITY.md",
       "source": "docs/oss-public/PRIVACY.md",
       "sourceSha256": "3cdab457a21f22e345de6409ea5f5573498ea22ce2b965565856b8f5ef997bbe",
-      "sha256": "3cdab457a21f22e345de6409ea5f5573498ea22ce2b965565856b8f5ef997bbe",
-      "modifiedDuringExport": false
+      "sha256": "2dab0d371c12e8af510da2518f03cb077ee985a4cc938fb486803fb15745ff70",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "docs/screenshots/conversation.png",
@@ -205,6 +221,22 @@
       "sourceSha256": "007d74b16e43c448f0d02f3dd42ad782e0124f3af31dc9babfb370180c3b43a7",
       "sha256": "007d74b16e43c448f0d02f3dd42ad782e0124f3af31dc9babfb370180c3b43a7",
       "modifiedDuringExport": false
+    },
+    {
+      "file": "docs/screenshots/quick-navigation-desktop.png",
+      "source": "Owned synthetic WebKit fixture render; no real user content",
+      "sourceSha256": "698e39e7be0a7ac9882caaf34da9221caf39ef5b63cfdb6c6699dc35808364b1",
+      "sha256": "698e39e7be0a7ac9882caaf34da9221caf39ef5b63cfdb6c6699dc35808364b1",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
+    },
+    {
+      "file": "docs/screenshots/quick-navigation.png",
+      "source": "Owned synthetic WebKit fixture render; no real user content",
+      "sourceSha256": "301608b5cdd36abe5707171eb0fe297d435faee3d46894ff1a3ab2dafd5e3c21",
+      "sha256": "301608b5cdd36abe5707171eb0fe297d435faee3d46894ff1a3ab2dafd5e3c21",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
     },
     {
       "file": "docs/screenshots/setup-diagnostics.png",
@@ -350,8 +382,9 @@
       "file": "package.json",
       "source": "package.json",
       "sourceSha256": "978e0c9ac7f92e0fa479ec2e7f1310c7a62039f2cebdd002c5c8693a81042ba9",
-      "sha256": "a0a2ed934eeb8aa5fa3622ceab24dc01bea7fa2e79582dffed02c95f496b0043",
-      "modifiedDuringExport": true
+      "sha256": "c22c40ecc55dd6a98bbe83e0f3a8be27a64ae8013757de8d9174ba62ffe0b010",
+      "modifiedDuringExport": true,
+      "modifiedAfterExport": true
     },
     {
       "file": "packages/core/package.json",
@@ -1768,11 +1801,28 @@
       "modifiedDuringExport": false
     },
     {
+      "file": "packages/web/src/remote/QuickNavigation.test.tsx",
+      "source": "packages/web/src/remote/QuickNavigation.test.tsx",
+      "sourceSha256": "53f8d501526bb03fc4346bd88f8e695e902b5f15cd6182d243eddc9224dbcdce",
+      "sha256": "53f8d501526bb03fc4346bd88f8e695e902b5f15cd6182d243eddc9224dbcdce",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
+    },
+    {
+      "file": "packages/web/src/remote/QuickNavigation.tsx",
+      "source": "packages/web/src/remote/QuickNavigation.tsx",
+      "sourceSha256": "50dce2cc9f3c6051dc26615ace393238d5052a551072c1d4c0039eacbc30fbfe",
+      "sha256": "50dce2cc9f3c6051dc26615ace393238d5052a551072c1d4c0039eacbc30fbfe",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
+    },
+    {
       "file": "packages/web/src/remote/RemoteApp.tsx",
       "source": "packages/web/src/remote/RemoteApp.tsx",
       "sourceSha256": "98ba6e4245cf98f8928b0a2370926babbd8a30930c50d90a0283dc74b27fafff",
-      "sha256": "98ba6e4245cf98f8928b0a2370926babbd8a30930c50d90a0283dc74b27fafff",
-      "modifiedDuringExport": false
+      "sha256": "da265587cd50067b7a012ecf96ce3c6fe891afa10d20489a3e4e8739aba47ec4",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "packages/web/src/remote/RemoteIcon.tsx",
@@ -1792,15 +1842,17 @@
       "file": "packages/web/src/remote/SessionSidebar.tsx",
       "source": "packages/web/src/remote/SessionSidebar.tsx",
       "sourceSha256": "8dea7fae9897e462419765e184d039d98a97f0c6a97652bbedb1f382346d2441",
-      "sha256": "8dea7fae9897e462419765e184d039d98a97f0c6a97652bbedb1f382346d2441",
-      "modifiedDuringExport": false
+      "sha256": "af818ee833d43d2955a63b3704aab7958f8f25761192e8f1d3cbc6fa134f5a33",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "packages/web/src/remote/Settings.tsx",
       "source": "packages/web/src/remote/Settings.tsx",
       "sourceSha256": "976dde696fbf363f368e902963ec226aaab6cc737a8d620568b46c4c9339b788",
-      "sha256": "976dde696fbf363f368e902963ec226aaab6cc737a8d620568b46c4c9339b788",
-      "modifiedDuringExport": false
+      "sha256": "6d80876ba77635aca71ba79d2919a1f292ca28668a81c9fb6b124e9b12a04e98",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "packages/web/src/remote/SetupGuide.test.tsx",
@@ -1964,6 +2016,22 @@
       "modifiedDuringExport": false
     },
     {
+      "file": "packages/web/src/remote/quick-navigation.test.ts",
+      "source": "packages/web/src/remote/quick-navigation.test.ts",
+      "sourceSha256": "32bd6ca7f03262b27f81c7e914c2ead2cb03b820de74cb3ca43548bf2671f6d1",
+      "sha256": "32bd6ca7f03262b27f81c7e914c2ead2cb03b820de74cb3ca43548bf2671f6d1",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
+    },
+    {
+      "file": "packages/web/src/remote/quick-navigation.ts",
+      "source": "packages/web/src/remote/quick-navigation.ts",
+      "sourceSha256": "2563f993a4c9c056942eaa1a7cd318dae39bcf484a50451e6b361f8c6c113c8f",
+      "sha256": "2563f993a4c9c056942eaa1a7cd318dae39bcf484a50451e6b361f8c6c113c8f",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
+    },
+    {
       "file": "packages/web/src/remote/quote-content.test.ts",
       "source": "packages/web/src/remote/quote-content.test.ts",
       "sourceSha256": "0aaa61ffeb05f0417c891bf66f5c4c5a9af3197e808d3b286e439593fa544ac8",
@@ -1995,8 +2063,9 @@
       "file": "packages/web/src/remote/remote.css",
       "source": "packages/web/src/remote/remote.css",
       "sourceSha256": "533f65db0a7f8ce98979b7c449bb2bba522f423e09fda3423911643aa6a1467a",
-      "sha256": "533f65db0a7f8ce98979b7c449bb2bba522f423e09fda3423911643aa6a1467a",
-      "modifiedDuringExport": false
+      "sha256": "60e38c32e58c9ab9d0e4cb0152bbe456b6e417a40bb4a56b001885d2f4e629dc",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "packages/web/src/remote/remote.test.tsx",
@@ -2634,6 +2703,14 @@
       "sourceSha256": "8b0be574cd002ddb4ea690a8286ee3435420bb31d6429d2c6bb7f75695424d59",
       "sha256": "8b0be574cd002ddb4ea690a8286ee3435420bb31d6429d2c6bb7f75695424d59",
       "modifiedDuringExport": false
+    },
+    {
+      "file": "scripts/e2e-quick-navigation.mjs",
+      "source": "scripts/e2e-quick-navigation.mjs",
+      "sourceSha256": "7c1392e12dcad398deb1b977e5764ecb192ea306b39da6f036a6c76f0b061f52",
+      "sha256": "7c1392e12dcad398deb1b977e5764ecb192ea306b39da6f036a6c76f0b061f52",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
     },
     {
       "file": "scripts/e2e-quote-image.mjs",

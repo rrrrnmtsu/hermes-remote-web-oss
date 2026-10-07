@@ -57,7 +57,7 @@ authorization. Do not contact a provider or enable tools as part of installation
 | Priority | Work | Boundary |
 | --- | --- | --- |
 | P1 | Full English/Japanese interface | Reuse the controller; no change to RPC behavior |
-| P1 | Quick navigation palette | Existing actions only; selecting does not submit or approve |
+| P1 | [Quick navigation palette](QUICK_NAVIGATION.md), implemented in the review candidate | Existing destinations/read panels only; no automatic send, approval or consent; physical-device acceptance separate |
 | P1 | Broader official-Hermes compatibility | Verify authoritative identity/ownership/policy; never bypass the generation gate |
 | P2 | Cross-conversation full-text search | Owner/profile-scoped bounded server read; no LLM-required search |
 | P2 | Multi-conversation status overview | Actual server scope only; no ownership takeover or fabricated task ledger |
