@@ -19,6 +19,7 @@ jobs:
           node-version: 24.18.0
           cache: npm
       - run: npm ci --ignore-scripts --no-audit --no-fund
+      - run: sha256sum --check SOURCE_SHA256SUMS
       - run: npm run typecheck
       - run: npm run lint
       - run: npm test -- --maxWorkers=1 --minWorkers=1
@@ -39,6 +40,7 @@ jobs:
           npm run e2e:quote-image
           npm run e2e:next-phase
           npm run e2e:oss-guide
+          npm run e2e:quick-navigation
           node scripts/e2e-conversation-date-fields.mjs --long-project=1
           npm run e2e:interactions
           node scripts/e2e-update-cache.mjs
@@ -53,6 +55,7 @@ jobs:
           path: |
             output/public-release/
             output/oss-guide/
+            output/quick-navigation/
             evidence/*browser*.json
             evidence/browser-fixture.json
           retention-days: 7

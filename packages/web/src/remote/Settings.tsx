@@ -5,10 +5,11 @@ import { CHAT_FONT_REM, type ChatFontSize } from './runtime';
 import type { CSSProperties } from 'react';
 import { SetupGuide } from './SetupGuide';
 
-export function Settings({ state, buildId, theme, onTheme, chatFontSize, onChatFontSize, onReconnect, onUpdate, onLogout, checkingUpdate = false }: {
+export function Settings({ state, buildId, theme, onTheme, chatFontSize, onChatFontSize, onReconnect, onUpdate, onLogout, onNavigate, checkingUpdate = false }: {
   state: RemoteState; buildId: string; theme: string; onTheme(value: string): void;
   chatFontSize: ChatFontSize; onChatFontSize(value: ChatFontSize): void;
   onReconnect(): void; onUpdate(): void; onLogout(): void; checkingUpdate?: boolean;
+  onNavigate?: () => void;
 }) {
   const checks = [['HTTPS', state.https], ['Hermes認証', state.authenticated], ['WSS', state.wss],
     ['gateway.ready', state.gatewayReady], ['読取RPC', state.readRpc]] as const;
@@ -30,6 +31,10 @@ export function Settings({ state, buildId, theme, onTheme, chatFontSize, onChatF
       </dl></details>
     </section>
     <SetupGuide state={state} buildId={buildId} />
+    {onNavigate && <section className="remote-panel"><h2>画面への移動</h2>
+      <p>サイドバー、または⌘ / Ctrl + Kから、既存の画面・パネルを検索して開けます。</p>
+      <button aria-haspopup="dialog" aria-keyshortcuts="Meta+K Control+K" onClick={onNavigate}>クイックナビゲーション</button>
+    </section>}
     <section className="remote-panel"><h2>表示</h2><label>表示テーマ<select value={theme} onChange={event => onTheme(event.target.value)}>
       <option value="system">端末に合わせる</option><option value="light">ライト</option><option value="dark">ダーク</option>
     </select></label>

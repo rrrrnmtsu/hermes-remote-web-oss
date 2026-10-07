@@ -25,6 +25,12 @@ Body-size setting supports 15/16/17px, with 16px default/reset. Encrypted storag
 offline shell, notifications and microphone/speech require explicit choice. Default
 memory drafts are lost when the page is destroyed; no complete recovery is claimed.
 
+For fast movement, choose **クイックナビゲーション** from the sidebar or Settings,
+or press Command/Control+K with a hardware keyboard. Search destination names in
+Japanese or English, then explicitly select a result. This only navigates/opens
+existing read panels; it never sends, answers, stops, saves or enables consent.
+The query stays in memory. [Quick navigation details](QUICK_NAVIGATION.md).
+
 For a support report, Settings → “導入と対応機能” → review the allowlisted diagnostic
 text → explicitly copy. Share build/stage/boolean information and synthetic
 reproduction steps, not actual conversation, session identifiers, origins, images,

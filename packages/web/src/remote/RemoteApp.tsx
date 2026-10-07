@@ -14,6 +14,8 @@ import { Notice } from './Notice';
 import { phaseLabels } from './remote-labels';
 import { ProductControls, type ProductSelection } from './ProductControls';
 import { activateWaitingWorker } from './storage/worker';
+import { QuickNavigation } from './QuickNavigation';
+import { isNavigationShortcut, navigationCommands, type NavigationDestination } from './quick-navigation';
 import './remote.css';
 
 declare const __REMOTE_BUILD_ID__: string;
@@ -109,11 +111,36 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
   const [notice, setNotice] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [desktopSidebar, setDesktopSidebar] = useState(false);
+  const [navigationScope, setNavigationScope] = useState<string | null>(null);
+  const navigationComposing = useRef(false);
+  const navigationFrame = useRef(0);
+  const currentScope = controller.featureScopeKey;
   const pageIntent = useRef(0);
   const opening = useRef(0);
   const openingSerial = useRef(0);
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const checkingUpdateRef = useRef(false);
+  const openNavigation = useCallback((): void => {
+    if (loggingOut || logoutConfirm || updating) return;
+    setNavigationScope(controller.featureScopeKey); setSidebarOpen(false);
+  }, [controller, loggingOut, logoutConfirm, updating]);
+  useEffect(() => { setNavigationScope(null); navigationComposing.current = false; }, [currentScope, state.connection]);
+  useEffect(() => {
+    const begin = (): void => { navigationComposing.current = true; };
+    const end = (): void => { navigationComposing.current = false; };
+    const key = (event: KeyboardEvent): void => {
+      if (!isNavigationShortcut(event, navigationComposing.current) || document.visibilityState === 'hidden'
+        || document.querySelector('dialog[open]')) return;
+      event.preventDefault(); openNavigation();
+    };
+    window.addEventListener('compositionstart', begin); window.addEventListener('compositionend', end);
+    window.addEventListener('keydown', key);
+    return () => {
+      window.removeEventListener('compositionstart', begin); window.removeEventListener('compositionend', end);
+      window.removeEventListener('keydown', key);
+    };
+  }, [openNavigation]);
+  useEffect(() => () => window.cancelAnimationFrame(navigationFrame.current), []);
   useEffect(() => { pageIntent.current++; opening.current = 0; }, [state.profile, state.principalId]);
   useEffect(() => {
     const media = window.matchMedia('(min-width: 1024px)');
@@ -150,14 +177,14 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
   useEffect(() => {
     if (state.connection === 'reauth' || state.connection === 'logged_out') {
       conversationPosition.current = null;
-      setSearch(''); setNotice(''); setList(true); setTab('chat'); setLogoutConfirm(false); setComposerFocused(false); setSidebarOpen(false);
+      setSearch(''); setNotice(''); setList(true); setTab('chat'); setLogoutConfirm(false); setComposerFocused(false); setSidebarOpen(false); setNavigationScope(null);
     }
   }, [state.connection]);
   const scopedRequests = state.requests.filter(card => card.profile === state.profile && card.sessionId === state.liveId);
   const pending = scopedRequests.filter(card => ['pending', 'checking', 'response_unknown'].includes(card.status));
   const scopeBusy = state.featureBusy || state.submitInProgress || state.sessionLoading || state.imageSelecting || state.delivery === 'sending' || Boolean(state.draft) || Boolean(state.attachment) || Boolean(state.document) || ['checking', 'foreign', 'unknown'].includes(state.imageQueue) || pending.length > 0
     || ['running', 'waiting_input', 'stop_requested'].includes(state.execution);
-  const safeUpdate = !loggingOut && !productBusy && !state.featureBusy && !state.draft && !state.imageSelecting && !state.attachment && !state.document && !['checking', 'foreign', 'unknown'].includes(state.imageQueue) && state.delivery !== 'sending' && state.delivery !== 'delivery_unknown' && pending.length === 0
+  const safeUpdate = !loggingOut && !productBusy && !navigationScope && !state.featureBusy && !state.draft && !state.imageSelecting && !state.attachment && !state.document && !['checking', 'foreign', 'unknown'].includes(state.imageQueue) && state.delivery !== 'sending' && state.delivery !== 'delivery_unknown' && pending.length === 0
     && !['running', 'waiting_input', 'stop_requested', 'unknown'].includes(state.execution) && !state.sessionLoading && !state.submitInProgress;
   const inConversation = tab === 'chat' && !list && Boolean(state.liveId);
   const pageScroll = usePageScroll(`${tab}:${tab === 'chat' ? inConversation ? state.liveId : `list:${state.selectedProjectId}` : ''}`,
@@ -186,9 +213,29 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
     const current = controller.store.getState();
     if ([current.durableId, current.lineageId].includes(id)) showCurrent(); else openFromSidebar(id);
   };
+  const navigate = (destination: NavigationDestination): void => {
+    const scope = navigationScope;
+    if (!scope || scope !== controller.featureScopeKey || loggingOut || updating) { setNavigationScope(null); return; }
+    const command = navigationCommands(controller.store.getState()).find(row => row.id === destination);
+    if (!command || command.disabledReason) return;
+    setNavigationScope(null); setSidebarOpen(false);
+    if (destination === 'current') showCurrent();
+    else if (destination === 'conversations') showList();
+    else if (destination === 'requests' || destination === 'settings') selectTab(destination);
+    else if (destination === 'sessions') { pageIntent.current++; setSidebarOpen(!desktopSidebar); }
+    else { pageIntent.current++; setProductSelection({ action: destination }); return; }
+    const intent = pageIntent.current;
+    window.cancelAnimationFrame(navigationFrame.current);
+    navigationFrame.current = window.requestAnimationFrame(() => {
+      if (scope !== controller.featureScopeKey || intent !== pageIntent.current || document.querySelector('dialog[open]')) return;
+      const target = destination === 'sessions' ? document.querySelector<HTMLElement>('.remote-sidebar-heading h2')
+        : pageScroll.main.current?.querySelector<HTMLElement>('.remote-chat-heading, h1');
+      if (target) { target.tabIndex = -1; target.focus({ preventScroll: true }); }
+    });
+  };
   const sidebar = <SessionSidebar state={state} controller={controller} scopeBusy={scopeBusy} search={search} onSearch={setSearch}
     onFilter={id => { pageIntent.current++; setSearch(''); setList(true); setTab('chat'); setComposerFocused(false); void controller.selectProject(id); }}
-    onOpen={openFromSidebar} onCurrent={showCurrent} onList={showList} {...(desktopSidebar ? {} : { onDismiss: () => setSidebarOpen(false) })} />;
+    onOpen={openFromSidebar} onCurrent={showCurrent} onList={showList} onNavigate={openNavigation} {...(desktopSidebar ? {} : { onDismiss: () => setSidebarOpen(false) })} />;
   return <>
     {loggingOut && <div className="remote-panel" role="status">ログアウト中です。会話と入力内容を隠しています。端末保存・通知の解除を確認しています。</div>}
     <div className="remote-workspace" hidden={loggingOut} style={loggingOut ? { display: 'none' } : undefined} data-sidebar={desktopSidebar ? 'persistent' : 'drawer'}>
@@ -244,7 +291,7 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
       </section> : <><Settings state={state} buildId={__REMOTE_BUILD_ID__} theme={theme} onTheme={setTheme}
         chatFontSize={chatFontSize} onChatFontSize={value => setChatFontSize(saveChatFontSize(value))}
         onReconnect={() => { void controller.recover(navigator.onLine); }}
-        checkingUpdate={checkingUpdate} onUpdate={() => {
+        onNavigate={openNavigation} checkingUpdate={checkingUpdate} onUpdate={() => {
           if (checkingUpdateRef.current) return;
           checkingUpdateRef.current = true; setCheckingUpdate(true);
           void availableBuild().then(build => {
@@ -279,5 +326,6 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
     </nav>}
     </div>
     {sidebarOpen && !desktopSidebar && <ConfirmDialog label="セッション管理" className="remote-sidebar-drawer" dismissOnBackdrop onDismiss={() => setSidebarOpen(false)}>{sidebar}</ConfirmDialog>}
+    {!loggingOut && navigationScope === currentScope && <QuickNavigation commands={navigationCommands(state)} onSelect={navigate} onDismiss={() => setNavigationScope(null)} />}
   </div></>;
 }

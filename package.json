@@ -54,7 +54,8 @@
     "e2e:next-phase": "node scripts/e2e-next-phase.mjs",
     "test:oss": "node --test scripts/oss/*.test.mjs",
     "e2e:oss-guide": "node scripts/oss/e2e-guide.mjs",
-    "package:release": "python3 scripts/oss/package-release.py"
+    "package:release": "python3 scripts/oss/package-release.py",
+    "e2e:quick-navigation": "node scripts/e2e-quick-navigation.mjs"
   },
   "dependencies": {
     "mdast-util-from-markdown": "2.0.3",
