@@ -216,6 +216,7 @@ async function run(engineName, engine) {
 await run('webkit', webkit);
 await run('chromium', chromium);
 if (report.cases.find(item => item.engine === 'webkit')?.cacheWarmStatus !== 'PASS') process.exitCode = 1;
+mkdirSync('evidence', { recursive: true });
 writeFileSync(uiCandidate ? 'evidence/update-cache-browser-ui-candidate.json'
   : actualCandidate ? 'evidence/update-cache-browser-actual.json' : 'evidence/update-cache-browser-synthetic.json',
   JSON.stringify(report, null, 2) + '\n');
