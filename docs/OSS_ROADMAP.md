@@ -56,7 +56,7 @@ authorization. Do not contact a provider or enable tools as part of installation
 
 | Priority | Work | Boundary |
 | --- | --- | --- |
-| P1 | [Existing bot overview](BOT_OVERVIEW.md), next release candidate | Explicit authenticated profile-scoped status read, loaded source-labelled conversations; no bot writes, service controls or real-message success claim |
+| P1 | [Existing bot overview and explicit conversation pages](BOT_OVERVIEW.md), next release candidate | Authenticated status/owned-page reads; exact-ID source join, four bounded manual pages and loaded-title filters; no bot writes, service controls or real-message success claim |
 | P1 | Continuous measured coverage | Existing global floors retained; full-suite coverage report/gate in CI; scope/race/privacy cases before increasing thresholds |
 | P1 | Full English/Japanese interface | Reuse the controller; no change to RPC behavior |
 | P1 | [Quick navigation palette](QUICK_NAVIGATION.md), included in Developer Preview 2 | Existing destinations/read panels only; no automatic send, approval or consent; physical-device acceptance separate |

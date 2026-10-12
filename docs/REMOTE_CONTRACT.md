@@ -52,6 +52,15 @@ templates. File/artifact reads use returned canonical identifiers inside authori
 roots, never guessed URLs or absolute client paths. All writes are explicit and
 scope-bound. Cron/MCP/credentials are not managed by this client.
 
+Bot conversation browsing reuses `remote.sessions.list` owned cursor pages
+(`limit: 50`, optional registered `project_id`) and official `session.list`
+(`limit: 200`, same profile) for exact-ID source evidence only. There is no source
+filter/offset in either RPC contract. Page/title ownership is never inferred from
+the legacy source index, a lineage alias or a title. Reads are explicit, capped
+at four pages, locally abortable and memory-only; missing/conflicting sources,
+snapshot/cursor disagreement and stale reads remain visible limitations.
+See [bot boundaries and ranges](BOT_OVERVIEW.md).
+
 One JPEG/PNG image or supported document requires nonempty explanatory text,
 server validation/bounds and declared model policy. Preview never transfers.
 Attach-bytes method existence alone does not prove safe-turn or vision support.

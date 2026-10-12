@@ -8,7 +8,7 @@ export interface RemoteGateway {
   setTicket(ticket: string): void;
   connect(url: string): Promise<void>;
   close(): void;
-  request<T>(method: string, params?: Record<string, unknown>, timeoutMs?: number): Promise<T>;
+  request<T>(method: string, params?: Record<string, unknown>, timeoutMs?: number, signal?: AbortSignal): Promise<T>;
   onAny(handler: (event: GatewayEvent) => void): () => void;
   onRequest(handler: (request: ServerRequest) => boolean | void): () => void;
   onState(handler: (state: string) => void): () => void;

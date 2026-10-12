@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { botSessions, type BotConnectionState, type BotOverviewState, type GatewayBotState } from '../../../core/src/features/bots';
 import type { RemoteSession } from '../../../core/src/stores/remote';
 import { ConfirmDialog } from './ConfirmDialog';
+import { BotConversationsPanel, type BotConversationControls } from './BotConversationsPanel';
 
 const gatewayLabels: Record<GatewayBotState, string> = {
   running: '稼働を報告', starting: '起動中', draining: '終了待ち', degraded: '要確認',
@@ -15,8 +16,9 @@ const platformLabels: Record<BotConnectionState, string> = {
 type Filter = 'all' | 'connected' | 'attention';
 
 /** Read-only runtime evidence; native bot credentials, writes and process controls are intentionally absent. */
-export function BotOverviewPanel({ state, sessions, canOpenSession, onLoad, onOpenSession, onClose }: {
+export function BotOverviewPanel({ state, sessions, conversations, canOpenSession, onLoad, onOpenSession, onClose }: {
   state: BotOverviewState; sessions: readonly RemoteSession[]; canOpenSession: boolean;
+  conversations?: BotConversationControls;
   onLoad(): void; onOpenSession(id: string): void; onClose(): void;
 }) {
   const [filter, setFilter] = useState<Filter>('all');
@@ -54,15 +56,9 @@ export function BotOverviewPanel({ state, sessions, canOpenSession, onLoad, onOp
           <strong>{platform.name}</strong><span>{platformLabels[platform.state]}</span>
         </li>)}</ul> : <p>この取得範囲・条件に表示できるボット状態はありません。設定済みボットがないとは断定しません。</p>}
       </> : <p>ボットごとの状態は、この応答では取得できませんでした。</p>}
-      <section aria-label="取得済みのボット会話"><h3>関連する会話</h3>
-        <p className="remote-meta">現在のprofileで取得済みの一覧から、sourceがボット名と一致する会話だけを表示します。全履歴を検索・追加取得しません。</p>
-        {related.length ? <ul className="remote-bot-conversations">{related.map(session => <li key={session.durableId}>
-          <span>{session.title || '無題の会話'}</span><span className="remote-meta">{session.source}</span>
-          <button disabled={!canOpenSession || state.load !== 'ready'} onClick={() => onOpenSession(session.durableId)}>この会話を開く</button>
-        </li>)}</ul> : <p>取得済みの一覧に、この条件の関連会話はありません。</p>}
-        {!canOpenSession && <p className="remote-meta">下書き・実行・確認待ち等を確認してから別の会話へ移動してください。現在の内容は保持しています。</p>}
-      </section>
     </>}
+    <BotConversationsPanel platforms={snapshot?.platforms || []} seeds={state.scope ? related : []} {...(conversations ? { controls: conversations } : {})}
+      canOpen={canOpenSession && (conversations?.state.pages ? true : state.load === 'ready')} onOpen={onOpenSession} />
     <p className="remote-meta">状態の閲覧だけを行います。ボットへの送信・起動停止・設定変更は行いません。</p>
     </div>
   </ConfirmDialog>;

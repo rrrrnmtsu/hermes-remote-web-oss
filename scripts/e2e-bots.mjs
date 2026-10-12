@@ -49,9 +49,10 @@ for (const [name, engine] of [['webkit', webkit], ['chromium', chromium]]) {
     await page.getByRole('navigation', { name: '下部ナビゲーション' }).getByRole('button', { name: '設定', exact: true }).click();
     await check('explicit_open_one_read_filter_no_reads_or_operations_and_focus_return', async () => {
       assert.equal(reads, 0); await open(); assert.equal(reads, 1);
-      assert.equal(await panel().getByText('Discord', { exact: true }).count(), 1);
+      const connections = () => panel().getByRole('list', { name: 'ボット接続状態' });
+      assert.equal(await connections().getByText('Discord', { exact: true }).count(), 1);
       await panel().getByLabel('ボットを絞り込む').selectOption('attention'); assert.equal(reads, 1);
-      assert.equal(await panel().getByText('Discord', { exact: true }).count(), 0); assert.equal(await panel().getByText('Telegram', { exact: true }).count(), 1);
+      assert.equal(await connections().getByText('Discord', { exact: true }).count(), 0); assert.equal(await connections().getByText('Telegram', { exact: true }).count(), 1);
       await panel().getByLabel('ボットを絞り込む').selectOption('all'); await close();
       assert.equal(await launch().evaluate(node => document.activeElement === node), true);
     });
