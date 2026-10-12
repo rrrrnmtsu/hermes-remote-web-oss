@@ -11,6 +11,8 @@ import type { StorageScope, StoredHistory } from './storage/types';
 import { cacheOfflineShell, clearOfflineShell, installWorkerSafetyGuard } from './storage/worker';
 import { InformationController } from '../../../core/src/features/information';
 import { InformationPanel } from './InformationPanel';
+import { BotOverviewController, botSessions } from '../../../core/src/features/bots';
+import { BotOverviewPanel } from './BotOverviewPanel';
 import { NotificationController } from '../../../core/src/features/notifications';
 import { browserPushPort } from './voice/browser-push';
 import { NotificationsPanel } from './voice/NotificationsPanel';
@@ -23,7 +25,7 @@ import { NativeControls } from './NativeControls';
 import { remoteAuthSender } from './runtime';
 import './ProductControls.css';
 
-export type ProductAction = 'organize' | 'templates' | 'info' | 'files' | 'artifacts' | 'voice' | 'read-aloud' | BranchMode;
+export type ProductAction = 'organize' | 'templates' | 'info' | 'bots' | 'files' | 'artifacts' | 'voice' | 'read-aloud' | BranchMode;
 export interface ProductSelection { action: ProductAction; message?: RemoteMessage; }
 
 /** Central feature composition. Topic views only receive scoped operation ports. */
@@ -69,6 +71,9 @@ export function ProductControls({ controller, state, settings, browser, selectio
     withOperationLock: action => action(),
   }), [controller]); // eslint-disable-line react-hooks/exhaustive-deps
   const infoState = useSyncExternalStore(information.store.subscribe, information.store.getState, information.store.getState);
+  const bots = useMemo(() => new BotOverviewController({ readStatus: (profile, signal) => controller.readBotStatus(profile, signal) }), [controller]);
+  const botState = useSyncExternalStore(bots.store.subscribe, bots.store.getState, bots.store.getState);
+  const closeBots = (): void => { bots.cancel(); onSelection(null); };
   const catalogRead = useRef<{ scope: string; query: string } | null>(null);
   const files = useMemo(() => new FilesController({ request: (method, params) => controller.featureRequest(method, params) }), [controller]);
   const filesState = useSyncExternalStore(files.store.subscribe, files.store.getState, files.store.getState);
@@ -107,6 +112,9 @@ export function ProductControls({ controller, state, settings, browser, selectio
   useEffect(() => { information.setScope(state.connection === 'connected' ? {
     origin: window.location.origin, principal: state.principalId, profile: state.profile, liveId: state.liveId, durableId: state.durableId, generation: controller.imageSelectionGeneration,
   } : null, state.featureMethods); catalogRead.current = null; setProjectConfirm(false); setProjectId(''); }, [scopeKey, state.connection, state.featureMethods, information]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { bots.setScope(state.connection === 'connected' && state.authenticated && state.principalId ? {
+    origin: window.location.origin, principal: state.principalId, profile: state.profile, generation: controller.imageSelectionGeneration,
+  } : null); return () => bots.cancel(); }, [scopeKey, state.connection, state.authenticated, bots]); // eslint-disable-line react-hooks/exhaustive-deps
   const port = useMemo(() => new ConversationFeatureClient({
     scope: () => { const now = controller.store.getState(); return now.connection === 'connected' ? { key: controller.featureScopeKey, profile: now.profile } : null; },
     supports: method => controller.store.getState().featureMethods.includes(method),
@@ -209,6 +217,9 @@ export function ProductControls({ controller, state, settings, browser, selectio
     </ConfirmDialog>}
     {settings && <>
       <section className="remote-panel"><h2>Hermesの情報</h2><p>選択profile・会話のモデル、利用量、Skills、定期ジョブ、複数会話の状態を読み取ります。</p><button onClick={() => onSelection({ action: 'info' })}>情報を開く</button></section>
+      <section className="remote-panel"><h2>ボット</h2><p>選択profileのDiscord・Telegram等の接続状態と、取得済みの関連会話を確認します。</p>
+        <button disabled={state.connection !== 'connected' || !state.authenticated || !state.principalId || !state.profiles.includes(state.profile)} onClick={() => onSelection({ action: 'bots' })}>ボットの状態を開く</button>
+        {state.connection === 'connected' && (!state.principalId || !state.profiles.includes(state.profile)) && <p className="remote-meta">このサーバーでは、ボット閲覧の認証scopeと登録profileを確認できません。</p>}</section>
       <StoragePanel store={store} scope={scope} online={state.connection === 'connected' && state.authenticated && state.readRpc} history={history} onStateChange={() => setRevision(value => value + 1)}
         onSafetyChange={setStorageBusy}
         onRestoreDraft={(text, captured) => { if (sameScope(captured, current.current.scope) && controller.store.getState().delivery !== 'delivery_unknown') controller.setDraft(text); }}
@@ -216,6 +227,18 @@ export function ProductControls({ controller, state, settings, browser, selectio
       <ConnectionsPanel connections={connections} currentOrigin={window.location.origin} canNavigate={safeNavigate} onBeforeNavigate={() => store.lock()} onSafetyChange={setConnectionsBusy} />
       <NotificationsPanel controller={notifications} scope={scopeKey} />
     </>}
+    {selection?.action === 'bots' && <BotOverviewPanel key={scopeKey}
+      state={botState.scope?.profile === state.profile && botState.scope.principal === state.principalId && botState.scope.generation === controller.imageSelectionGeneration
+        ? botState : { ...botState, scope: null, snapshot: null, load: 'idle', error: '' }}
+      sessions={state.sessions} canOpenSession={safeNavigate} onLoad={() => { void bots.load(); }} onClose={closeBots}
+      onOpenSession={id => {
+        const now = controller.store.getState(), info = bots.store.getState();
+        if (!info.scope || !info.snapshot || info.load !== 'ready' || now.connection !== 'connected'
+          || info.scope.profile !== now.profile || info.scope.principal !== now.principalId || info.scope.generation !== controller.imageSelectionGeneration
+          || controller.hasScopeWork() || now.delivery === 'delivery_unknown'
+          || !botSessions(now.sessions, info.snapshot.platforms).some(row => row.durableId === id)) return;
+        closeBots(); onOpen(id);
+      }} />}
     {organization && <ConversationToolsOrganization key={`${scopeKey}:${organization.session_id}`} scopeKey={scopeKey} port={port} session={organization}
       onChanged={() => { void controller.refreshSessions(); }} onDismiss={() => { setOrganization(null); onSelection(null); }} />}
     {selection?.action === 'info' && <InformationPanel state={{ ...infoState, writing: infoState.writing || state.featureBusy }} canChangeModel={canOperateSession() && Boolean(state.liveId)}

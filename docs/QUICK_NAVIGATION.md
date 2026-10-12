@@ -5,9 +5,9 @@ With a hardware keyboard, press **Command+K** (Mac) or **Control+K**; use Escape
 the close button to return. The shortcut does not take over another open modal or
 an active IME composition. The existing expanded editor retains its own modal.
 
-The palette contains nine existing destinations: the current conversation,
+The palette contains ten destinations: the current conversation,
 conversation list, profile/project sidebar, pending requests, Settings/diagnostics,
-personal templates, Hermes information, current artifacts and authorized files.
+personal templates, Hermes information, [bot status](BOT_OVERVIEW.md), current artifacts and authorized files.
 Unavailable destinations explain the missing conversation, connection or server
 capability. A pending count covers only the current profile/live conversation.
 

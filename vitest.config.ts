@@ -8,10 +8,10 @@ export default defineConfig({
     setupFiles: ['./test/setup.ts'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html', 'lcov'],
-      // Release gate uses measured, currently passing floors rather than aspirational 85%.
-      // Raising thresholds and enabling `all: true` is a follow-up coverage expansion task,
-      // not a silent CI-breaking config change.
+      reporter: ['text', 'html', 'lcov', 'json-summary'],
+      include: ['packages/**/*.{ts,tsx,js,jsx}'],
+      // Preserve measured package-source floors, including the JavaScript workers.
+      // Generated release copies must not change the denominator after a build.
       thresholds: {
         lines: 80,
         functions: 70,

@@ -1,7 +1,7 @@
 import type { RemoteState } from '../../../core/src/stores/remote';
 
 export type NavigationDestination = 'current' | 'conversations' | 'sessions' | 'requests' | 'settings'
-  | 'templates' | 'info' | 'artifacts' | 'files';
+  | 'templates' | 'info' | 'bots' | 'artifacts' | 'files';
 
 export interface NavigationCommand {
   id: NavigationDestination;
@@ -29,6 +29,9 @@ export function navigationCommands(state: RemoteState): NavigationCommand[] {
       keywords: 'templates snippets 定型文 テンプレート', disabledReason: capability('remote.templates.list') },
     { id: 'info', label: 'Hermesの情報', description: '会話モデル、利用量、機能の情報を確認します。',
       keywords: 'information models usage skills cron activity 情報 モデル 利用量 機能', disabledReason: capability('remote.info.models') },
+    { id: 'bots', label: 'ボットの状態', description: '選択profileのメッセージングGatewayと接続状態を読み取ります。',
+      keywords: 'bots messaging channels discord telegram slack ボット 連携', disabledReason: unavailable || (!state.authenticated ? '認証後に利用できます。'
+        : !state.principalId || !state.profiles.includes(state.profile) ? '認証scopeと登録profileを確認できません。このサーバーでは利用できません。' : undefined) },
     { id: 'artifacts', label: 'この会話の成果物', description: '現在の会話に登録された成果物を確認します。',
       keywords: 'artifacts outputs 成果物 出力', disabledReason: !state.liveId ? '会話を先に開いてください。' : capability('remote.artifacts.list') },
     { id: 'files', label: '許可されたファイル', description: '許可された作業先のファイルを閲覧します。',
