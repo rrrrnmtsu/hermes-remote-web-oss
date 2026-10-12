@@ -50,6 +50,11 @@ describe('existing messaging bot status projection', () => {
     expect(projectBotStatus(status(), scope.profile)!.sharedGateway).toBeNull();
     expect(projectBotStatus({ ...status(), gateway_shared_with: ['a'] }, scope.profile)!.sharedGateway).toBe(false);
   });
+  it('does not use Object prototype properties as display names for an untrusted custom platform', () => {
+    const snapshot = projectBotStatus({ ...status(), gateway_platforms: { constructor: { state: 'connected' } } }, scope.profile)!;
+    expect(snapshot.platforms).toEqual([{ id: 'constructor', name: 'その他のボット', state: 'connected', updatedAt: null }]);
+    expect(JSON.stringify(snapshot)).toContain('その他のボット');
+  });
   it('filters only already loaded platform-labelled conversations with a bounded result', () => {
     const platforms = projectBotStatus(status(), scope.profile)!.platforms;
     const rows = [{ source: 'tui', id: 'local' }, { source: 'Discord', id: 'discord' }, { source: 'telegram', id: 'telegram' }, { source: 'gateway', id: 'unknown' }];

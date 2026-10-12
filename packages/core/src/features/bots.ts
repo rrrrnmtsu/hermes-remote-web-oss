@@ -60,7 +60,7 @@ export function projectBotStatus(value: unknown, profile: string, observedAt = D
     if (state === 'unknown' && item.connected === false) state = 'disconnected';
     if (state === 'connected' && item.connected === false) state = 'unknown';
     if (!running && state === 'connected') state = gatewayState === 'stopped' ? 'gateway_stopped' : 'unknown';
-    platforms.push({ id, name: platformNames[id] || 'その他のボット', state, updatedAt: timestamp(item.updated_at) });
+    platforms.push({ id, name: Object.hasOwn(platformNames, id) ? platformNames[id]! : 'その他のボット', state, updatedAt: timestamp(item.updated_at) });
   }
   const age = data.gateway_heartbeat_stale_s;
   return { profile, running, gatewayState, platforms, platformsAvailable: raw !== null,

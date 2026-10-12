@@ -610,17 +610,19 @@
       "file": "packages/core/src/features/bots.test.ts",
       "source": "packages/core/src/features/bots.test.ts",
       "sourceSha256": "5587e7f7e460022e7fd065dd217bf81ba1ab3ccc57f4a93005a22b4a3a472f50",
-      "sha256": "5587e7f7e460022e7fd065dd217bf81ba1ab3ccc57f4a93005a22b4a3a472f50",
+      "sha256": "1882f19c15d50bd3032302f7a7b9faf0b193da45bcd8406a7a9b8b586f1457bc",
       "modifiedDuringExport": false,
-      "originalPostPublicationWork": true
+      "originalPostPublicationWork": true,
+      "modifiedAfterExport": true
     },
     {
       "file": "packages/core/src/features/bots.ts",
       "source": "packages/core/src/features/bots.ts",
       "sourceSha256": "c2742e24fccb7092329f51f229fa350f0c343aa9c7fe2a140f41c53ca9fc19c1",
-      "sha256": "c2742e24fccb7092329f51f229fa350f0c343aa9c7fe2a140f41c53ca9fc19c1",
+      "sha256": "f66ca542dc3f0820db976846fa440ee3607dc1a08c0e78e15a96de31850b51ea",
       "modifiedDuringExport": false,
-      "originalPostPublicationWork": true
+      "originalPostPublicationWork": true,
+      "modifiedAfterExport": true
     },
     {
       "file": "packages/core/src/features/conversations.test.ts",
