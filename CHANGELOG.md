@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+- Read-only messaging Gateway overview with explicit profile-scoped refresh and
+  bounded, sanitized platform status; no bot send/config/process actions.
+- Explicit owned conversation pages in the bot panel: 50 rows per page, at most
+  four manual pages, selected registered project and loaded-title/bot filters.
+  Existing source evidence is joined by exact owned ID; missing/conflicting/older
+  evidence is not presented as complete history or verified bot delivery.
+- Close/scope/auth changes discard memory queries/pages and local pending reads.
+  Existing draft/run/unknown-write guards, settings, dependencies, backend contracts
+  and opt-in behavior are retained. Provider/device/live-bot acceptance is separate.
+
 ## 2.0.0-preview.2
 
 - Quick navigation from the sidebar, Settings or Command/Control+K, using nine

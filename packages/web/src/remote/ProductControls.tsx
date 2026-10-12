@@ -12,6 +12,7 @@ import { cacheOfflineShell, clearOfflineShell, installWorkerSafetyGuard } from '
 import { InformationController } from '../../../core/src/features/information';
 import { InformationPanel } from './InformationPanel';
 import { BotOverviewController, botSessions } from '../../../core/src/features/bots';
+import { BotConversationsController, conversationBotSources } from '../../../core/src/features/bot-conversations';
 import { BotOverviewPanel } from './BotOverviewPanel';
 import { NotificationController } from '../../../core/src/features/notifications';
 import { browserPushPort } from './voice/browser-push';
@@ -73,7 +74,10 @@ export function ProductControls({ controller, state, settings, browser, selectio
   const infoState = useSyncExternalStore(information.store.subscribe, information.store.getState, information.store.getState);
   const bots = useMemo(() => new BotOverviewController({ readStatus: (profile, signal) => controller.readBotStatus(profile, signal) }), [controller]);
   const botState = useSyncExternalStore(bots.store.subscribe, bots.store.getState, bots.store.getState);
-  const closeBots = (): void => { bots.cancel(); onSelection(null); };
+  const botConversations = useMemo(() => new BotConversationsController({ readPage: (scope, cursor, signal) => controller.readBotConversationPage(scope, cursor, signal) }), [controller]);
+  const botConversationState = useSyncExternalStore(botConversations.store.subscribe, botConversations.store.getState, botConversations.store.getState);
+  const botHistoryAvailable = state.featureMethods.includes('remote.sessions.list');
+  const closeBots = (): void => { bots.cancel(); botConversations.cancel(); onSelection(null); };
   const catalogRead = useRef<{ scope: string; query: string } | null>(null);
   const files = useMemo(() => new FilesController({ request: (method, params) => controller.featureRequest(method, params) }), [controller]);
   const filesState = useSyncExternalStore(files.store.subscribe, files.store.getState, files.store.getState);
@@ -115,6 +119,10 @@ export function ProductControls({ controller, state, settings, browser, selectio
   useEffect(() => { bots.setScope(state.connection === 'connected' && state.authenticated && state.principalId ? {
     origin: window.location.origin, principal: state.principalId, profile: state.profile, generation: controller.imageSelectionGeneration,
   } : null); return () => bots.cancel(); }, [scopeKey, state.connection, state.authenticated, bots]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { botConversations.setScope(state.connection === 'connected' && state.authenticated && state.principalId ? {
+    origin: window.location.origin, principal: state.principalId, profile: state.profile, generation: controller.imageSelectionGeneration, projectId: state.selectedProjectId,
+  } : null, botHistoryAvailable);
+  return () => botConversations.cancel(); }, [scopeKey, state.connection, state.authenticated, state.selectedProjectId, botHistoryAvailable, botConversations]); // eslint-disable-line react-hooks/exhaustive-deps
   const port = useMemo(() => new ConversationFeatureClient({
     scope: () => { const now = controller.store.getState(); return now.connection === 'connected' ? { key: controller.featureScopeKey, profile: now.profile } : null; },
     supports: method => controller.store.getState().featureMethods.includes(method),
@@ -227,16 +235,30 @@ export function ProductControls({ controller, state, settings, browser, selectio
       <ConnectionsPanel connections={connections} currentOrigin={window.location.origin} canNavigate={safeNavigate} onBeforeNavigate={() => store.lock()} onSafetyChange={setConnectionsBusy} />
       <NotificationsPanel controller={notifications} scope={scopeKey} />
     </>}
-    {selection?.action === 'bots' && <BotOverviewPanel key={scopeKey}
+    {selection?.action === 'bots' && <BotOverviewPanel key={`${scopeKey}:${state.selectedProjectId}`}
       state={botState.scope?.profile === state.profile && botState.scope.principal === state.principalId && botState.scope.generation === controller.imageSelectionGeneration
         ? botState : { ...botState, scope: null, snapshot: null, load: 'idle', error: '' }}
-      sessions={state.sessions} canOpenSession={safeNavigate} onLoad={() => { void bots.load(); }} onClose={closeBots}
+      sessions={state.selectedProjectId ? state.projectSessions : state.sessions} canOpenSession={safeNavigate} onLoad={() => { void bots.load(); }} onClose={closeBots}
+      conversations={{ state: botConversationState.scope?.profile === state.profile && botConversationState.scope.principal === state.principalId
+        && botConversationState.scope.generation === controller.imageSelectionGeneration && botConversationState.scope.projectId === state.selectedProjectId
+        ? botConversationState : { ...botConversationState, scope: null, available: false, rows: [], pages: 0, nextCursor: null, error: '', stale: false, load: 'idle' },
+        projectLabel: state.projects.find(project => project.id === state.selectedProjectId)?.label || (state.selectedProjectId ? 'project未確認' : 'profile内の全作業先'),
+        onRead: append => { if (scopeKey === controller.featureScopeKey && state.selectedProjectId === controller.store.getState().selectedProjectId
+          && botConversationState.scope === botConversations.store.getState().scope) void botConversations.load(append); } }}
       onOpenSession={id => {
-        const now = controller.store.getState(), info = bots.store.getState();
-        if (!info.scope || !info.snapshot || info.load !== 'ready' || now.connection !== 'connected'
-          || info.scope.profile !== now.profile || info.scope.principal !== now.principalId || info.scope.generation !== controller.imageSelectionGeneration
-          || controller.hasScopeWork() || now.delivery === 'delivery_unknown'
-          || !botSessions(now.sessions, info.snapshot.platforms).some(row => row.durableId === id)) return;
+        const now = controller.store.getState(), info = bots.store.getState(), history = botConversations.store.getState();
+        if (scopeKey !== controller.featureScopeKey || state.selectedProjectId !== now.selectedProjectId
+          || now.connection !== 'connected' || !now.authenticated || controller.hasScopeWork() || now.delivery === 'delivery_unknown' || history.load === 'loading') return;
+        if (history.pages) {
+          if (!history.scope || history.scope.profile !== now.profile || history.scope.principal !== now.principalId
+            || history.scope.generation !== controller.imageSelectionGeneration || history.scope.projectId !== now.selectedProjectId || history.stale || history.load !== 'ready') return;
+          const row = history.rows.find(row => row.id === id);
+          if (!row?.source || !conversationBotSources(history.rows, info.snapshot?.platforms || []).includes(row.source)) return;
+        } else {
+          if (!info.scope || !info.snapshot || info.load !== 'ready' || info.scope.profile !== now.profile
+            || info.scope.principal !== now.principalId || info.scope.generation !== controller.imageSelectionGeneration
+            || !botSessions(now.selectedProjectId ? now.projectSessions : now.sessions, info.snapshot.platforms).some(row => row.durableId === id)) return;
+        }
         closeBots(); onOpen(id);
       }} />}
     {organization && <ConversationToolsOrganization key={`${scopeKey}:${organization.session_id}`} scopeKey={scopeKey} port={port} session={organization}

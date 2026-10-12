@@ -19,7 +19,8 @@ export async function startFixture({ releaseDirectory, imageTurn = false, static
     staticRequests: [], epoch: 'DEMO-epoch-1', truncated: false, sockets: new Set(), forceWsFailure: false,
     richNavigation: false, projectDelayMs: 0, projectSessionsDelayMs: 0, failProjects: false,
     imageTurn, imageAttachMode: '', imagePromptMode: '', imageDetachMode: '', imageAttachDelayMs: 0, imageCounter: 0,
-    networkOffline: false, staticDelayMs: 0, featureMethods: [], httpRequests: [], wsUpgrades: [] };
+    networkOffline: false, staticDelayMs: 0, featureMethods: [], httpRequests: [], wsUpgrades: [],
+    botConversationRead: null, botConversationRequests: [] };
   let origin = '';
   // Names only: a server-side witness is needed where WebKit conceals Cookie
   // request headers. Never retain cookie values, ticket query strings or frames.
@@ -131,7 +132,18 @@ export async function startFixture({ releaseDirectory, imageTurn = false, static
         else if (frame.method === 'gateway.capabilities') reply({ per_session_exclusive_submit: true, remote_web_version: 1, ...(state.imageTurn ? { image_turn_version: 1 } : {}) });
         else if (frame.method === 'image.turn_capabilities') reply({ version: 1, enabled: state.imageTurn, model_vision: state.imageTurn ? true : null, reason: 'DEMO', max_raw_bytes: 5 * 1048576, max_frame_bytes: 8 * 1048576, max_text_bytes: 65536, max_edge: 8192, max_pixels: 16000000 });
         else if (frame.method === 'gateway.ping' || frame.method === 'ping') reply({ pong: true });
+        else if (typeof state.botConversationRead === 'function' && ['session.list', 'remote.sessions.list'].includes(frame.method)) {
+          // Opt-in synthetic pagination only. The production adapter uses the real existing RPCs.
+          state.botConversationRequests.push({ method: frame.method, params: structuredClone(params) });
+          Promise.resolve().then(() => state.botConversationRead(frame.method, params)).then(reply, () =>
+            wire(ws, { jsonrpc: '2.0', id: frame.id, error: { code: -32602, message: 'DEMO bot read unavailable' } }));
+        }
         else if (frame.method === 'session.list') reply({ sessions: navigation(profile).rows.slice(0, params.limit || 100) });
+        else if (frame.method === 'remote.sessions.list' && state.featureMethods.includes(frame.method)) reply({
+          sessions: navigation(profile).rows.slice(0, params.limit || 50).map(row => ({ session_id: row.id, title: row.title,
+            pinned: false, archived: false, version: '0.DEMO', started_at: row.last_active, parent_session_id: null })),
+          next_cursor: null, order: 'created_desc', scope: 'owned_profile_sessions', limit: params.limit || 50, snapshot_time: 1791900000,
+        });
         else if (frame.method === 'projects.tree') {
           if (state.failProjects) wire(ws, { jsonrpc: '2.0', id: frame.id, error: { code: -32601, message: 'DEMO unsupported projects' } });
           else setTimeout(() => reply({ projects: navigation(profile).projects.map(project => ({ ...project,
@@ -141,7 +153,10 @@ export async function startFixture({ releaseDirectory, imageTurn = false, static
           const project = navigation(profile).projects.find(project => project.id === params.project_id) || null;
           setTimeout(() => reply({ project }), state.projectSessionsDelayMs);
         }
-        else if (frame.method === 'session.create' || frame.method === 'session.resume' || frame.method === 'session.activate') reply(snapshot(profile));
+        else if (frame.method === 'session.create' || frame.method === 'session.resume' || frame.method === 'session.activate') {
+          if (state.botConversationRead && frame.method === 'session.resume' && String(params.session_id).startsWith(`DEMO-owned-${profile}-`)) item.durable = params.session_id;
+          reply(snapshot(profile));
+        }
         else if (frame.method === 'session.events.since') reply({ events: item.events.filter(event => event.seq > (params.last_seen || 0)), latest_seq: item.seq, epoch: state.epoch,
           truncated: state.truncated, count: item.events.length, open_requests: [...state.open.values()].filter(request => request.params.session_id === item.live) });
         else if (frame.method === 'image.attach_bytes') {

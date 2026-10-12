@@ -98,6 +98,19 @@ function template(value: unknown): UserTemplate {
   return row as unknown as UserTemplate;
 }
 
+/** The same owned-page validator is shared by conversation browsing and bot discovery. */
+export function parseConversationPage(value: unknown): ConversationPage {
+  const result = object(value);
+  if (!Array.isArray(result.sessions) || result.sessions.length > 100 || result.order !== 'created_desc'
+    || result.scope !== 'owned_profile_sessions' || typeof result.limit !== 'number' || typeof result.snapshot_time !== 'number'
+    || result.next_cursor !== null && typeof result.next_cursor !== 'string') throw new Error('履歴の取得範囲を確認できません。');
+  for (const item of result.sessions) {
+    const row = object(item); metadata(row);
+    if (typeof row.started_at !== 'number' || row.parent_session_id !== null && typeof row.parent_session_id !== 'string') throw new Error('履歴の形式を確認できません。');
+  }
+  return result as unknown as ConversationPage;
+}
+
 /** Adapter passes its single gateway operation entry; no retry or generation fallback. */
 export class ConversationFeatureClient implements ConversationOperationPort {
   private writing = false;
@@ -114,15 +127,7 @@ export class ConversationFeatureClient implements ConversationOperationPort {
     } finally { if (write) this.writing = false; }
   }
   async list(query: ConversationQuery = {}): Promise<ConversationPage> {
-    const result = object(await this.call('remote.sessions.list', { limit: 50, ...query }));
-    if (!Array.isArray(result.sessions) || result.sessions.length > 100 || result.order !== 'created_desc'
-      || result.scope !== 'owned_profile_sessions' || typeof result.limit !== 'number' || typeof result.snapshot_time !== 'number'
-      || result.next_cursor !== null && typeof result.next_cursor !== 'string') throw new Error('履歴の取得範囲を確認できません。');
-    for (const item of result.sessions) {
-      const row = object(item); metadata(row);
-      if (typeof row.started_at !== 'number' || row.parent_session_id !== null && typeof row.parent_session_id !== 'string') throw new Error('履歴の形式を確認できません。');
-    }
-    return result as unknown as ConversationPage;
+    return parseConversationPage(await this.call('remote.sessions.list', { limit: 50, ...query }));
   }
   async metadata(sessionId: string): Promise<ConversationMetadata> {
     return metadata(object(await this.call('remote.session.metadata', { session_id: sessionId })).session);

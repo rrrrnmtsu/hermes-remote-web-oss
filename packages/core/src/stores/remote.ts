@@ -1,5 +1,6 @@
 import { createStore } from 'zustand/vanilla';
 import type { ConversationPage } from '../features/conversations';
+import { BOT_CONVERSATION_PAGE_SIZE, BOT_SOURCE_INDEX_LIMIT, projectBotConversationPage, type BotConversationPage, type BotConversationScope } from '../features/bot-conversations';
 import { documentLimits, documentSnapshot, DOCUMENT_UNAVAILABLE, type DocumentSelection, type DocumentCapabilities, type DocumentTurnReceipt, type RemoteDocument } from '../features/documents';
 import { HermesHttpError, type Http } from '../transport/http';
 import { requestKey, type RemoteGateway, type GatewayEvent, type ServerRequest } from '../transport/remote-gateway';
@@ -509,17 +510,51 @@ export class RemoteController {
 
   /** Existing Dashboard read, bound to the registered profile and current authenticated socket scope. */
   async readBotStatus(profile: string, signal: AbortSignal): Promise<unknown> {
+    const current = await this.prepareBotRead(profile, signal);
+    const result = await this.options.http(`/api/status?profile=${encodeURIComponent(profile)}`, { method: 'GET', skipProfile: true, signal });
+    if (!current()) throw new Error('bot_scope_changed');
+    return result;
+  }
+
+  /** Native auth and scope guards shared by both bot metadata read entries. */
+  private async prepareBotRead(profile: string, signal: AbortSignal): Promise<() => boolean> {
     const state = this.store.getState(), captured = this.featureScopeKey;
-    const current = (): boolean => captured === this.featureScopeKey && this.store.getState().connection === 'connected' && !signal.aborted;
+    const current = (): boolean => captured === this.featureScopeKey && this.store.getState().connection === 'connected'
+      && this.store.getState().authenticated && !signal.aborted;
     if (state.connection !== 'connected' || !state.authenticated || !state.principalId
       || profile !== state.profile || !state.profiles.includes(profile) || signal.aborted) throw new Error('bot_scope_unavailable');
     // The status endpoint is public. Check the existing protected auth read first,
     // so an expired cookie cannot leave private app state visible behind a successful public GET.
     await this.verifyAuth({ signal, current });
     if (!current()) throw new Error('bot_scope_changed');
-    const result = await this.options.http(`/api/status?profile=${encodeURIComponent(profile)}`, { method: 'GET', skipProfile: true, signal });
-    if (!current()) throw new Error('bot_scope_changed');
-    return result;
+    return current;
+  }
+
+  /** Two fixed, existing read contracts; only exact owned IDs may receive source evidence. */
+  async readBotConversationPage(scope: BotConversationScope, cursor: string | null, signal: AbortSignal): Promise<BotConversationPage> {
+    const gateway = this.gateway;
+    const scoped = (): boolean => {
+      const now = this.store.getState();
+      return scope.origin === this.options.origin && scope.principal === now.principalId
+        && scope.profile === now.profile && scope.generation === this.imageSelectionGeneration
+        && scope.projectId === now.selectedProjectId && this.gateway === gateway && now.featureMethods.includes('remote.sessions.list')
+        && (!scope.projectId || now.projects.some(project => project.id === scope.projectId));
+    };
+    if (!gateway || !scoped()
+      || cursor !== null && (typeof cursor !== 'string' || !cursor.trim() || cursor.length > 2048)) throw new Error('bot_conversation_scope_unavailable');
+    const current = await this.prepareBotRead(scope.profile, signal);
+    if (!current() || !scoped()) throw new Error('bot_scope_changed');
+    const query = { profile: scope.profile, limit: BOT_CONVERSATION_PAGE_SIZE,
+      ...(cursor ? { cursor } : {}), ...(scope.projectId ? { project_id: scope.projectId } : {}) };
+    const [owned, index] = await Promise.allSettled([
+      gateway.request<unknown>('remote.sessions.list', query, undefined, signal),
+      // No unsupported source/offset/title/include_hidden parameters and no mutating REST auto-archive path.
+      gateway.request<SessionListResult>('session.list', { profile: scope.profile, limit: BOT_SOURCE_INDEX_LIMIT }, undefined, signal),
+    ]);
+    if (!current() || !scoped()) throw new Error('bot_scope_changed');
+    if (owned.status === 'rejected') throw owned.reason;
+    if (index.status === 'rejected') throw index.reason;
+    return projectBotConversationPage(owned.value, index.value, scope.profile);
   }
 
   /** One scoped operation port for optional features. No API probing or write retry. */

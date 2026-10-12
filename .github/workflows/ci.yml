@@ -43,6 +43,7 @@ jobs:
           npm run e2e:oss-guide
           npm run e2e:quick-navigation
           npm run e2e:bots
+          npm run e2e:bot-conversations
           node scripts/e2e-conversation-date-fields.mjs --long-project=1
           npm run e2e:interactions
           node scripts/e2e-update-cache.mjs
@@ -59,6 +60,7 @@ jobs:
             output/oss-guide/
             output/quick-navigation/
             output/bot-overview/
+            output/bot-conversations/
             coverage/
             evidence/*browser*.json
             evidence/browser-fixture.json

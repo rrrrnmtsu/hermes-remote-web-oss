@@ -5,3 +5,8 @@
 .remote-bot-list li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem; padding: 0.75rem 0; border-bottom: 1px solid var(--remote-border); }
 .remote-bot-conversations li { display: grid; gap: 0.375rem; padding: 0.75rem 0; border-bottom: 1px solid var(--remote-border); overflow-wrap: anywhere; }
 .remote-bot-conversations button { justify-self: start; }
+.remote-bot-history { min-width: 0; }
+.remote-bot-conversation-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 0.5rem; }
+.remote-bot-conversation-filters > * { min-width: 0; }
+.remote-bot-conversation-filters input, .remote-bot-conversation-filters select { width: 100%; min-width: 0; }
+.remote-bot-page-actions button { max-width: 100%; white-space: normal; }

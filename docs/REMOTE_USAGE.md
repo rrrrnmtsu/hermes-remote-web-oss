@@ -31,6 +31,14 @@ Japanese or English, then explicitly select a result. This only navigates/opens
 existing read panels; it never sends, answers, stops, saves or enables consent.
 The query stays in memory. [Quick navigation details](QUICK_NAVIGATION.md).
 
+For messaging-bot conversations, open **設定 → ボットの状態を開く** (also in quick
+navigation). **会話一覧を取得** and **次の50件を取得** explicitly load up to four
+owned pages for the selected profile/project. The bot selector and title search
+only filter the loaded range; older source evidence may be unavailable. A row
+opens only on your click, after existing draft/run/unknown-send checks. The panel
+does not send a bot message, change its settings or start/stop a process.
+[Meaning of counts, source evidence and limits](BOT_OVERVIEW.md).
+
 For a support report, Settings → “導入と対応機能” → review the allowlisted diagnostic
 text → explicitly copy. Share build/stage/boolean information and synthetic
 reproduction steps, not actual conversation, session identifiers, origins, images,

@@ -26,7 +26,7 @@ describe('bot overview is a bounded read-only view', () => {
     fireEvent.change(screen.getByLabelText('ボットを絞り込む'), { target: { value: 'attention' } });
     expect(within(screen.getByRole('list', { name: 'ボット接続状態' })).queryByText('Discord')).toBeNull();
     expect(within(screen.getByRole('list', { name: 'ボット接続状態' })).queryByText('Slack')).toBeNull();
-    expect(screen.getByText('Telegram')).toBeInTheDocument(); expect(screen.getByText('状態未確認')).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'ボット接続状態' })).getByText('Telegram')).toBeInTheDocument(); expect(screen.getByText('状態未確認')).toBeInTheDocument();
     expect(options.onLoad).toHaveBeenCalledTimes(1); expect(options.onOpenSession).not.toHaveBeenCalled();
   });
   it('distinguishes Web WSS, shared gateway, stale heartbeat and actual message delivery', () => {

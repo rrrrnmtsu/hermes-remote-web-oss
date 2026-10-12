@@ -23,6 +23,8 @@ const platformNames: Readonly<Record<string, string>> = {
   homeassistant: 'Home Assistant', mattermost: 'Mattermost', feishu: 'Feishu / Lark', wecom: 'WeCom',
   dingtalk: 'DingTalk', sms: 'SMS', bluebubbles: 'BlueBubbles', google_chat: 'Google Chat', ntfy: 'ntfy',
 };
+export const botPlatformName = (id: string): string => Object.hasOwn(platformNames, id) ? platformNames[id]! : 'その他のボット';
+export const knownBotPlatform = (id: string): boolean => Object.hasOwn(platformNames, id);
 const initial = (): BotOverviewState => ({ scope: null, load: 'idle', snapshot: null, error: '' });
 const scopeKey = (scope: BotScope | null): string => scope ? JSON.stringify([scope.origin, scope.principal, scope.profile, scope.generation]) : '';
 function record(value: unknown): Record<string, unknown> | null {
@@ -60,7 +62,7 @@ export function projectBotStatus(value: unknown, profile: string, observedAt = D
     if (state === 'unknown' && item.connected === false) state = 'disconnected';
     if (state === 'connected' && item.connected === false) state = 'unknown';
     if (!running && state === 'connected') state = gatewayState === 'stopped' ? 'gateway_stopped' : 'unknown';
-    platforms.push({ id, name: Object.hasOwn(platformNames, id) ? platformNames[id]! : 'その他のボット', state, updatedAt: timestamp(item.updated_at) });
+    platforms.push({ id, name: botPlatformName(id), state, updatedAt: timestamp(item.updated_at) });
   }
   const age = data.gateway_heartbeat_stale_s;
   return { profile, running, gatewayState, platforms, platformsAvailable: raw !== null,
