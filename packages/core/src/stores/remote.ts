@@ -507,6 +507,21 @@ export class RemoteController {
     this.patch({ draft, ...(this.store.getState().delivery === 'failed_before_send' ? { delivery: 'draft' as const } : {}) });
   }
 
+  /** Existing Dashboard read, bound to the registered profile and current authenticated socket scope. */
+  async readBotStatus(profile: string, signal: AbortSignal): Promise<unknown> {
+    const state = this.store.getState(), captured = this.featureScopeKey;
+    const current = (): boolean => captured === this.featureScopeKey && this.store.getState().connection === 'connected' && !signal.aborted;
+    if (state.connection !== 'connected' || !state.authenticated || !state.principalId
+      || profile !== state.profile || !state.profiles.includes(profile) || signal.aborted) throw new Error('bot_scope_unavailable');
+    // The status endpoint is public. Check the existing protected auth read first,
+    // so an expired cookie cannot leave private app state visible behind a successful public GET.
+    await this.verifyAuth({ signal, current });
+    if (!current()) throw new Error('bot_scope_changed');
+    const result = await this.options.http(`/api/status?profile=${encodeURIComponent(profile)}`, { method: 'GET', skipProfile: true, signal });
+    if (!current()) throw new Error('bot_scope_changed');
+    return result;
+  }
+
   /** One scoped operation port for optional features. No API probing or write retry. */
   async featureRequest<T>(method: string, params: Record<string, unknown> = {}, write = false): Promise<T> {
     const state = this.store.getState(), gateway = this.gateway;
@@ -943,11 +958,11 @@ export class RemoteController {
     this.patch({ ...initialState(), targetVersion: this.store.getState().targetVersion });
   }
 
-  private async verifyAuth(): Promise<void> {
+  private async verifyAuth(options?: { signal: AbortSignal; current(): boolean }): Promise<void> {
     try {
-      await this.options.http('/api/auth/me', { skipProfile: true });
+      await this.options.http('/api/auth/me', { skipProfile: true, ...(options ? { signal: options.signal } : {}) });
     } catch (error) {
-      if (isAuthFailure(error)) {
+      if (isAuthFailure(error) && (!options || options.current())) {
         this.signedOut = true;
         this.scope++;
         this.socketGeneration++;

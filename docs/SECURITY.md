@@ -24,6 +24,11 @@ conversation ID is written to plaintext browser storage.
 Quick-navigation queries are also page memory only and discarded on close or
 scope/auth changes. Navigation does not grant notification, storage or microphone
 consent, or execute send/approval/stop/model/profile writes.
+Bot status and filters are also memory-only. The existing protected auth read
+precedes the profile-scoped public status endpoint; cancellation and scope checks
+reject late responses. Raw status fields, credential/error/path data and other
+profiles' platform rows are not retained by the bot view. No bot-management write
+or automatic polling is added.
 Explicit Markdown/artifact download leaves content in a selected file.
 Browser save requests do not prove OS completion or revoke existing copies.
 

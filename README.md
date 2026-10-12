@@ -20,6 +20,11 @@ session model selection are capability-gated.
 panels from the sidebar, Settings or Command/Control+K. Search uses Japanese or
 English destination keywords; choosing does not send or approve an action.
 
+[Existing bot overview](docs/BOT_OVERVIEW.md) reads the selected profile's messaging
+Gateway and platform status, with bounded filters and loaded-conversation links.
+It does not configure a bot or send messages. Runtime connection reports are not
+proof of successful end-to-end bot replies.
+
 Encrypted device drafts/history, a narrowly scoped static worker, notifications,
 device speech and separate-origin navigation are optional. Default consent is off.
 Native iOS source is experimental; it is not a compiled or signed app release.

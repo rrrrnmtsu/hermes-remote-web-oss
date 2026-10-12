@@ -55,7 +55,8 @@
     "test:oss": "node --test scripts/oss/*.test.mjs",
     "e2e:oss-guide": "node scripts/oss/e2e-guide.mjs",
     "package:release": "python3 scripts/oss/package-release.py",
-    "e2e:quick-navigation": "node scripts/e2e-quick-navigation.mjs"
+    "e2e:quick-navigation": "node scripts/e2e-quick-navigation.mjs",
+    "e2e:bots": "node scripts/e2e-bots.mjs"
   },
   "dependencies": {
     "mdast-util-from-markdown": "2.0.3",

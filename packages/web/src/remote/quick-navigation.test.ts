@@ -17,7 +17,7 @@ describe('bounded navigation destinations', () => {
         { id: 2, key: 'number:2', profile: 'other', sessionId: 'DEMO-live', method: 'approval', params: {}, status: 'pending' },
         { id: 3, key: 'number:3', profile: 'DEMO', sessionId: 'other', method: 'clarify', params: {}, status: 'pending' },
       ] });
-    expect(commands.map(command => command.id)).toEqual(['current', 'conversations', 'sessions', 'requests', 'settings', 'templates', 'info', 'artifacts', 'files']);
+    expect(commands.map(command => command.id)).toEqual(['current', 'conversations', 'sessions', 'requests', 'settings', 'templates', 'info', 'bots', 'artifacts', 'files']);
     expect(commands.find(command => command.id === 'requests')?.description).toContain('未回答 1件');
     expect(JSON.stringify(commands)).not.toContain('DEMO-live');
     expect(JSON.stringify(commands)).not.toContain('DEMO');
@@ -40,6 +40,13 @@ describe('bounded navigation destinations', () => {
     expect(filterNavigationCommands(commands, '🤷').map(command => command.id)).toEqual([]);
     expect(filterNavigationCommands(commands, '')).toHaveLength(commands.length);
     expect(filterNavigationCommands(commands, 'a'.repeat(1_000_000))).toEqual([]);
+  });
+  it('exposes bot reads only after the registered profile and authenticated principal are established', () => {
+    const state = { ...snapshot(), connection: 'connected' as const, authenticated: true, profile: 'default', profiles: ['default'], principalId: 'DEMO-owner' };
+    expect(navigationCommands(state).find(row => row.id === 'bots')?.disabledReason).toBeUndefined();
+    expect(navigationCommands({ ...state, principalId: '' }).find(row => row.id === 'bots')?.disabledReason).toContain('認証scope');
+    expect(navigationCommands({ ...state, profiles: [] }).find(row => row.id === 'bots')?.disabledReason).toContain('登録profile');
+    expect(navigationCommands({ ...state, authenticated: false }).find(row => row.id === 'bots')?.disabledReason).toContain('認証後');
   });
   it('accepts one explicit desktop shortcut, respecting IME, modifiers, repeat and prior event ownership', () => {
     const ctrl = new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, cancelable: true });
