@@ -347,7 +347,7 @@ dd { margin-left: 0; overflow-wrap: anywhere; margin-bottom: 12px; } dt { font-w
 :root[data-remote-keyboard="true"] .remote-chat-heading { min-height: 44px; padding-block: 0; }
 
 /* Brief, opacity-only entrances preserve reading anchors and pointer targets. */
-.remote-copy-button { display: inline-flex; align-items: center; gap: 8px; }
+.remote-copy-button, .remote-progress-action { display: inline-flex; align-items: center; gap: 8px; }
 .remote-code-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
 .remote-code-actions .remote-copy-button { grid-column: 2; grid-row: 1; }
 .remote-code-actions .remote-copy-feedback { grid-column: 1; grid-row: 1; }

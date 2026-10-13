@@ -102,6 +102,18 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
         await page.keyboard.press('Escape');
       }
       row.checks.push('320/390/430, landscape, light/dark, 200 percent text; no horizontal overflow, 44px controls');
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.evaluate(() => { document.documentElement.style.fontSize = '16px'; document.documentElement.dataset.theme = 'light'; });
+      await page.getByRole('button', { name: '← 会話一覧', exact: true }).click();
+      await page.getByRole('navigation', { name: '下部ナビゲーション' }).getByRole('button', { name: '設定', exact: true }).click();
+      const update = page.getByRole('button', { name: '更新を確認', exact: true });
+      const alignment = await update.evaluate(node => {
+        const icon = node.querySelector('svg').getBoundingClientRect(), label = node.querySelector('span').getBoundingClientRect();
+        return { centerDifference: Math.abs(icon.y + icon.height / 2 - label.y - label.height / 2), gap: label.x - icon.right };
+      });
+      assert.ok(alignment.centerDifference < 1 && alignment.gap >= 8);
+      row.checks.push('update icon and label retain centered alignment and spacing');
+
     }
     assert.equal(fixture.state.submissions, 0);
     assert.equal(fixture.state.methods.some(method => ['prompt.submit', 'session.interrupt', 'approval.respond', 'session.create'].includes(method)), false);

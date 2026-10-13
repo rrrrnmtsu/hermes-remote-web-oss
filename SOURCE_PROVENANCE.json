@@ -2111,7 +2111,7 @@
       "file": "packages/web/src/remote/Settings.tsx",
       "source": "packages/web/src/remote/Settings.tsx",
       "sourceSha256": "976dde696fbf363f368e902963ec226aaab6cc737a8d620568b46c4c9339b788",
-      "sha256": "de694543e34d571828dee5923f30e66e9aae37991556894d2017d9422f045275",
+      "sha256": "7aa7ce5a127c37fe0bdfe12db348b26663823373ac33a976c6679e20e8db00da",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },
@@ -2329,7 +2329,7 @@
       "file": "packages/web/src/remote/remote.css",
       "source": "packages/web/src/remote/remote.css",
       "sourceSha256": "533f65db0a7f8ce98979b7c449bb2bba522f423e09fda3423911643aa6a1467a",
-      "sha256": "2c91ae4b126535f3e09daa51f9b55776677a67f3283d0a7b9e0e1623f212a139",
+      "sha256": "4faf1b0a06822bc4df9cb6fa1ac2d54768d5d83ca3786679285cf516b3070d90",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true,
       "postPublicationModified": true
@@ -3015,7 +3015,7 @@
       "file": "scripts/e2e-micro-interactions.mjs",
       "source": "scripts/e2e-micro-interactions.mjs",
       "sourceSha256": "129de474a38615abebd47127cf7c176c9edaacf7e59949235d03cded586c4356",
-      "sha256": "129de474a38615abebd47127cf7c176c9edaacf7e59949235d03cded586c4356",
+      "sha256": "cbb01c3550db2ad1ef930163226e2b6e1318e2adcfdf24d4daeb9182e5627942",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },
