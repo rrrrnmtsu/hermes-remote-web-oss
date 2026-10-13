@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { RemoteController, RemoteState } from '../../../core/src/stores/remote';
 import { ConnectionPanel } from './ConnectionPanel';
 import { RemoteIcon } from './RemoteIcon';
@@ -7,6 +8,8 @@ export function ConversationList({ state, controller, scopeBusy, search, onSearc
   state: RemoteState; controller: RemoteController; scopeBusy: boolean; search: string;
   paginated?: boolean; onSearch(value: string): void; onOpen(): void; onChooseSession(sessionId?: string): void; onConnect(): void; onDiagnostics(): void;
 }) {
+  const searchInput = useRef<HTMLInputElement>(null);
+  const clearSearch = () => { onSearch(''); searchInput.current?.focus({ preventScroll: true }); };
   const query = search.trim().toLocaleLowerCase('ja-JP');
   const project = state.projects.find(project => project.id === state.selectedProjectId);
   const rows = project ? state.projectSessions : state.sessions;
@@ -17,7 +20,7 @@ export function ConversationList({ state, controller, scopeBusy, search, onSearc
   const canOpen = state.connection === 'connected' && !scopeBusy && Boolean(navigator.locks);
   return <section className="remote-conversation-list" aria-label="会話一覧">
     <div className="remote-list-heading"><h1>会話</h1>
-      <button className="remote-new-conversation" disabled={!canOpen} aria-busy={state.sessionLoading || undefined} onClick={() => onChooseSession()}><RemoteIcon name="new" />新規会話</button>
+      <button className="remote-new-conversation" disabled={!canOpen} aria-busy={state.sessionLoading || undefined} onClick={() => onChooseSession()}><RemoteIcon name={state.sessionLoading ? 'loading' : 'new'} />新規会話</button>
     </div>
     {project && <div className="remote-project-context" aria-label="選択中のプロジェクト">
       <RemoteIcon name="folder" /><div><strong>{project.label}</strong><p>{state.profile} の所属セッションを表示</p></div>
@@ -39,13 +42,13 @@ export function ConversationList({ state, controller, scopeBusy, search, onSearc
     {!paginated && <><div className="remote-search">
       <RemoteIcon name="search" />
       <label className="remote-sr-only" htmlFor="remote-search">会話を検索</label>
-      <input id="remote-search" type="search" placeholder={project ? 'このprojectの会話を検索' : 'このprofileの会話を検索'} value={search} onChange={event => onSearch(event.target.value)} />
-      {search && <button className="remote-icon-button" aria-label="検索をクリア" onClick={() => onSearch('')}>×</button>}
+      <input ref={searchInput} id="remote-search" type="search" placeholder={project ? 'このprojectの会話を検索' : 'このprofileの会話を検索'} value={search} onChange={event => onSearch(event.target.value)} />
+      {search && <button className="remote-icon-button" aria-label="検索をクリア" onClick={clearSearch}>×</button>}
     </div>
     <div className="remote-list-tools"><h2>{query ? `検索結果 · ${matches.length}件` : project ? `所属セッション · ${matches.length}件` : '最近の会話'}</h2>
-      <button aria-label="一覧を再取得" disabled={state.connection !== 'connected' || loading} onClick={() => {
+      <button aria-label="一覧を再取得" aria-busy={loading || undefined} disabled={state.connection !== 'connected' || loading} onClick={() => {
         if (project) void controller.selectProject(project.id); else void controller.refreshSessions().catch(() => undefined);
-      }}><RemoteIcon name="refresh" />再取得</button>
+      }}><RemoteIcon name={loading ? 'loading' : 'refresh'} />再取得</button>
     </div>
     {project && state.projectError && <p className="remote-scope-hint" role="status">{state.projectError}</p>}
     <div className="remote-session-list" aria-busy={loading}>
@@ -58,7 +61,7 @@ export function ConversationList({ state, controller, scopeBusy, search, onSearc
         <RemoteIcon name={query ? 'search' : 'chat'} />
         <h2>{query ? '一致する会話がありません' : project ? 'この取得範囲に所属セッションはありません' : 'このprofileには会話がありません'}</h2>
         <p>{query ? '検索は取得済みの会話タイトルが対象です。別の言葉で検索できます。' : project ? '直近100件の通常履歴が対象です。「最近の会話」では他の履歴も確認できます。' : '「新規会話」からHermesとの会話を始められます。'}</p>
-        {search && <button onClick={() => onSearch('')}>検索をクリア</button>}
+        {search && <button onClick={clearSearch}>検索をクリア</button>}
       </div>}
     </div></>}
   </section>;

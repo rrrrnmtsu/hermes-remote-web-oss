@@ -1,5 +1,6 @@
-export function RemoteIcon({ name }: { name: 'back' | 'more' | 'send' | 'new' | 'down' | 'stop' | 'chat' | 'requests' | 'settings' | 'search' | 'chevron' | 'refresh' | 'check' | 'keyboard' | 'menu' | 'folder' | 'close' }) {
+export function RemoteIcon({ name }: { name: 'back' | 'more' | 'send' | 'new' | 'down' | 'stop' | 'chat' | 'requests' | 'settings' | 'search' | 'chevron' | 'refresh' | 'check' | 'keyboard' | 'menu' | 'folder' | 'close' | 'copy' | 'loading' }) {
   const paths = {
+    copy: 'M9 9h11v11H9zM5 15H3V3h12v2', loading: 'M20 12a8 8 0 1 1-8-8',
     back: 'M15 5l-7 7 7 7M8 12h12', more: 'M5 12h.01M12 12h.01M19 12h.01',
     send: 'M12 19V5M5 12l7-7 7 7', new: 'M12 5v14M5 12h14', down: 'M12 5v14M5 12l7 7 7-7',
     stop: 'M7 7h10v10H7z',
@@ -11,6 +12,6 @@ export function RemoteIcon({ name }: { name: 'back' | 'more' | 'send' | 'new' | 
     keyboard: 'M3 3h18v12H3zM7 7h.01M12 7h.01M17 7h.01M7 11h10M9 19l3 3 3-3',
     menu: 'M4 6h16M4 12h16M4 18h16', folder: 'M3 7V4h6l3 3h9v13H3z', close: 'M6 6l12 12M18 6L6 18',
   };
-  return <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={name === 'more' ? 4 : 2}
+  return <svg className={name === 'loading' ? 'remote-icon-loading' : undefined} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={name === 'more' ? 4 : 2}
     strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false"><path d={paths[name]} /></svg>;
 }

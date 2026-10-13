@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Brief geometry-stable press/dialog feedback with OS reduced-motion support;
+  real operation progress indicators for existing send/read/update actions.
+- Scoped, deduplicated explicit clipboard feedback, bounded confirmed success,
+  persistent failure guidance and no stale completion after dismiss/scope change.
+  Search clear restores focus; draft, IME, delivery and update guards are retained.
+
 - Read-only messaging Gateway overview with explicit profile-scoped refresh and
   bounded, sanitized platform status; no bot send/config/process actions.
 - Explicit owned conversation pages in the bot panel: 50 rows per page, at most

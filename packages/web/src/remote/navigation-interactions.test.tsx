@@ -24,6 +24,16 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe('navigation and search interaction ownership', () => {
+  it('returns focus to the list search after clearing without changing the draft or creating a session', () => {
+    const value = controller(); value.store.setState({ draft: 'DEMO draft' });
+    const open = vi.spyOn(value, 'openSession'); const submit = vi.spyOn(value, 'submit');
+    render(<RemoteApp controller={value} />);
+    const input = screen.getByRole('searchbox', { name: '会話を検索' });
+    fireEvent.change(input, { target: { value: 'DEMO missing' } });
+    const clear = within(input.parentElement!).getByRole('button', { name: '検索をクリア' }); clear.focus(); fireEvent.click(clear);
+    expect(input).toHaveValue(''); expect(input).toHaveFocus();
+    expect(value.store.getState().draft).toBe('DEMO draft'); expect(open).not.toHaveBeenCalled(); expect(submit).not.toHaveBeenCalled();
+  });
   it('restores each page position and resets it at a different profile', () => {
     const value = controller(); render(<RemoteApp controller={value} />);
     fireEvent.click(screen.getByRole('button', { name: '設定' })); const main = screen.getByRole('main');

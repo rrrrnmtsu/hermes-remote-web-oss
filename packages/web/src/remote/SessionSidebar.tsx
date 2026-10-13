@@ -38,8 +38,8 @@ export function SessionSidebar({ state, controller, scopeBusy, search, onSearch,
     {scopeBusy && <p className="remote-sidebar-hint" role="status">{scopeBusyReason(state)}一覧の絞り込みと、開いている会話への復帰はできます。</p>}
     <nav aria-label="プロジェクト別セッション">
       <div className="remote-sidebar-section-heading"><h3>プロジェクト</h3>
-        <button className="remote-icon-button" aria-label="プロジェクトを再取得" disabled={state.connection !== 'connected' || state.projectsStatus === 'loading'}
-          onClick={() => { void controller.refreshProjects(); }}><RemoteIcon name="refresh" /></button>
+        <button className="remote-icon-button" aria-label="プロジェクトを再取得" aria-busy={state.projectsStatus === 'loading' || undefined} disabled={state.connection !== 'connected' || state.projectsStatus === 'loading'}
+          onClick={() => { void controller.refreshProjects(); }}><RemoteIcon name={state.projectsStatus === 'loading' ? 'loading' : 'refresh'} /></button>
       </div>
       <button className="remote-sidebar-project" aria-pressed={!state.selectedProjectId} onClick={() => onFilter('')}>
         <RemoteIcon name="chat" /><span><strong>最近の会話</strong><small>{state.featureMethods?.includes('remote.sessions.list') ? '選択profile・先頭50件以内' : '選択profile・直近100件以内'}</small></span><span className="remote-sidebar-count">{state.sessions.length}</span>

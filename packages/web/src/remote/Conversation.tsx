@@ -697,17 +697,17 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
           onCompositionStart={() => composition(true)} onCompositionEnd={() => composition(false)}
           onChange={event => { controller.setDraft(event.target.value); rememberSelection(); }} /></>}
         <div ref={composerActions} className="remote-composer-actions">
-          <div className="remote-composer-slot"><button className="remote-composer-help" type="button" aria-label="入力の補助" aria-haspopup="dialog" disabled={isComposing}
+          <div className="remote-composer-slot"><button className="remote-composer-help" type="button" aria-label="入力の補助" aria-haspopup="dialog" aria-expanded={auxiliary} disabled={isComposing}
               title="入力の補助" onPointerDown={event => { event.preventDefault(); rememberSelection(); }} onClick={() => { rememberSelection(); setAuxiliary(true); }}><RemoteIcon name="new" /></button>
             {inputFocused && <button className="remote-dismiss-keyboard" type="button" aria-label="キーボードを閉じる"
             title="キーボードを閉じる" onPointerDown={event => event.preventDefault()} onClick={() => { composer.current?.blur(); setInputFocused(false); onComposerFocus(false); }}><RemoteIcon name="keyboard" /></button>}
             {hasNew && !searchOpen && <button className="remote-new" type="button" aria-label="新着を表示" onClick={() => {
               atBottom.current = true; if (scroller.current) followTail(scroller.current); setHasNew(false);
             }}><RemoteIcon name="down" />新着</button>}</div>
-          <button className="remote-send" aria-label="送信" title={state.delivery === 'sending' ? '送信中' : '送信'} disabled={!sendEnabled} type="submit" onPointerDown={event => {
+          <button className="remote-send" aria-label="送信" aria-busy={state.delivery === 'sending' || state.submitInProgress || undefined} title={state.delivery === 'sending' || state.submitInProgress ? '送信処理中' : '送信'} disabled={!sendEnabled} type="submit" onPointerDown={event => {
             // Avoid a blur/reflow between a touch-down and the actual send click.
             if (document.activeElement === composer.current) event.preventDefault();
-          }}><RemoteIcon name="send" /></button>
+          }}><RemoteIcon name={state.delivery === 'sending' || state.submitInProgress ? 'loading' : 'send'} /></button>
         </div>
         <p id="remote-composer-hint" className="remote-sr-only">改行はEnter。送信は送信ボタンのみ。下書きはこの画面のメモリのみです。実行中の追加入力は下書きに留めます。</p>
       </form>

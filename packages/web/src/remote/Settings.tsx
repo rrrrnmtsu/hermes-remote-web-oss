@@ -21,7 +21,7 @@ export function Settings({ state, buildId, theme, onTheme, chatFontSize, onChatF
       </li>)}</ul>
       <p className="remote-meta">最終同期: {state.lastSync ? new Date(state.lastSync).toLocaleString('ja-JP') : '未同期'}</p>
       {state.failureKind && <p className="remote-scope-hint">{phaseLabels[state.failedStage]} / {state.failureKind}</p>}
-      <div className="remote-actions"><button disabled={['https', 'auth', 'ticket', 'wss', 'gateway', 'rpc', 'reconnecting'].includes(state.connection)} onClick={onReconnect}>再接続して同期</button><button disabled={checkingUpdate} aria-busy={checkingUpdate || undefined} onClick={onUpdate}>更新を確認</button></div>
+      <div className="remote-actions"><button disabled={['https', 'auth', 'ticket', 'wss', 'gateway', 'rpc', 'reconnecting'].includes(state.connection)} onClick={onReconnect}>再接続して同期</button><button className="remote-progress-action" disabled={checkingUpdate} aria-busy={checkingUpdate || undefined} onClick={onUpdate}><RemoteIcon name={checkingUpdate ? 'loading' : 'refresh'} /><span>更新を確認</span></button></div>
       {checkingUpdate && <p role="status" className="remote-meta">更新情報を確認中…</p>}
       <details className="remote-diagnostic-details"><summary>アプリと接続の詳細</summary><dl>
         <dt>アプリbuild</dt><dd>{buildId}</dd><dt>対象Hermes</dt><dd>{state.targetVersion || '未確認'}</dd>

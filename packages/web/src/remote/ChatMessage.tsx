@@ -2,6 +2,7 @@ import { memo, useMemo, useRef, useState, type ReactNode } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import type { RemoteMessage } from '../../../core/src/stores/remote';
 import { ConfirmDialog } from './ConfirmDialog';
+import { useCopyFeedback } from './use-copy-feedback';
 import { RemoteIcon } from './RemoteIcon';
 import { safeMarkdownUrl } from './safe-markdown';
 import { searchHighlight, type SearchHit, DISPLAY_TEXT_LIMIT } from './chat-content';
@@ -9,12 +10,13 @@ import { captureQuote, type QuoteCandidate } from './quote-content';
 
 function CodeBlock({ children }: { children?: ReactNode }) {
   const code = useRef<HTMLPreElement>(null);
-  const [feedback, setFeedback] = useState('');
+  const clipboard = useCopyFeedback();
   return <div className="remote-code-block">
-    <div className="remote-code-actions" data-quote-exclude><button type="button" aria-label="コードをコピー" onClick={() => {
-      if (!navigator.clipboard) { setFeedback('コピーできません'); return; }
-      void navigator.clipboard.writeText(code.current?.textContent || '').then(() => setFeedback('コピーしました'), () => setFeedback('コピーできません'));
-    }}>コピー</button><span role="status">{feedback}</span></div>
+    <div className="remote-code-actions" data-quote-exclude><button type="button" aria-label="コードをコピー"
+      className="remote-copy-button" data-copy-state={clipboard.phase} aria-busy={clipboard.phase === 'pending' || undefined}
+      aria-disabled={clipboard.phase === 'pending' || undefined} onClick={() => { void clipboard.copy(code.current?.textContent || ''); }}>
+      <RemoteIcon name={clipboard.phase === 'success' ? 'check' : clipboard.phase === 'pending' ? 'loading' : 'copy'} />コピー
+    </button><span className="remote-copy-feedback" data-state={clipboard.phase} role="status" aria-atomic="true">{clipboard.feedback}</span></div>
     <pre ref={code}>{children}</pre>
   </div>;
 }
@@ -33,7 +35,7 @@ export const ChatMessage = memo(function ChatMessage({ message, searchHits = [],
   onReadAloud?(): void;
 }) {
   const [actions, setActions] = useState(false);
-  const [feedback, setFeedback] = useState('');
+  const clipboard = useCopyFeedback(`${quoteScope}:${message.id}`);
   const body = useRef<HTMLDivElement>(null);
   const candidate = useRef<QuoteCandidate | null>(null);
   const capture = (): void => {
@@ -50,20 +52,20 @@ export const ChatMessage = memo(function ChatMessage({ message, searchHits = [],
         : <div ref={body} className="remote-message-content"><ReactMarkdown skipHtml urlTransform={safeMarkdownUrl} rehypePlugins={highlights} components={markdownComponents}>{message.text.slice(0, DISPLAY_TEXT_LIMIT)}</ReactMarkdown></div>}
       {message.role !== 'tool' && message.text.length > 80000 && <p>表示は80,000文字で省略しています。全文はHermes側で確認してください。</p>}
     </div>
-    <button className="remote-message-more remote-icon-button" aria-label={`${label}のメッセージ操作`}
+    <button className="remote-message-more remote-icon-button" aria-label={`${label}のメッセージ操作`} aria-haspopup="dialog" aria-expanded={actions}
       onPointerDown={capture} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') capture(); }}
-      onClick={() => { if (!candidate.current) capture(); setFeedback(''); setActions(true); }}>
+      onClick={() => { if (!candidate.current) capture(); clipboard.reset(); setActions(true); }}>
       <RemoteIcon name="more" />
     </button>
-    {actions && <ConfirmDialog label="メッセージの操作" className="remote-sheet" actionNavigation dismissOnBackdrop onDismiss={() => { setActions(false); candidate.current = null; }}>
-      <div className="remote-sheet-heading"><h2>メッセージの操作</h2><button autoFocus data-dialog-initial-focus onClick={() => { setActions(false); candidate.current = null; }}>閉じる</button></div>
-      <button className="remote-menu-action" aria-label="メッセージをコピー" onClick={() => {
-        if (!navigator.clipboard) { setFeedback('このブラウザではコピーできません。本文を選択してください。'); return; }
-        void navigator.clipboard.writeText(message.text).then(() => setFeedback('コピーしました'), () => setFeedback('コピーできません。本文を選択してください。'));
-      }}>コピー</button>
+    {actions && <ConfirmDialog label="メッセージの操作" className="remote-sheet" actionNavigation dismissOnBackdrop onDismiss={() => { setActions(false); clipboard.reset(); candidate.current = null; }}>
+      <div className="remote-sheet-heading"><h2>メッセージの操作</h2><button autoFocus data-dialog-initial-focus onClick={() => { setActions(false); clipboard.reset(); candidate.current = null; }}>閉じる</button></div>
+      <button className="remote-menu-action remote-copy-button" aria-label="メッセージをコピー" data-copy-state={clipboard.phase}
+        aria-busy={clipboard.phase === 'pending' || undefined} aria-disabled={clipboard.phase === 'pending' || undefined}
+        onClick={() => { void clipboard.copy(message.text); }}>
+        <RemoteIcon name={clipboard.phase === 'success' ? 'check' : clipboard.phase === 'pending' ? 'loading' : 'copy'} />コピー</button>
       {onQuote && ['user', 'assistant'].includes(message.role) && <button className="remote-menu-action" disabled={!candidate.current?.text}
-        onClick={() => { const frozen = candidate.current; setActions(false); candidate.current = null; if (frozen) onQuote(frozen); }}>引用して質問</button>}
-      <p className="remote-meta" role="status">{feedback}</p>
+        onClick={() => { const frozen = candidate.current; setActions(false); clipboard.reset(); candidate.current = null; if (frozen) onQuote(frozen); }}>引用して質問</button>}
+      <p className="remote-meta remote-copy-feedback" data-state={clipboard.phase} role="status" aria-atomic="true">{clipboard.feedback}</p>
       {onReadAloud && ['user', 'assistant'].includes(message.role) && <button className="remote-menu-action" onClick={() => { setActions(false); onReadAloud(); }}>端末で読み上げ</button>}
       {onBranch && Number.isSafeInteger(Number(message.id)) && Number(message.id) > 0 && ['user', 'assistant'].includes(message.role) && <>
         <button className="remote-menu-action" onClick={() => { setActions(false); onBranch('branch'); }}>ここから分岐</button>
