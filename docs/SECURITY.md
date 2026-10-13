@@ -21,6 +21,9 @@ The default is page-memory content. Plaintext display keys:
 
 No credential, ticket, transcript, draft, attachment bytes/name, search term or
 conversation ID is written to plaintext browser storage.
+Conversation outline entries and return anchors are memory-only, bounded to the
+loaded/displayable messages and discarded with conversation/auth scope. Opening
+or jumping adds no RPC, history fetch, generated summary or stored content.
 Quick-navigation queries are also page memory only and discarded on close or
 scope/auth changes. Navigation does not grant notification, storage or microphone
 consent, or execute send/approval/stop/model/profile writes.

@@ -2,6 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback, typ
 import type { RemoteController, RemoteState, RemoteMessage } from '../../../core/src/stores/remote';
 import type { ProductAction } from './ProductControls';
 import { ChatMessage } from './ChatMessage';
+import { ConversationOutline } from './ConversationOutline';
+import { createConversationOutline, findOutlineTarget, type ConversationOutline as OutlineSnapshot, type OutlineEntry } from './chat-outline';
 import { ConfirmDialog } from './ConfirmDialog';
 import { Notice } from './Notice';
 import { RemoteIcon } from './RemoteIcon';
@@ -198,8 +200,14 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
   const composing = useRef(false);
   const [isComposing, setIsComposing] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [outline, setOutline] = useState<{ scope: string; snapshot: OutlineSnapshot } | null>(null);
+  const [outlineError, setOutlineError] = useState('');
+  const [returnPosition, setReturnPosition] = useState<ReturnType<typeof captureReadingPosition> | null>(null);
+  const [outlineAnnouncement, setOutlineAnnouncement] = useState('');
+  const outlineFrame = useRef(0);
+  const clearOutlineTarget = useRef<() => void>(() => undefined);
   const searching = useRef(false);
-  searching.current = searchOpen;
+  searching.current = searchOpen || outline !== null;
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [selectedHit, setSelectedHit] = useState(0);
@@ -246,6 +254,9 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
     return grouped;
   }, [searchHits]);
   const scope = `${state.profile}:${state.liveId}`;
+  useEffect(() => () => {
+    window.cancelAnimationFrame(outlineFrame.current); clearOutlineTarget.current();
+  }, [scope]);
   useEffect(() => { setGenerationDetails(false); }, [scope, state.connection, state.generationAllowed]);
   const localPosition = useRef(scrollMemory?.current?.scope === scope ? scrollMemory.current.position : null);
   useLayoutEffect(() => {
@@ -532,6 +543,47 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
     const node = scroller.current; atBottom.current = Boolean(node && captureReadingPosition(node).bottom);
     menuTrigger.current?.focus({ preventScroll: true });
   };
+  const openOutline = (): void => {
+    setOutlineError(''); setMenu(false);
+    setOutline({ scope, snapshot: createConversationOutline(state.messages) });
+  };
+  const navigateOutline = (entry: OutlineEntry | null): void => {
+    const current = controller.store.getState(), node = scroller.current;
+    if (!node || (outline && outline.scope !== scope) || `${current.profile}:${current.liveId}` !== scope
+      || ['reauth', 'logged_out'].includes(current.connection)) return;
+    const target = entry ? findOutlineTarget(node, entry) : null;
+    if (entry && !target) { setOutlineError('この項目は現在の表示範囲にありません。目次を開き直してください。'); return; }
+    if (!entry && !returnPosition) return;
+    if (entry && !returnPosition) setReturnPosition({ ...captureReadingPosition(node), bottom: false });
+    const saved = returnPosition;
+    setMenu(false); setOutline(null); setOutlineError('');
+    atBottom.current = false; allocationTail.current = false; allocationNativeTop.current = null;
+    window.cancelAnimationFrame(outlineFrame.current);
+    // Run after the native sheet has returned focus; never let focus reveal
+    // scroll the page or replace the transcript's remembered reader anchor.
+    outlineFrame.current = window.requestAnimationFrame(() => {
+      const latestState = controller.store.getState();
+      if (!node.isConnected || `${latestState.profile}:${latestState.liveId}` !== scope
+        || ['reauth', 'logged_out'].includes(latestState.connection)) return;
+      clearOutlineTarget.current();
+      if (target?.isConnected) {
+        scrollConversationHit(node, target);
+        const previousTabIndex = target.getAttribute('tabindex');
+        target.tabIndex = -1; target.focus({ preventScroll: true }); target.classList.add('remote-outline-target');
+        const timer = window.setTimeout(() => target.classList.remove('remote-outline-target'), 1800);
+        clearOutlineTarget.current = () => {
+          window.clearTimeout(timer); target.classList.remove('remote-outline-target');
+          if (previousTabIndex === null) target.removeAttribute('tabindex'); else target.setAttribute('tabindex', previousTabIndex);
+        };
+        setOutlineAnnouncement(`${entry!.role === 'user' ? '質問' : '回答見出し'}へ移動しました。会話メニューから移動前の位置へ戻れます。`);
+      } else if (saved) {
+        restoreReadingPosition(node, saved); setReturnPosition(null);
+        menuTrigger.current?.focus({ preventScroll: true }); setOutlineAnnouncement('移動前の閲覧位置へ戻りました。');
+      }
+      localPosition.current = { ...captureReadingPosition(node), bottom: false };
+      readingGeometry.current = { width: node.clientWidth, height: node.clientHeight, scrollHeight: node.scrollHeight, scrollTop: node.scrollTop };
+    });
+  };
   const generationStatus = state.generationAllowed === false && <button className="remote-generation-status" type="button" aria-label="送信できない理由を確認"
     aria-haspopup="dialog" onClick={() => setGenerationDetails(true)}><span>送信は利用できません</span><span>理由<RemoteIcon name="chevron" /></span></button>;
   return <section ref={layout} className="remote-conversation" aria-label="会話" style={{ '--chat-body-font-size': CHAT_FONT_REM[chatFontSize] } as CSSProperties}>
@@ -550,6 +602,8 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
       {onUpdate && <button className="remote-menu-action" onClick={() => { setMenu(false); onUpdate(); }}>アプリの更新を確認</button>}
       <button className="remote-menu-action" onClick={() => { setMenu(false); onSidebar(); }}><RemoteIcon name="menu" />セッションを選ぶ</button>
       <button className="remote-menu-action" onClick={() => { setMenu(false); setSearchOpen(true); atBottom.current = false; }}>この会話を検索</button>
+      <button className="remote-menu-action" onClick={openOutline}>この会話の目次</button>
+      {returnPosition && <button className="remote-menu-action" onClick={() => navigateOutline(null)}>移動前の位置へ戻る</button>}
       {onFeature && state.featureMethods?.includes('remote.session.metadata') && <button className="remote-menu-action" onClick={() => { setMenu(false); onFeature('organize'); }}>名前・ピン・アーカイブ</button>}
       {onFeature && <button className="remote-menu-action" onClick={() => { setMenu(false); onFeature('info'); }}>モデル・実行情報</button>}
       {onFeature && <button className="remote-menu-action" onClick={() => { setMenu(false); onFeature('artifacts'); }}>成果物</button>}
@@ -567,6 +621,9 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
           <dt>最終同期</dt><dd>{state.lastSync ? new Date(state.lastSync).toLocaleString('ja-JP') : '未同期'}</dd></dl>
       </details>
     </ConfirmDialog>}
+    {outline && <ConversationOutline outline={outline.snapshot} error={outlineError} canReturn={Boolean(returnPosition)}
+      onDismiss={() => setOutline(null)} onJump={entry => navigateOutline(entry)} onReturn={() => navigateOutline(null)} />}
+    <span className="remote-sr-only" role="status">{outlineAnnouncement}</span>
     {exportSnapshot && <MarkdownSaveDialog snapshot={exportSnapshot} onDismiss={() => setExportSnapshot(null)} />}
     {quote && <ConfirmDialog label="引用して質問" className="remote-sheet remote-quote" onDismiss={() => setQuote(null)}>
       <div className="remote-sheet-heading"><h2>引用して質問</h2><button autoFocus onClick={() => setQuote(null)}>閉じる</button></div>
