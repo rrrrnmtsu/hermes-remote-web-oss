@@ -130,8 +130,9 @@ async function run(name, engine) {
     assert.ok((await input.boundingBox()).height > shortHeight);
     await input.fill('DEMO\n'.repeat(30));
     const longHeight = (await input.boundingBox()).height;
-    const style = await input.evaluate(node => ({ font: parseFloat(getComputedStyle(node).fontSize), line: parseFloat(getComputedStyle(node).lineHeight), overflow: getComputedStyle(node).overflowY, scrollHeight: node.scrollHeight }));
-    assert.ok(style.font >= 16 && longHeight <= style.line * 6 + 12 && style.scrollHeight > longHeight);
+    const style = await input.evaluate(node => ({ font: parseFloat(getComputedStyle(node).fontSize), line: parseFloat(getComputedStyle(node).lineHeight),
+      padding: parseFloat(getComputedStyle(node).paddingTop) + parseFloat(getComputedStyle(node).paddingBottom), overflow: getComputedStyle(node).overflowY, scrollHeight: node.scrollHeight }));
+    assert.ok(style.font >= 16 && longHeight <= style.line * 6 + style.padding && style.scrollHeight > longHeight);
     assert.equal(style.overflow, 'auto');
     await input.fill(''); assert.equal((await input.boundingBox()).height, shortHeight);
     const send = page.getByRole('button', { name: '送信', exact: true });
@@ -145,6 +146,8 @@ async function run(name, engine) {
     assert.equal(await page.getByRole('button', { name: 'キーボードを閉じる' }).count(), 0);
     await input.focus();
     await input.press('Tab');
+    assert.equal(await page.getByRole('button', { name: '入力の補助', exact: true }).evaluate(node => document.activeElement === node), true);
+    await page.keyboard.press('Tab');
     const dismiss = page.getByRole('button', { name: 'キーボードを閉じる' });
     assert.equal(await dismiss.evaluate(node => document.activeElement === node), true);
     await dismiss.press('Enter');

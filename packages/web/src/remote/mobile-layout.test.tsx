@@ -186,16 +186,16 @@ describe('compact mobile chat layout', () => {
     search.style.padding = '8px 12px'; search.style.borderBottom = '1px solid black';
     form.parentElement!.style.padding = '2px 12px 4px'; form.style.padding = '6px 12px'; form.style.border = '1px solid black';
     actions.style.marginTop = '4px'; transcript.style.padding = '2px 16px 4px';
-    const info = context.querySelector<HTMLElement>('p.remote-meta')!;
-    info.style.fontSize = '13px'; info.style.lineHeight = '20px'; info.style.margin = '2px 0';
+    expect(context.querySelector('.remote-generation-status')).toBeNull();
+    expect(search.querySelector('.remote-generation-status')).not.toBeNull();
     input.style.lineHeight = '24px'; input.style.padding = '4px 0';
     Object.defineProperty(input, 'scrollHeight', { configurable: true, value: 1000 });
-    Object.defineProperty(context, 'scrollHeight', { configurable: true, value: 70 });
+    Object.defineProperty(context, 'scrollHeight', { configurable: true, value: 0 });
     Object.defineProperty(search, 'scrollHeight', { configurable: true, value: 134 });
     fireEvent.change(screen.getByLabelText('会話内の検索語'), { target: { value: 'DEMO query' } });
     fireEvent.change(input, { target: { value: 'DEMO 日本語\n'.repeat(6) } });
     expect(search.style.getPropertyValue('--remote-search-min-height')).toBe('61px');
-    expect(search.style.getPropertyValue('--remote-search-max-height')).toBe('63px');
+    expect(search.style.getPropertyValue('--remote-search-max-height')).toBe('87px');
     expect(Number.parseFloat(input.style.height)).toBe(44);
     expect(screen.getByLabelText('会話内の検索語')).toHaveValue('DEMO query');
     expect(controller.store.getState().draft).toBe('DEMO 日本語\n'.repeat(6));
@@ -219,6 +219,27 @@ describe('compact mobile chat layout', () => {
     fireEvent.click(newer);
     expect(transcript.scrollTo).toHaveBeenCalledWith({ top: 1000 });
     expect(controller.store.getState().draft).toBe('DEMO keep draft');
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('explains a disabled send explicitly without changing permission or draft, and closes on scope/auth changes', () => {
+    const controller = demoController();
+    controller.store.setState({ generationAllowed: false, generationReason: 'DEMO: provider acceptance is not verified.', draft: 'DEMO keep 日本語\n改行' });
+    const submit = vi.spyOn(controller, 'submit').mockResolvedValue(undefined);
+    openConversation(controller);
+    const reason = screen.getByRole('button', { name: '送信できない理由を確認' });
+    expect(reason).toHaveAttribute('aria-haspopup', 'dialog');
+    act(() => reason.focus());
+    fireEvent.click(reason);
+    const details = screen.getByRole('dialog', { name: '送信できない理由' });
+    expect(details).toHaveTextContent('DEMO: provider acceptance is not verified.');
+    fireEvent.click(within(details).getByRole('button', { name: '閉じる' }));
+    expect(document.activeElement).toBe(reason);
+    expect(screen.getByRole('button', { name: '送信', hidden: true })).toBeDisabled();
+    expect(controller.store.getState().draft).toBe('DEMO keep 日本語\n改行');
+    fireEvent.click(reason);
+    act(() => controller.store.setState({ profile: 'DEMO-other', liveId: 'DEMO-other-live', draft: '' }));
+    expect(screen.queryByRole('dialog', { name: '送信できない理由' })).toBeNull();
     expect(submit).not.toHaveBeenCalled();
   });
 

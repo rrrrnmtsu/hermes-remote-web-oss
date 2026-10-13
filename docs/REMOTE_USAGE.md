@@ -10,8 +10,12 @@ separate acceptance checks. There is no default server credential/origin.
 2. Use the sidebar to select a registered profile/project and a conversation.
    A displayed page is the fetched scope, not every profile or all history.
 3. Write in the memory composer. Enter inserts a line break; send explicitly.
-   “入力の補助” offers expanded input, fixed templates and local attachments.
+   The **＋** button (“入力の補助”) offers expanded input, fixed templates and local attachments.
    Selection, preview, quotation and template insertion do not send.
+   Short drafts share one rounded row with the controls; longer drafts grow to a
+   bounded scrollable editor. At 200% text size the editor uses the full width.
+   The keyboard icon dismisses editing without clearing the draft. The disabled
+   send state remains authoritative; “理由” opens the server's explanation.
 4. The message menu offers “引用して質問”. Conversation menu contains loaded-body
    search and bounded Markdown save. Search index/query and draft stay in memory.
    Saving a Markdown file deliberately leaves conversation text on the device.
