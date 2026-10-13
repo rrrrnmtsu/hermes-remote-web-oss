@@ -165,14 +165,23 @@ details[open] > summary::before { transform: rotate(45deg); }
 .remote-composer-context:focus-visible { outline: 3px solid var(--remote-accent); outline-offset: -3px; }
 .remote-composer-context > .remote-meta { margin-block: 4px; }
 .remote-composer-context > .remote-action-required { margin-top: 0; padding: 4px 8px; }
-.remote-composer { flex: 0 0 auto; padding: 8px 12px; background: var(--remote-surface); border: 1px solid var(--remote-border); border-radius: 24px; min-width: 0; }
-.remote-composer textarea { display: block; width: 100%; height: 44px; min-height: max(44px, calc(1.5em + 8px)); min-width: 0; resize: none; max-height: min(calc(9em + 8px), calc(var(--remote-height) * .32)); overflow-y: auto; font-size: max(16px, 1rem); line-height: 1.5; background: transparent; border: 0; border-radius: 0; padding: 4px 0; }
+.remote-composer { --remote-composer-leading: 44px; display: grid; grid-template-columns: var(--remote-composer-leading) minmax(0, 1fr) 48px; column-gap: 6px; align-items: end; flex: 0 0 auto; padding: 8px; background: var(--remote-surface); border: 1px solid var(--remote-border); border-radius: 32px; min-width: 0; }
+.remote-composer[data-focused="true"] { --remote-composer-leading: 88px; }
+.remote-composer:focus-within { border-color: var(--remote-accent); box-shadow: 0 0 0 1px var(--remote-accent); }
+.remote-composer textarea { grid-column: 2; grid-row: 1; align-self: center; display: block; width: 100%; height: 44px; min-height: max(44px, calc(1.5em + 20px)); min-width: 0; resize: none; max-height: min(calc(9em + 20px), calc(var(--remote-height) * .32)); overflow-y: auto; font-size: max(16px, 1rem); line-height: 1.5; background: transparent; border: 0; border-radius: 0; padding: 10px 0; }
+/* Focus remains visible on the containing pill; never draw a second rectangle over text. */
+.remote-composer textarea:focus-visible { outline: none; }
+.remote-composer[data-stacked="true"] textarea { grid-column: 1 / -1; grid-row: 1; }
+.remote-composer[data-stacked="true"] .remote-composer-actions { grid-row: 2; margin-top: 4px; }
 .remote-composer textarea::placeholder { color: var(--remote-muted); opacity: 1; }
-.remote-composer-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
-.remote-composer-slot { flex: 1; }
-.remote-composer-slot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
-.remote-composer-help { display: inline-flex; align-items: center; gap: 4px; font-size: .8125rem; background: transparent; padding: 8px; }
-.remote-composer-help svg { width: 20px; height: 20px; }
+.remote-composer-actions { grid-column: 1 / -1; grid-row: 1; display: flex; justify-content: space-between; align-items: center; pointer-events: none; min-height: 48px; }
+.remote-composer-actions button { pointer-events: auto; }
+.remote-composer-slot { display: flex; flex: 0 0 auto; align-items: center; gap: 0; min-width: 0; }
+.remote-composer-help, .remote-dismiss-keyboard { display: inline-flex; justify-content: center; align-items: center; width: 44px; height: 44px; padding: 8px; border-radius: 50%; background: transparent; }
+.remote-composer-help svg { width: 24px; height: 24px; }
+.remote-generation-status { display: flex; justify-content: space-between; align-items: center; gap: 8px; width: 100%; padding: 4px 8px; background: transparent; color: var(--remote-muted); font-size: .8125rem; text-align: left; }
+.remote-generation-status > span:last-child { display: inline-flex; align-items: center; flex: 0 0 auto; gap: 2px; }
+.remote-generation-status svg { width: 14px; height: 14px; }
 .remote-chat-search { flex: 0 1 auto; min-height: var(--remote-search-min-height, 0px); max-height: var(--remote-search-max-height, none); overflow-y: auto; overscroll-behavior: contain; padding: 8px 12px; border-bottom: 1px solid var(--remote-border); }
 .remote-chat-search:focus-visible { outline: 3px solid var(--remote-accent); outline-offset: -3px; }
 .remote-search-input { display: flex; gap: 4px; }
@@ -203,7 +212,7 @@ details[open] > summary::before { transform: rotate(45deg); }
 .remote-editor-footer details { flex: 1 1 8rem; }
 .remote-editor-footer summary { font-size: .8125rem; padding-block: 6px; }
 @media (max-width: 360px) { .remote-composer-help span { display: none; } }
-.remote-dismiss-keyboard { display: inline-flex; align-items: center; gap: 6px; padding: 8px 0; background: transparent; color: var(--remote-muted); font-size: .75rem; }
+.remote-dismiss-keyboard { color: var(--remote-muted); }
 .remote-send { display: flex; align-items: center; justify-content: center; height: 48px; width: 48px; min-width: 48px; padding: 12px; border-radius: 50%; background: var(--remote-accent); color: var(--remote-on-accent); }
 .remote-send:disabled { background: var(--remote-border); color: var(--remote-muted); opacity: 1; }
 .remote-activity-strip:empty { display: none; }
@@ -258,7 +267,6 @@ dd { margin-left: 0; overflow-wrap: anywhere; margin-bottom: 12px; } dt { font-w
 :root[data-remote-compact="true"] .remote-composer-dock { padding-top: 2px; padding-bottom: 4px; }
 :root[data-remote-compact="true"] .remote-composer { padding-block: 6px; }
 :root[data-remote-compact="true"] .remote-composer-context > .remote-meta { margin-block: 2px; }
-:root[data-remote-compact="true"] .remote-new { position: static; align-self: center; transform: none; }
 :root[data-remote-compact="true"] .remote-image-attachment { align-items: flex-start; padding: 0; }
 :root[data-remote-compact="true"] .remote-image-attachment > button { padding-block: 0; flex-shrink: 0; white-space: nowrap; position: sticky; top: 0; }
 :root[data-remote-compact="true"] .remote-image-details, :root[data-remote-compact="true"] .remote-image-attachment img { width: 44px; height: 44px; }

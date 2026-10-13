@@ -178,7 +178,15 @@ for (const [engine, type] of [['chromium', chromium], ['webkit', webkit]]) {
       await operation('list_explicit_search', () => click('条件を指定して取得'), async () => await page.getByRole('region', { name: '過去の会話', exact: true }).locator('ul > li').count() ? [] : ['search_has_no_visible_feedback']);
       await operation('open_saved_conversation', () => page.getByRole('region', { name: '過去の会話', exact: true }).locator('ul > li > button').first().click(), async () => await page.locator('#remote-input').count() ? [] : ['conversation_not_opened']);
       await page.locator('#remote-input').fill(DEMO_DRAFT); await capture('01-before-conversation');
-      await operation('readonly_send_disabled_has_policy_reason', async row => { row.disabled = await page.getByRole('button', { name: '送信', exact: true }).isDisabled(); }, async (_before, _after, row) => row.disabled && await page.getByRole('status').filter({ hasText: 'DEMO この検修は実生成が未許可です。' }).count() === 1 ? [] : ['disabled_send_policy_reason_missing']);
+      await operation('readonly_send_disabled_has_policy_reason', async row => {
+        row.disabled = await page.getByRole('button', { name: '送信', exact: true }).isDisabled();
+        await click('送信できない理由を確認');
+        const reason = page.getByRole('dialog', { name: '送信できない理由', exact: true });
+        row.reasonVisible = (await reason.innerText()).includes('DEMO この検修は実生成が未許可です。');
+        await reason.getByRole('button', { name: '閉じる', exact: true }).click();
+      }, async (before, after, row) => row.disabled && row.reasonVisible
+        && await page.getByRole('button', { name: '送信', exact: true }).isDisabled() && before.draft?.sha256 === after.draft?.sha256
+        ? [] : ['disabled_send_policy_reason_missing_or_guard_draft_changed']);
     });
     await workflow('I-MENU_PANEL_CLOSE_FOCUS', async () => {
       await conversation();

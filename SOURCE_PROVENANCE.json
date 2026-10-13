@@ -17,7 +17,8 @@
     "Post-publication quick navigation over existing destinations/read panels; memory-only queries, unchanged RPC/backend contracts",
     "Developer Preview 2 release metadata and self-contained update-test output; unchanged application source, dependency resolution and backend contracts",
     "Post-publication bounded read-only bot overview using the existing profile-scoped status API; measured package-source coverage and consent/scope regression tests, unchanged dependency resolution and backend source",
-    "Post-publication explicit owned bot conversation pages with an exact-ID bounded source join, memory-only title/bot filters and scope/cancellation/focus regressions; unchanged backend, dependencies and opt-in behavior"
+    "Post-publication explicit owned bot conversation pages with an exact-ID bounded source join, memory-only title/bot filters and scope/cancellation/focus regressions; unchanged backend, dependencies and opt-in behavior",
+    "Post-publication compact rounded composer, full-width wrapped/long drafts and enlarged-text layout, visible caret, scoped policy-reason modal, matched synthetic mobile screenshots and Chromium/WebKit regression; unchanged transport, backend, dependencies and consent"
   ],
   "files": [
     {
@@ -52,9 +53,10 @@
       "file": ".github/workflows/ci.yml",
       "source": "docs/oss-public/ci.yml",
       "sourceSha256": "cee12c3594c0b402fbe85dcaa9e7e00a9b9a35343385f541edb31cc331a570be",
-      "sha256": "0e88fd217240032615225b2f16f97709dc3e1c69d4c977c76f0197741eecf9be",
+      "sha256": "2846f14b86e4672db966c26e5bc643fb0f07964e0118bebbbc368f97239eca9f",
       "modifiedDuringExport": false,
-      "modifiedAfterExport": true
+      "modifiedAfterExport": true,
+      "postPublicationModified": true
     },
     {
       "file": ".github/workflows/release.yml",
@@ -177,6 +179,15 @@
       "modifiedAfterExport": true
     },
     {
+      "file": "docs/COMPOSER_UX.md",
+      "source": "docs/COMPOSER_UX.md",
+      "sourceSha256": "9ff0206c0c37fb8e3fd530fe72defca00a0755eac967c78cd482ef7632244525",
+      "sha256": "f9aac42b9262b2891a91d9c7e7b69a87e004a103aa549a0aec5248b47c3b4abd",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true,
+      "postPublicationModified": true
+    },
+    {
       "file": "docs/DEV_TOOLCHAIN.json",
       "source": "docs/oss-public/dev-toolchain.json",
       "sourceSha256": "173c606b6af513756777204c4e2dd7c37109e985b178c31940517615a67db095",
@@ -226,9 +237,10 @@
       "file": "docs/REMOTE_USAGE.md",
       "source": "docs/oss-public/REMOTE_USAGE.md",
       "sourceSha256": "f52735452b20a982ca328a42382ca70af675a50a05f09abbe3bbcec1962f30b1",
-      "sha256": "b49b1ba7a133893cf1e6b81e697802b322ecc84fe02875039e44d8c15533e320",
+      "sha256": "7960a098c4d8f7b476fc92369c4f456bb1b90c8f23be9985337cdf6bd5154dee",
       "modifiedDuringExport": false,
-      "modifiedAfterExport": true
+      "modifiedAfterExport": true,
+      "postPublicationModified": true
     },
     {
       "file": "docs/SECURITY.md",
@@ -237,6 +249,30 @@
       "sha256": "0781c8b6eacbb96821d88afc4abf3ae3347a7bfb8394ae9fe5959ce27d7761be",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
+    },
+    {
+      "file": "docs/media/composer-after.png",
+      "source": "docs/media/composer-after.png",
+      "sourceSha256": "91280b6f38fbe59fef2bc0c68596d6201aa3f4666d4c41e62d163c9bf37ce7f8",
+      "sha256": "91280b6f38fbe59fef2bc0c68596d6201aa3f4666d4c41e62d163c9bf37ce7f8",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
+    },
+    {
+      "file": "docs/media/composer-before.png",
+      "source": "docs/media/composer-before.png",
+      "sourceSha256": "060ffe4740db0d3a6a54674d45fb9bc0ca7636ec76c9db376121b216e0ba5b30",
+      "sha256": "060ffe4740db0d3a6a54674d45fb9bc0ca7636ec76c9db376121b216e0ba5b30",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
+    },
+    {
+      "file": "docs/media/composer-long-draft.png",
+      "source": "docs/media/composer-long-draft.png",
+      "sourceSha256": "4cd9d19481674bf46ad435cb05ceb7e3b01116484238bc129247e1409f6e121a",
+      "sha256": "4cd9d19481674bf46ad435cb05ceb7e3b01116484238bc129247e1409f6e121a",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true
     },
     {
       "file": "docs/screenshots/bot-conversations-narrow.png",
@@ -438,9 +474,10 @@
       "file": "package.json",
       "source": "package.json",
       "sourceSha256": "978e0c9ac7f92e0fa479ec2e7f1310c7a62039f2cebdd002c5c8693a81042ba9",
-      "sha256": "8f2bf7f2ca6bc245c77f24a5a0d2417dc63419331e618a60d9d413c851022f3b",
+      "sha256": "cdaaa731b75c43f8512aa82718dcd8e78c6b5febb47a7df9c8840aa30a4bda60",
       "modifiedDuringExport": true,
-      "modifiedAfterExport": true
+      "modifiedAfterExport": true,
+      "postPublicationModified": true
     },
     {
       "file": "packages/core/package.json",
@@ -1751,8 +1788,9 @@
       "file": "packages/web/src/remote/Conversation.tsx",
       "source": "packages/web/src/remote/Conversation.tsx",
       "sourceSha256": "9e41a0f703f78c6f82e957760ed5dadebaaee76126f1626b0393e0c5416eca9a",
-      "sha256": "9e41a0f703f78c6f82e957760ed5dadebaaee76126f1626b0393e0c5416eca9a",
-      "modifiedDuringExport": false
+      "sha256": "e3ae9d859eb109253b3a2131beadd9935f4b8063134c983963aecd5bfad8407e",
+      "modifiedDuringExport": false,
+      "postPublicationModified": true
     },
     {
       "file": "packages/web/src/remote/ConversationList.tsx",
@@ -2137,8 +2175,9 @@
       "file": "packages/web/src/remote/mobile-layout.test.tsx",
       "source": "packages/web/src/remote/mobile-layout.test.tsx",
       "sourceSha256": "812ee0ad618bf331a260e19372161e66b3954ba043105f8ff0c0993436e9fad5",
-      "sha256": "812ee0ad618bf331a260e19372161e66b3954ba043105f8ff0c0993436e9fad5",
-      "modifiedDuringExport": false
+      "sha256": "d4070991722530ca7540251f7bb8fb35207af3437f3e5e0ddbdb81755585beaa",
+      "modifiedDuringExport": false,
+      "postPublicationModified": true
     },
     {
       "file": "packages/web/src/remote/native-shell.test.ts",
@@ -2218,9 +2257,10 @@
       "file": "packages/web/src/remote/remote.css",
       "source": "packages/web/src/remote/remote.css",
       "sourceSha256": "533f65db0a7f8ce98979b7c449bb2bba522f423e09fda3423911643aa6a1467a",
-      "sha256": "60e38c32e58c9ab9d0e4cb0152bbe456b6e417a40bb4a56b001885d2f4e629dc",
+      "sha256": "7603a6cb232313745585703e928eb5d052966f4ead9e090fc10295d3efe497c2",
       "modifiedDuringExport": false,
-      "modifiedAfterExport": true
+      "modifiedAfterExport": true,
+      "postPublicationModified": true
     },
     {
       "file": "packages/web/src/remote/remote.test.tsx",
@@ -2839,8 +2879,18 @@
       "file": "scripts/e2e-chat-ux.mjs",
       "source": "scripts/e2e-chat-ux.mjs",
       "sourceSha256": "31303717e4f12f17bfe7ef05854dc7b697b8bdfd1b8b60b7590e75dfe7a21ec6",
-      "sha256": "31303717e4f12f17bfe7ef05854dc7b697b8bdfd1b8b60b7590e75dfe7a21ec6",
-      "modifiedDuringExport": false
+      "sha256": "16aee3084c0e13c7b22146e4f0fd8426c82a88ee6da95ca171af706be78916db",
+      "modifiedDuringExport": false,
+      "postPublicationModified": true
+    },
+    {
+      "file": "scripts/e2e-composer.mjs",
+      "source": "scripts/e2e-composer.mjs",
+      "sourceSha256": "971195525184787c78aa9c8f08e09b617d1ca68ce317a6c5ddca80de61d9674e",
+      "sha256": "72f7dfd184038f508bb244d736ca5fa46270d53239f4d5029d8d9306135c730c",
+      "modifiedDuringExport": false,
+      "originalPostPublicationWork": true,
+      "postPublicationModified": true
     },
     {
       "file": "scripts/e2e-conversation-date-fields.mjs",
@@ -2860,8 +2910,9 @@
       "file": "scripts/e2e-interactions-review.mjs",
       "source": "scripts/e2e-interactions-review.mjs",
       "sourceSha256": "4b0e91452df143901ab8ccab978556863bd1237b659532a6a0a4e2fc5de86882",
-      "sha256": "4b0e91452df143901ab8ccab978556863bd1237b659532a6a0a4e2fc5de86882",
-      "modifiedDuringExport": false
+      "sha256": "6f1c1e98fab95817643018b52f7fe1cd94e1b699a486976b3dc139736b35f2b1",
+      "modifiedDuringExport": false,
+      "postPublicationModified": true
     },
     {
       "file": "scripts/e2e-next-phase.mjs",
@@ -2925,9 +2976,10 @@
       "file": "scripts/fixture-server.mjs",
       "source": "scripts/fixture-server.mjs",
       "sourceSha256": "5223896f3efad30a667464812f019e96e88a815bf6762b92b57b84160d01cb21",
-      "sha256": "86a7b0d7c786c9959a696b6d8926e1ac4bf7d62ab335f1da2ef7236fa36e91a9",
+      "sha256": "b896f7d17253ec01df14fa3f33fcd12498f9d0ef315f7b12c75fb50330a92745",
       "modifiedDuringExport": false,
-      "modifiedAfterExport": true
+      "modifiedAfterExport": true,
+      "postPublicationModified": true
     },
     {
       "file": "scripts/fixture-server.test.mjs",

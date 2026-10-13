@@ -166,6 +166,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
+  const composerText = useRef(state.draft);
   const layout = useRef<HTMLElement>(null);
   const composerContext = useRef<HTMLDivElement>(null);
   const composerActions = useRef<HTMLDivElement>(null);
@@ -204,6 +205,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
   const searchCache = useRef(new Map<string, SearchDocument>());
   const [auxiliary, setAuxiliary] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  const [generationDetails, setGenerationDetails] = useState(false);
   const selection = useRef<DraftSelection | null>(null);
   const insertion = useRef<(text: string) => void>(() => undefined);
   insertion.current = text => {
@@ -243,6 +245,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
     return grouped;
   }, [searchHits]);
   const scope = `${state.profile}:${state.liveId}`;
+  useEffect(() => { setGenerationDetails(false); }, [scope, state.connection, state.generationAllowed]);
   const localPosition = useRef(scrollMemory?.current?.scope === scope ? scrollMemory.current.position : null);
   useLayoutEffect(() => {
     const node = scroller.current;
@@ -286,12 +289,30 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
       const padding = (Number.parseFloat(style.paddingTop) || 0) + (Number.parseFloat(style.paddingBottom) || 0)
         + (Number.parseFloat(style.borderTopWidth) || 0) + (Number.parseFloat(style.borderBottomWidth) || 0);
       const minimum = Math.max(44, line + padding);
+      // Enlarged text gets a full-width editor. At normal size the action
+      // buttons share its row, rather than spending another keyboard-height row.
+      const form = input.closest('form');
+      let stacked = Number.parseFloat(style.fontSize) >= 24 || /[\n\t]/.test(input.value) || input.value.length > 512;
+      if (!stacked && form && form.clientWidth > 0) {
+        const chrome = getComputedStyle(form);
+        const inlineWidth = form.clientWidth - (Number.parseFloat(chrome.paddingLeft) || 0) - (Number.parseFloat(chrome.paddingRight) || 0)
+          // Use the focused width in both states: a blur between pointerdown
+          // and click must not move transcript controls by changing row layout.
+          - 88 - 48 - 2 * (Number.parseFloat(chrome.columnGap) || 0);
+        const measure = document.createElement('canvas').getContext('2d');
+        if (measure) {
+          measure.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+          stacked = measure.measureText(input.value).width > inlineWidth;
+        }
+      }
+      if (form && form.dataset.stacked !== String(stacked)) { form.dataset.stacked = String(stacked); layoutChanged = true; }
       const viewportText = document.documentElement.style.getPropertyValue('--remote-height');
       const visibleHeight = /^\d+(?:\.\d+)?px$/.test(viewportText) ? Number.parseFloat(viewportText)
         : Math.abs((window.visualViewport?.scale ?? 1) - 1) > .05 ? window.innerHeight : window.visualViewport?.height ?? window.innerHeight;
       let available = visibleHeight * .32;
       let contextMinimum = 0, remaining = Number.POSITIVE_INFINITY;
-      const section = layout.current, form = input.closest('form'), context = composerContext.current, actions = composerActions.current;
+      const section = layout.current, context = composerContext.current, actions = composerActions.current;
+      let controlsHeight = 48;
       if (section && form && context && actions && section.getBoundingClientRect().height > 0 && actions.getBoundingClientRect().height > 0) {
         const verticalSpace = (node: Element): number => {
           const css = getComputedStyle(node);
@@ -304,6 +325,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
         const actionStyle = getComputedStyle(actions);
         const actionHeight = actions.getBoundingClientRect().height + (Number.parseFloat(actionStyle.marginTop) || 0)
           + (Number.parseFloat(actionStyle.marginBottom) || 0);
+        controlsHeight = actionHeight;
         const file = context.querySelector('.remote-file-attachment'), fileActions = context.querySelector('.remote-file-actions');
         const image = context.querySelector('.remote-image-attachment');
         const imageControls = [...(image?.querySelectorAll('button') || [])]
@@ -311,6 +333,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
         const request = context.querySelector('.remote-action-required');
         const activity = context.querySelector('.remote-activity-strip');
         const activityHeight = activity?.getBoundingClientRect().height || 0;
+        const generation = context.querySelector('.remote-generation-status');
         const info = context.querySelector(':scope > p.remote-meta');
         const infoStyle = info ? getComputedStyle(info) : null;
         const infoHeight = infoStyle ? Math.ceil(Number.parseFloat(infoStyle.lineHeight) || (Number.parseFloat(infoStyle.fontSize) || 13) * 1.6)
@@ -318,7 +341,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
         const priorityMinimum = request ? request.getBoundingClientRect().height
           : activityHeight ? activityHeight + (Number.parseFloat(getComputedStyle(activity!).marginBottom) || 0)
             : file && fileActions ? fileActions.getBoundingClientRect().height + verticalSpace(file)
-              : image ? imageControls + verticalSpace(image) : infoHeight;
+              : image ? imageControls + verticalSpace(image) : generation ? Math.max(44, generation.getBoundingClientRect().height) : infoHeight;
         contextMinimum = context.scrollHeight ? Math.min(context.scrollHeight, priorityMinimum) : 0;
         const contextText = `${contextMinimum}px`;
         if (context.style.getPropertyValue('--remote-context-min-height') !== contextText) { context.style.setProperty('--remote-context-min-height', contextText); layoutChanged = true; }
@@ -330,7 +353,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
         // viewport percentage alone, determine space remaining for the editor.
         // Keep one real body line; metadata may scroll but controls never shrink.
         remaining = section.getBoundingClientRect().height - (heading?.getBoundingClientRect().height || 0)
-          - (transcript ? verticalSpace(transcript) : 0) - minimumReadingLine - verticalSpace(dock) - verticalSpace(form) - actionHeight;
+          - (transcript ? verticalSpace(transcript) : 0) - minimumReadingLine - verticalSpace(dock) - verticalSpace(form) - (stacked ? actionHeight : 0);
         const search = searchControls.current;
         if (search) {
           const row = search.querySelector('.remote-search-input');
@@ -348,6 +371,9 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
       const key = [input.value, input.getBoundingClientRect().width, style.fontSize, line, padding, limit].join('\u0000');
       if (key !== measured) {
         measured = key;
+        const inputScroll = input.scrollTop;
+        const followCaret = composerText.current !== input.value && document.activeElement === input && input.selectionEnd === input.value.length;
+        composerText.current = input.value;
         input.style.height = '0px';
         const naturalHeight = input.scrollHeight;
         // The temporary measurement can enlarge the transcript and clamp its
@@ -357,10 +383,12 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
           allocationTail.current = true; allocationNativeTop.current = scroller.current.scrollTop;
         }
         input.style.height = `${Math.ceil(Math.max(minimum, Math.min(naturalHeight, limit)))}px`;
+        input.scrollTop = followCaret ? input.scrollHeight : inputScroll;
         layoutChanged = true;
       }
       if (context && Number.isFinite(remaining)) {
-        const maximum = `${Math.max(contextMinimum, Math.floor(remaining - Number.parseFloat(input.style.height)))}px`;
+        const editorHeight = Number.parseFloat(input.style.height);
+        const maximum = `${Math.max(contextMinimum, Math.floor(remaining - (stacked ? editorHeight : Math.max(editorHeight, controlsHeight))))}px`;
         if (context.style.getPropertyValue('--remote-context-max-height') !== maximum) { context.style.setProperty('--remote-context-max-height', maximum); layoutChanged = true; }
       }
       if (layoutChanged) requestReadingLayout.current();
@@ -368,7 +396,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
     const schedule = (): void => { if (!frame) frame = window.requestAnimationFrame(resize); };
     resize();
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule);
-    for (const node of [layout.current, composerActions.current, layout.current?.querySelector('.remote-chat-heading'), searchControls.current]) {
+    for (const node of [layout.current, input.closest('form'), composerActions.current, layout.current?.querySelector('.remote-chat-heading'), searchControls.current]) {
       if (node) observer?.observe(node);
     }
     window.addEventListener('resize', schedule);
@@ -489,7 +517,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
     || ['stop_requested', 'running', 'waiting_input', 'unknown', 'failed'].includes(state.execution);
   const showImageNotice = Boolean(imageError || state.imageDiagnostic && (state.attachment?.status !== 'selected' || state.delivery === 'failed_before_send'));
   const documentLimit = documentLimits(state.documentCapabilities);
-  const hasContext = state.generationAllowed === false || hasActivity || Boolean(state.attachment || state.document)
+  const hasContext = state.generationAllowed === false && !searchOpen || hasActivity || Boolean(state.attachment || state.document)
     || Boolean(state.documentDiagnostic && state.document?.status !== 'selected') || imageReading || showImageNotice;
   const contextPriority = pending.length ? 'request' : hasActivity ? 'activity' : state.attachment ? 'image' : state.document ? 'document' : 'information';
   useLayoutEffect(() => {
@@ -503,6 +531,8 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
     const node = scroller.current; atBottom.current = Boolean(node && captureReadingPosition(node).bottom);
     menuTrigger.current?.focus({ preventScroll: true });
   };
+  const generationStatus = state.generationAllowed === false && <button className="remote-generation-status" type="button" aria-label="送信できない理由を確認"
+    aria-haspopup="dialog" onClick={() => setGenerationDetails(true)}><span>送信は利用できません</span><span>理由<RemoteIcon name="chevron" /></span></button>;
   return <section ref={layout} className="remote-conversation" aria-label="会話" style={{ '--chat-body-font-size': CHAT_FONT_REM[chatFontSize] } as CSSProperties}>
     <header className="remote-chat-heading" aria-label="会話ヘッダー">
       <button className="remote-back remote-icon-button" aria-label="← 会話一覧" onClick={onBack}><RemoteIcon name="back" /></button>
@@ -568,6 +598,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
         <button aria-label="次の一致" disabled={!searchResult.hits.length} onClick={() => navigateHit(1)}>次へ</button></div>
       </div>
       <p className="remote-meta">読み込み済みの本文を検索 · {index?.documents.length ?? 0}発言</p>
+      {generationStatus}
       {searchResult.limited && <details className="remote-search-limits"><summary>範囲打切り</summary><p className="remote-meta">
         表示中の最新400件の先頭から本文50万文字・各8万文字・一致200件までを検索しています。大文字小文字を区別します。
       </p></details>}
@@ -625,7 +656,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
         onDetails={() => setAttachmentDetails({ kind: 'image', scope, identity: attachmentIdentity })} onCancel={() => { void controller.cancelImage(); }} />}
       {state.document && <FileAttachment document={state.document} localOnly={!controller.documentTransferAvailable} capabilities={state.documentCapabilities}
         onDetails={() => setAttachmentDetails({ kind: 'document', scope, identity: attachmentIdentity })} onCancel={() => controller.cancelDocument()} />}
-      {state.generationAllowed === false && <p className="remote-meta" role="status">{state.generationReason}</p>}
+      {!searchOpen && generationStatus}
       {state.documentDiagnostic && state.document?.status !== 'selected' && <p className="remote-meta" role="status">{state.documentDiagnostic}</p>}
       {imageReading && <p className="remote-meta" role="status">端末内で{selectionKind === 'document' ? '資料' : '画像'}を確認中… 転送していません。</p>}
       {showImageNotice && <details className="remote-image-notice" open>
@@ -633,7 +664,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
         <p className="remote-meta" role={imageError ? 'alert' : 'status'}>{imageError || state.imageDiagnostic}</p>
       </details>}
       </div>
-      <form className="remote-composer" onBlur={event => {
+      <form className="remote-composer" data-focused={inputFocused} onBlur={event => {
         if (!event.currentTarget.contains(event.relatedTarget)) setInputFocused(false);
       }} onSubmit={event => { event.preventDefault(); if (!composing.current && sendEnabled) void controller.submit(); }}>
         <input ref={documentInput} type="file" accept=".txt,.md,.markdown,.csv,.pdf" hidden aria-label="TXT・Markdown・CSV・PDFを1つ選択" onChange={event => {
@@ -659,18 +690,18 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
             .finally(() => { if (revision === imageRevision.current) { setImageReading(false); controller.setImageSelecting(false, profile, liveId); } });
         }} />
         {!expanded && <><label className="remote-sr-only" htmlFor="remote-input">Hermesへのメッセージ</label>
-        <textarea ref={composer} id="remote-input" value={state.draft} rows={1} placeholder="メッセージを入力…" aria-describedby="remote-composer-hint"
+        <textarea ref={composer} id="remote-input" value={state.draft} rows={1} placeholder="メッセージ…" aria-describedby="remote-composer-hint"
           onFocus={() => { setInputFocused(true); onComposerFocus(true); }} onBlur={() => { rememberSelection(); onComposerFocus(false); }} onSelect={rememberSelection}
           onCompositionStart={() => composition(true)} onCompositionEnd={() => composition(false)}
           onChange={event => { controller.setDraft(event.target.value); rememberSelection(); }} /></>}
         <div ref={composerActions} className="remote-composer-actions">
-          <div className="remote-composer-slot">{inputFocused && <button className="remote-dismiss-keyboard" type="button" aria-label="キーボードを閉じる"
-            onPointerDown={event => event.preventDefault()} onClick={() => { composer.current?.blur(); setInputFocused(false); onComposerFocus(false); }}><RemoteIcon name="keyboard" /><span>閉じる</span></button>}
+          <div className="remote-composer-slot"><button className="remote-composer-help" type="button" aria-label="入力の補助" aria-haspopup="dialog" disabled={isComposing}
+              title="入力の補助" onPointerDown={event => { event.preventDefault(); rememberSelection(); }} onClick={() => { rememberSelection(); setAuxiliary(true); }}><RemoteIcon name="new" /></button>
+            {inputFocused && <button className="remote-dismiss-keyboard" type="button" aria-label="キーボードを閉じる"
+            title="キーボードを閉じる" onPointerDown={event => event.preventDefault()} onClick={() => { composer.current?.blur(); setInputFocused(false); onComposerFocus(false); }}><RemoteIcon name="keyboard" /></button>}
             {hasNew && !searchOpen && <button className="remote-new" type="button" aria-label="新着を表示" onClick={() => {
               atBottom.current = true; if (scroller.current) followTail(scroller.current); setHasNew(false);
-            }}><RemoteIcon name="down" />新着</button>}
-            <button className="remote-composer-help" type="button" aria-label="入力の補助" aria-haspopup="dialog" disabled={isComposing}
-              onPointerDown={event => { event.preventDefault(); rememberSelection(); }} onClick={() => { rememberSelection(); setAuxiliary(true); }}><RemoteIcon name="more" /><span>入力の補助</span></button></div>
+            }}><RemoteIcon name="down" />新着</button>}</div>
           <button className="remote-send" aria-label="送信" title={state.delivery === 'sending' ? '送信中' : '送信'} disabled={!sendEnabled} type="submit" onPointerDown={event => {
             // Avoid a blur/reflow between a touch-down and the actual send click.
             if (document.activeElement === composer.current) event.preventDefault();
@@ -679,6 +710,11 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
         <p id="remote-composer-hint" className="remote-sr-only">改行はEnter。送信は送信ボタンのみ。下書きはこの画面のメモリのみです。実行中の追加入力は下書きに留めます。</p>
       </form>
     </div>
+    {generationDetails && state.generationAllowed === false && <ConfirmDialog label="送信できない理由" className="remote-sheet" dismissOnBackdrop onDismiss={() => setGenerationDetails(false)}>
+      <div className="remote-sheet-heading"><h2>送信できない理由</h2><button autoFocus data-dialog-initial-focus onClick={() => setGenerationDetails(false)}>閉じる</button></div>
+      <p>{state.generationReason || '現在の接続では送信が許可されていません。'}</p>
+      <p className="remote-meta">下書きの編集やコピーは利用できます。この表示を閉じても送信の許可範囲は変わりません。</p>
+    </ConfirmDialog>}
     {attachmentDetails?.scope === scope && attachmentDetails.identity === attachmentIdentity && attachmentDetails.kind === 'image' && state.attachment
       && <AttachmentDetails kind="image" image={state.attachment} capabilities={state.imageCapabilities} rawLimit={controller.imageLimit}
         localOnly={!controller.imageTransferAvailable} onDismiss={() => setAttachmentDetails(null)}

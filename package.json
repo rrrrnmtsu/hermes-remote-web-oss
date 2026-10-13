@@ -47,6 +47,7 @@
     "test:remote": "vitest run packages/core/src/stores/remote.test.ts packages/core/src/transport/remote-gateway.test.ts packages/core/src/transport/official-replay.test.ts packages/web/src/remote/remote.test.tsx --maxWorkers=1 --minWorkers=1",
     "e2e:remote": "node scripts/e2e-remote.mjs",
     "e2e:chat-ux": "node scripts/e2e-chat-ux.mjs",
+    "e2e:composer": "node scripts/e2e-composer.mjs",
     "e2e:daily-ui": "node scripts/e2e-daily-ui.mjs",
     "e2e:quote-image": "node scripts/build-image-fixture.mjs && node scripts/e2e-quote-image.mjs",
     "e2e:sidebar": "node scripts/e2e-sidebar.mjs",

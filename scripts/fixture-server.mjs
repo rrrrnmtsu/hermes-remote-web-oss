@@ -20,7 +20,7 @@ export async function startFixture({ releaseDirectory, imageTurn = false, static
     richNavigation: false, projectDelayMs: 0, projectSessionsDelayMs: 0, failProjects: false,
     imageTurn, imageAttachMode: '', imagePromptMode: '', imageDetachMode: '', imageAttachDelayMs: 0, imageCounter: 0,
     networkOffline: false, staticDelayMs: 0, featureMethods: [], httpRequests: [], wsUpgrades: [],
-    botConversationRead: null, botConversationRequests: [] };
+    botConversationRead: null, botConversationRequests: [], generationAllowed: true, generationReason: '' };
   let origin = '';
   // Names only: a server-side witness is needed where WebKit conceals Cookie
   // request headers. Never retain cookie values, ticket query strings or frames.
@@ -127,7 +127,8 @@ export async function startFixture({ releaseDirectory, imageTurn = false, static
         }
         state.methods.push(frame.method);
         if (frame.method === 'client.capabilities') reply({ server_requests: ['approval', 'clarify', 'sudo'], declines_not_shown: true });
-        else if (frame.method === 'remote.app.capabilities') reply({ version: 1, principal_id: 'a'.repeat(64), methods: state.featureMethods, generation_allowed: true, generation_reason: '' });
+        else if (frame.method === 'remote.app.capabilities') reply({ version: 1, principal_id: 'a'.repeat(64), methods: state.featureMethods,
+          generation_allowed: state.generationAllowed, generation_reason: state.generationReason });
         else if (frame.method === 'remote.notifications.unsubscribe_all' && state.featureMethods.includes(frame.method)) reply({ version: 1, removed: 0 });
         else if (frame.method === 'gateway.capabilities') reply({ per_session_exclusive_submit: true, remote_web_version: 1, ...(state.imageTurn ? { image_turn_version: 1 } : {}) });
         else if (frame.method === 'image.turn_capabilities') reply({ version: 1, enabled: state.imageTurn, model_vision: state.imageTurn ? true : null, reason: 'DEMO', max_raw_bytes: 5 * 1048576, max_frame_bytes: 8 * 1048576, max_text_bytes: 65536, max_edge: 8192, max_pixels: 16000000 });
