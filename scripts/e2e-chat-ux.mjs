@@ -103,7 +103,7 @@ async function run(name, engine) {
     const input = page.getByLabel('Hermesへのメッセージ'); await input.waitFor();
     const header = page.getByLabel('会話ヘッダー');
     const headerSize = await header.boundingBox();
-    assert.ok(headerSize.height >= 52 && headerSize.height <= 60);
+    assert.ok(headerSize.height >= 44 && headerSize.height <= 48);
     assert.equal(await header.getByRole('button').count(), 2);
     assert.ok(!(await header.innerText()).includes('接続・同期済み'));
     assert.ok(!(await header.locator('.remote-chat-state').innerText()).includes('default'));
@@ -114,7 +114,7 @@ async function run(name, engine) {
     await menu.locator('summary').click();
     assert.ok((await menu.innerText()).includes('DEMO-live-default'));
     await menu.getByRole('button', { name: '閉じる', exact: true }).click();
-    result.cases.push('56px_header_primary_controls_only_details_in_menu_no_chat_nav');
+    result.cases.push('compact_header_primary_controls_only_details_in_menu_no_chat_nav');
     await input.fill('DEMO protected draft');
     await page.getByRole('button', { name: '← 会話一覧' }).click();
     assert.equal(await page.getByRole('button', { name: '新規会話' }).isDisabled(), true);

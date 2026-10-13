@@ -18,7 +18,8 @@
     "Developer Preview 2 release metadata and self-contained update-test output; unchanged application source, dependency resolution and backend contracts",
     "Post-publication bounded read-only bot overview using the existing profile-scoped status API; measured package-source coverage and consent/scope regression tests, unchanged dependency resolution and backend source",
     "Post-publication explicit owned bot conversation pages with an exact-ID bounded source join, memory-only title/bot filters and scope/cancellation/focus regressions; unchanged backend, dependencies and opt-in behavior",
-    "Post-publication compact rounded composer, full-width wrapped/long drafts and enlarged-text layout, visible caret, scoped policy-reason modal, matched synthetic mobile screenshots and Chromium/WebKit regression; unchanged transport, backend, dependencies and consent"
+    "Post-publication compact rounded composer, full-width wrapped/long drafts and enlarged-text layout, visible caret, scoped policy-reason modal, matched synthetic mobile screenshots and Chromium/WebKit regression; unchanged transport, backend, dependencies and consent",
+    "Compact conversation header and non-blocking update indicator with explicit guarded dialog; preserved memory drafts, focus, reading position, runtime/worker safety and backend contracts"
   ],
   "files": [
     {
@@ -53,7 +54,7 @@
       "file": ".github/workflows/ci.yml",
       "source": "docs/oss-public/ci.yml",
       "sourceSha256": "cee12c3594c0b402fbe85dcaa9e7e00a9b9a35343385f541edb31cc331a570be",
-      "sha256": "2846f14b86e4672db966c26e5bc643fb0f07964e0118bebbbc368f97239eca9f",
+      "sha256": "a2b67eff259f1f3cf8f41d277b07f56b8832aa25bf99592dda9cc549ce429731",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true,
       "postPublicationModified": true
@@ -179,6 +180,14 @@
       "modifiedAfterExport": true
     },
     {
+      "file": "docs/CHAT_HEADER_UX.md",
+      "source": "docs/CHAT_HEADER_UX.md",
+      "sourceSha256": "5665f9d88d24a1e998c816d852563083e8422c1db9ff760fcc2f13f9ee347c4b",
+      "sha256": "5665f9d88d24a1e998c816d852563083e8422c1db9ff760fcc2f13f9ee347c4b",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
+    },
+    {
       "file": "docs/COMPOSER_UX.md",
       "source": "docs/COMPOSER_UX.md",
       "sourceSha256": "9ff0206c0c37fb8e3fd530fe72defca00a0755eac967c78cd482ef7632244525",
@@ -237,7 +246,7 @@
       "file": "docs/REMOTE_USAGE.md",
       "source": "docs/oss-public/REMOTE_USAGE.md",
       "sourceSha256": "f52735452b20a982ca328a42382ca70af675a50a05f09abbe3bbcec1962f30b1",
-      "sha256": "7960a098c4d8f7b476fc92369c4f456bb1b90c8f23be9985337cdf6bd5154dee",
+      "sha256": "9bd065a0e8cb52c4d27d48b53c8c01d3303e711f5ee0c75d3664543bc8c4585f",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true,
       "postPublicationModified": true
@@ -247,6 +256,22 @@
       "source": "docs/oss-public/PRIVACY.md",
       "sourceSha256": "3cdab457a21f22e345de6409ea5f5573498ea22ce2b965565856b8f5ef997bbe",
       "sha256": "0781c8b6eacbb96821d88afc4abf3ae3347a7bfb8394ae9fe5959ce27d7761be",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
+    },
+    {
+      "file": "docs/media/chat-header-after.png",
+      "source": "docs/media/chat-header-after.png",
+      "sourceSha256": "89e0b9ccb94d401e95648ba6bfbc1b698d84bda72fefaccfc405deef54d0567b",
+      "sha256": "89e0b9ccb94d401e95648ba6bfbc1b698d84bda72fefaccfc405deef54d0567b",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
+    },
+    {
+      "file": "docs/media/chat-header-before.png",
+      "source": "docs/media/chat-header-before.png",
+      "sourceSha256": "8662e8eb1f8159cbd14ab4acf2cb8fca81ee2d1d68a6474734b80316601d6593",
+      "sha256": "8662e8eb1f8159cbd14ab4acf2cb8fca81ee2d1d68a6474734b80316601d6593",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },
@@ -474,7 +499,7 @@
       "file": "package.json",
       "source": "package.json",
       "sourceSha256": "978e0c9ac7f92e0fa479ec2e7f1310c7a62039f2cebdd002c5c8693a81042ba9",
-      "sha256": "cdaaa731b75c43f8512aa82718dcd8e78c6b5febb47a7df9c8840aa30a4bda60",
+      "sha256": "01e94ae67ad3c0f52ad4d7f2250857e82af21763f5084bd918b0d8af88ff82cb",
       "modifiedDuringExport": true,
       "modifiedAfterExport": true,
       "postPublicationModified": true
@@ -1788,9 +1813,10 @@
       "file": "packages/web/src/remote/Conversation.tsx",
       "source": "packages/web/src/remote/Conversation.tsx",
       "sourceSha256": "9e41a0f703f78c6f82e957760ed5dadebaaee76126f1626b0393e0c5416eca9a",
-      "sha256": "e3ae9d859eb109253b3a2131beadd9935f4b8063134c983963aecd5bfad8407e",
+      "sha256": "4544afc82891991405da0cf33d5ce54df8a9977f4fa0f279cb08f9f460398b4b",
       "modifiedDuringExport": false,
-      "postPublicationModified": true
+      "postPublicationModified": true,
+      "modifiedAfterExport": true
     },
     {
       "file": "packages/web/src/remote/ConversationList.tsx",
@@ -2011,7 +2037,7 @@
       "file": "packages/web/src/remote/RemoteApp.tsx",
       "source": "packages/web/src/remote/RemoteApp.tsx",
       "sourceSha256": "98ba6e4245cf98f8928b0a2370926babbd8a30930c50d90a0283dc74b27fafff",
-      "sha256": "da265587cd50067b7a012ecf96ce3c6fe891afa10d20489a3e4e8739aba47ec4",
+      "sha256": "bfa05fbaa8f0f6108b8dbc88b0e2b4c0eda6976f334f07b24b4a8de5f420559a",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },
@@ -2175,9 +2201,10 @@
       "file": "packages/web/src/remote/mobile-layout.test.tsx",
       "source": "packages/web/src/remote/mobile-layout.test.tsx",
       "sourceSha256": "812ee0ad618bf331a260e19372161e66b3954ba043105f8ff0c0993436e9fad5",
-      "sha256": "d4070991722530ca7540251f7bb8fb35207af3437f3e5e0ddbdb81755585beaa",
+      "sha256": "c4d6f9049a025b30f848d85c00f58e0eeeccbee5931a854ce32338885add67f2",
       "modifiedDuringExport": false,
-      "postPublicationModified": true
+      "postPublicationModified": true,
+      "modifiedAfterExport": true
     },
     {
       "file": "packages/web/src/remote/native-shell.test.ts",
@@ -2257,7 +2284,7 @@
       "file": "packages/web/src/remote/remote.css",
       "source": "packages/web/src/remote/remote.css",
       "sourceSha256": "533f65db0a7f8ce98979b7c449bb2bba522f423e09fda3423911643aa6a1467a",
-      "sha256": "7603a6cb232313745585703e928eb5d052966f4ead9e090fc10295d3efe497c2",
+      "sha256": "af2a298790e3c2ab4b98873a1f9a54043ffba0648fc6c2c94821274ec970d866",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true,
       "postPublicationModified": true
@@ -2876,12 +2903,21 @@
       "modifiedAfterExport": true
     },
     {
+      "file": "scripts/e2e-chat-header.mjs",
+      "source": "scripts/e2e-chat-header.mjs",
+      "sourceSha256": "68f97aa7acaf165c3ef7539afcc9763b8439f0e707d79d6b20e6f177ffcbef87",
+      "sha256": "3c5efc0b50d4e29d5301dcbf34ea3107d510299befb2cd966600a2e60d9aa4ba",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
+    },
+    {
       "file": "scripts/e2e-chat-ux.mjs",
       "source": "scripts/e2e-chat-ux.mjs",
       "sourceSha256": "31303717e4f12f17bfe7ef05854dc7b697b8bdfd1b8b60b7590e75dfe7a21ec6",
-      "sha256": "16aee3084c0e13c7b22146e4f0fd8426c82a88ee6da95ca171af706be78916db",
+      "sha256": "89195b97bfff0c5f9406363b20c22cb942cd5a1ce1fba00835845f31902e1324",
       "modifiedDuringExport": false,
-      "postPublicationModified": true
+      "postPublicationModified": true,
+      "modifiedAfterExport": true
     },
     {
       "file": "scripts/e2e-composer.mjs",
@@ -2968,7 +3004,7 @@
       "file": "scripts/e2e-update-cache.mjs",
       "source": "scripts/e2e-update-cache.mjs",
       "sourceSha256": "1caf8b94eacd2d8d3777409b38c5412f4d69fce19c77a6704aaaf8aa9f259952",
-      "sha256": "a79891a82221def4703da583ebe1399f7e7b9977be91594f62c548b62e7de041",
+      "sha256": "caaf632844ac7c1b901c5bad6c36628d6faf67d535278ca050c9fc0a5ac7c220",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },

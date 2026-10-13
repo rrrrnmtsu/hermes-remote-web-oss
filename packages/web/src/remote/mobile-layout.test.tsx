@@ -33,6 +33,28 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('compact mobile chat layout', () => {
+  it('keeps updates in the conversation menu and preserves drafts and update guards', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ buildId: 'DEMO-next' }) }));
+    const controller = demoController();
+    const submit = vi.spyOn(controller, 'submit').mockResolvedValue(undefined);
+    const { container } = openConversation(controller);
+    fireEvent.change(screen.getByLabelText('Hermesへのメッセージ'), { target: { value: 'DEMO 下書き' } });
+    await act(async () => { window.dispatchEvent(new Event('pageshow')); });
+    expect(container.querySelector('.remote-notices')).not.toHaveTextContent('更新あり');
+    const menu = screen.getByRole('button', { name: '会話メニュー' });
+    expect(menu).toHaveAccessibleDescription('更新あり');
+    act(() => menu.focus()); fireEvent.click(menu);
+    fireEvent.click(screen.getByRole('button', { name: 'アプリの更新を確認' }));
+    expect(screen.getByRole('dialog', { name: 'アプリの更新' })).toHaveTextContent('DEMO-next');
+    expect(screen.getByRole('button', { name: '操作と下書きがない状態で更新' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: '会話に戻る' }));
+    expect(controller.store.getState().draft).toBe('DEMO 下書き');
+    expect(submit).not.toHaveBeenCalled();
+    fireEvent.click(menu); fireEvent.click(screen.getByRole('button', { name: 'アプリの更新を確認' }));
+    act(() => controller.store.setState({ connection: 'reauth' }));
+    expect(screen.queryByRole('dialog', { name: 'アプリの更新' })).toBeNull();
+  });
+
   it('keeps only back, title, status and the menu in the chat header', () => {
     const { container } = openConversation(demoController());
     expect(container.querySelectorAll('header')).toHaveLength(1);

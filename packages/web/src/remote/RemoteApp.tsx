@@ -102,6 +102,7 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
   const [chatFontSize, setChatFontSize] = useState(readChatFontSize);
   const conversationPosition = useRef<ConversationScrollMemory | null>(null);
   const [update, setUpdate] = useState<string | null>(null);
+  const [updateDialog, setUpdateDialog] = useState(false);
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
   const [productBusy, setProductBusy] = useState(false);
@@ -124,7 +125,7 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
     if (loggingOut || logoutConfirm || updating) return;
     setNavigationScope(controller.featureScopeKey); setSidebarOpen(false);
   }, [controller, loggingOut, logoutConfirm, updating]);
-  useEffect(() => { setNavigationScope(null); navigationComposing.current = false; }, [currentScope, state.connection]);
+  useEffect(() => { setNavigationScope(null); setUpdateDialog(false); navigationComposing.current = false; }, [currentScope, state.connection]);
   useEffect(() => {
     const begin = (): void => { navigationComposing.current = true; };
     const end = (): void => { navigationComposing.current = false; };
@@ -233,6 +234,19 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
       if (target) { target.tabIndex = -1; target.focus({ preventScroll: true }); }
     });
   };
+  const applyUpdate = (): void => {
+    if (!safeUpdate) return;
+    setUpdating(true);
+    void activateWaitingWorker().then(() => {
+      if (!updateSafety.current || controller.hasScopeWork() || controller.store.getState().delivery === 'delivery_unknown') {
+        setUpdating(false); setNotice('更新中に入力または操作が始まったため、画面の再読込を止めました。下書きは維持しています。'); return;
+      }
+      window.location.reload();
+    }, () => {
+      setUpdating(false); setNotice('別タブの入力・実行状態または更新workerを確認できません。現在の画面を維持しています。');
+    });
+  };
+  const updateAction = <button disabled={!safeUpdate || updating} onClick={applyUpdate}>操作と下書きがない状態で更新</button>;
   const sidebar = <SessionSidebar state={state} controller={controller} scopeBusy={scopeBusy} search={search} onSearch={setSearch}
     onFilter={id => { pageIntent.current++; setSearch(''); setList(true); setTab('chat'); setComposerFocused(false); void controller.selectProject(id); }}
     onOpen={openFromSidebar} onCurrent={showCurrent} onList={showList} onNavigate={openNavigation} {...(desktopSidebar ? {} : { onDismiss: () => setSidebarOpen(false) })} />;
@@ -254,18 +268,7 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
     {!inConversation && state.delivery === 'delivery_unknown' && <Notice tone="critical" title="送信結果不明 · 送信結果を確認できません"><p>本文を自動再送しません。再同期で履歴を確認してください。同文の履歴だけでは今回の受付を断定できません。別会話への移動は以前の実行を取り消しません。</p></Notice>}
     {notice && <Notice tone="info" title={notice} />}
     {!navigator.locks && <Notice tone="warning" title="このブラウザは閲覧のみ利用できます"><p>タブ間操作制御に未対応のため、送信や回答はできません。</p></Notice>}
-    {update && <Notice tone="info" title={`更新あり · ${update}`} action={<button disabled={!safeUpdate || updating} onClick={() => {
-      if (!safeUpdate) return;
-      setUpdating(true);
-      void activateWaitingWorker().then(() => {
-        if (!updateSafety.current || controller.hasScopeWork() || controller.store.getState().delivery === 'delivery_unknown') {
-          setUpdating(false); setNotice('更新中に入力または操作が始まったため、画面の再読込を止めました。下書きは維持しています。'); return;
-        }
-        window.location.reload();
-      }, () => {
-        setUpdating(false); setNotice('別タブの入力・実行状態または更新workerを確認できません。現在の画面を維持しています。');
-      });
-    }}>操作と下書きがない状態で更新</button>} />}
+    {update && !inConversation && <Notice tone="info" title={`更新あり · ${update}`} action={updateAction} />}
     </div>
     <main ref={pageScroll.main} onScroll={pageScroll.remember} className={inConversation ? 'remote-main remote-main-chat' : 'remote-main'}>
       {tab === 'chat' ? <>
@@ -274,6 +277,7 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
           onConnect={() => { writeSetting('signed-out', 'no'); void controller.start(); }} />
           : <Conversation key={`${state.profile}:${state.liveId}`} state={state} controller={controller} chatFontSize={chatFontSize} scrollMemory={conversationPosition}
             onDraftInserter={registerInsert} onFeature={(action, message) => setProductSelection({ action, ...(message ? { message } : {}) })}
+            onUpdate={update ? () => setUpdateDialog(true) : undefined}
             onComposerFocus={setComposerFocused} onRequests={() => selectTab('requests')}
           onSidebar={() => { setComposerFocused(false); if (desktopSidebar) showList(); else setSidebarOpen(true); }}
           onBack={showList} />}
@@ -325,6 +329,14 @@ export function RemoteApp({ controller = remoteController }: { controller?: Remo
       <button aria-current={tab === 'settings' ? 'page' : undefined} onClick={() => selectTab('settings')}><RemoteIcon name="settings" /><span>設定</span></button>
     </nav>}
     </div>
+    {update && updateDialog && inConversation && !loggingOut && <ConfirmDialog label="アプリの更新" onDismiss={() => setUpdateDialog(false)}>
+      <h2>更新があります</h2>
+      <p className="remote-meta">{update}</p>
+      <p>入力・実行・確認待ちがないときに更新できます。自動では再読み込みしません。</p>
+      {!safeUpdate && <p role="status">下書きや操作が残っています。会話に戻ってから更新してください。</p>}
+      {updateAction}
+      <button autoFocus data-dialog-initial-focus onClick={() => setUpdateDialog(false)}>会話に戻る</button>
+    </ConfirmDialog>}
     {sidebarOpen && !desktopSidebar && <ConfirmDialog label="セッション管理" className="remote-sidebar-drawer" dismissOnBackdrop onDismiss={() => setSidebarOpen(false)}>{sidebar}</ConfirmDialog>}
     {!loggingOut && navigationScope === currentScope && <QuickNavigation commands={navigationCommands(state)} onSelect={navigate} onDismiss={() => setNavigationScope(null)} />}
   </div></>;

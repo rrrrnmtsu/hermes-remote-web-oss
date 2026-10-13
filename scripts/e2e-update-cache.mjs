@@ -78,6 +78,15 @@ async function conversation(page) {
   const current = page.getByRole('button', { name: '開いている会話へ', exact: true });
   if (await current.count()) await current.click();
 }
+async function assertConversationUpdateBlocked(page) {
+  // New clients keep optional updates in the menu; actual older releases retain the banner.
+  const menuAction = page.getByRole('button', { name: '操作と下書きがない状態で更新', exact: true });
+  if (await menuAction.count()) { assert.equal(await menuAction.isDisabled(), true); return; }
+  await page.getByRole('button', { name: '会話メニュー', exact: true }).click();
+  await page.getByRole('button', { name: 'アプリの更新を確認', exact: true }).click();
+  assert.equal(await menuAction.isDisabled(), true);
+  await page.getByRole('button', { name: '会話に戻る', exact: true }).click();
+}
 async function pending(page, open = false) {
   if (await page.getByRole('button', { name: '会話メニュー', exact: true }).count()) {
     await page.locator('.remote-action-required').waitFor();
@@ -146,7 +155,7 @@ async function run(engineName, engine) {
     await settings(page);
     await page.getByRole('button', { name: '更新を確認', exact: true }).click();
     await page.getByText(`更新あり · ${newBuild}`).waitFor();
-    assert.equal(await page.getByRole('button', { name: '操作と下書きがない状態で更新' }).isDisabled(), true);
+    await assertConversationUpdateBlocked(page);
     assert.equal(navigations, 0);
     result.checks.push('no_forced_reload_with_draft');
 
@@ -154,7 +163,7 @@ async function run(engineName, engine) {
     await input.fill('DEMO hold');
     await page.getByRole('button', { name: '送信', exact: true }).click();
     await page.getByRole('button', { name: '停止', exact: true }).waitFor();
-    assert.equal(await page.getByRole('button', { name: '操作と下書きがない状態で更新' }).isDisabled(), true);
+    await assertConversationUpdateBlocked(page);
     assert.equal(navigations, 0);
     result.checks.push('no_forced_reload_while_running');
     await page.getByRole('button', { name: '停止', exact: true }).click();
@@ -164,7 +173,7 @@ async function run(engineName, engine) {
     await input.fill('DEMO approval');
     await page.getByRole('button', { name: '送信', exact: true }).click();
     await pending(page);
-    assert.equal(await page.getByRole('button', { name: '操作と下書きがない状態で更新' }).isDisabled(), true);
+    await assertConversationUpdateBlocked(page);
     assert.equal(navigations, 0);
     result.checks.push('no_forced_reload_with_pending_approval');
     await pending(page, true);

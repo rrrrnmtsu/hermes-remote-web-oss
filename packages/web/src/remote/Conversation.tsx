@@ -159,8 +159,9 @@ function ActivityStrip({ state, pendingCount, onStop, controller }: {
   return null;
 }
 
-export function Conversation({ state, controller, chatFontSize = 16, scrollMemory, onBack, onRequests, onComposerFocus, onSidebar, onFeature, onDraftInserter }: {
+export function Conversation({ state, controller, chatFontSize = 16, scrollMemory, onBack, onRequests, onComposerFocus, onSidebar, onFeature, onDraftInserter, onUpdate }: {
   state: RemoteState; controller: RemoteController; onBack(): void; onRequests(): void; onComposerFocus(focused: boolean): void; onSidebar(): void;
+  onUpdate?: (() => void) | undefined;
   chatFontSize?: ChatFontSize; scrollMemory?: MutableRefObject<ConversationScrollMemory | null>;
   onFeature?(action: ProductAction, message?: RemoteMessage): void; onDraftInserter?(insert: ((text: string) => void) | null): void;
 }) {
@@ -542,10 +543,11 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
           {executionLabels[state.execution]}{state.connection !== 'connected' && <span> · {phaseLabels[state.connection]}</span>}
         </span>
       </div>
-      <button ref={menuTrigger} className="remote-icon-button" aria-label="会話メニュー" aria-haspopup="dialog" aria-expanded={menu} onClick={() => setMenu(true)}><RemoteIcon name="more" /></button>
+      <button ref={menuTrigger} className="remote-icon-button remote-chat-menu-trigger" aria-label="会話メニュー" aria-describedby={onUpdate ? 'remote-update-status' : undefined} aria-haspopup="dialog" aria-expanded={menu} onClick={() => setMenu(true)}><RemoteIcon name="more" />{onUpdate && <><span className="remote-update-dot" aria-hidden="true" /><span id="remote-update-status" className="remote-sr-only">更新あり</span></>}</button>
     </header>
     {menu && <ConfirmDialog label="会話メニュー" className="remote-sheet remote-chat-menu" actionNavigation dismissOnBackdrop onDismiss={() => setMenu(false)}>
       <div className="remote-sheet-heading"><h2>会話メニュー</h2><button autoFocus data-dialog-initial-focus onClick={() => setMenu(false)}>閉じる</button></div>
+      {onUpdate && <button className="remote-menu-action" onClick={() => { setMenu(false); onUpdate(); }}>アプリの更新を確認</button>}
       <button className="remote-menu-action" onClick={() => { setMenu(false); onSidebar(); }}><RemoteIcon name="menu" />セッションを選ぶ</button>
       <button className="remote-menu-action" onClick={() => { setMenu(false); setSearchOpen(true); atBottom.current = false; }}>この会話を検索</button>
       {onFeature && state.featureMethods?.includes('remote.session.metadata') && <button className="remote-menu-action" onClick={() => { setMenu(false); onFeature('organize'); }}>名前・ピン・アーカイブ</button>}

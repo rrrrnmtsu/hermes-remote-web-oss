@@ -48,3 +48,5 @@ text → explicitly copy. Share build/stage/boolean information and synthetic
 reproduction steps, not actual conversation, session identifiers, origins, images,
 raw logs, cookies, tickets or keys. See [SECURITY.md](../SECURITY.md) for private
 vulnerability reporting and [privacy](SECURITY.md) for each storage boundary.
+
+会話中の更新案内は右上の「…」の印から、会話メニュー →「アプリの更新を確認」で開きます。更新操作は下書き・実行・確認待ちがない場合にだけ利用できます。設定画面の更新操作も引き続き使えます。自動再読み込みはしません。

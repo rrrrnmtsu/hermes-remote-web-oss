@@ -107,7 +107,7 @@ svg { flex-shrink: 0; }
 .remote-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0; }
 .remote-button { display: inline-block; min-height: 44px; padding: 12px; }
 .remote-conversation { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; }
-.remote-chat-heading { display: flex; gap: 8px; align-items: center; flex: 0 0 auto; padding: 4px 8px; min-height: 56px; background: var(--remote-bg); }
+.remote-chat-heading { display: flex; gap: 8px; align-items: center; flex: 0 0 auto; padding: 2px 8px; min-height: 48px; background: var(--remote-bg); }
 .remote-icon-button { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 8px; background: transparent; }
 .remote-heading-copy { flex: 1; min-width: 0; }
 .remote-heading-copy > strong { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 1rem; line-height: 1.3; font-weight: 600; }
@@ -334,3 +334,8 @@ dd { margin-left: 0; overflow-wrap: anywhere; margin-bottom: 12px; } dt { font-w
 .remote-image-details { padding: 0; width: 48px; height: 48px; flex-shrink: 0; background: transparent; }
 .remote-image-notice { max-height: min(9rem, calc(var(--remote-height) * .25)); overflow: auto; font-size: .8125rem; margin-bottom: 4px; }
 .remote-image-notice p { margin: 4px 0; }
+
+/* Keep optional updates out of the conversation's vertical reading budget. */
+.remote-chat-menu-trigger { position: relative; }
+.remote-update-dot { position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--remote-accent); }
+:root[data-remote-keyboard="true"] .remote-chat-heading { min-height: 44px; padding-block: 0; }

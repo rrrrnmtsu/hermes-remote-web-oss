@@ -58,7 +58,8 @@
     "package:release": "python3 scripts/oss/package-release.py",
     "e2e:quick-navigation": "node scripts/e2e-quick-navigation.mjs",
     "e2e:bots": "node scripts/e2e-bots.mjs",
-    "e2e:bot-conversations": "node scripts/e2e-bot-conversations.mjs"
+    "e2e:bot-conversations": "node scripts/e2e-bot-conversations.mjs",
+    "e2e:chat-header": "node scripts/e2e-chat-header.mjs"
   },
   "dependencies": {
     "mdast-util-from-markdown": "2.0.3",
