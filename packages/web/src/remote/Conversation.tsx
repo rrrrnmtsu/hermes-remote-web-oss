@@ -396,7 +396,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
     const schedule = (): void => { if (!frame) frame = window.requestAnimationFrame(resize); };
     resize();
     const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(schedule);
-    for (const node of [layout.current, composerActions.current, layout.current?.querySelector('.remote-chat-heading'), searchControls.current]) {
+    for (const node of [layout.current, input.closest('form'), composerActions.current, layout.current?.querySelector('.remote-chat-heading'), searchControls.current]) {
       if (node) observer?.observe(node);
     }
     window.addEventListener('resize', schedule);
@@ -405,7 +405,7 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
       observer?.disconnect();
       window.removeEventListener('resize', schedule);
     };
-  }, [state.draft, inputFocused, expanded, searchOpen, chatFontSize, state.attachment, state.document, state.connection, state.delivery, state.execution,
+  }, [state.draft, expanded, searchOpen, chatFontSize, state.attachment, state.document, state.connection, state.delivery, state.execution,
     state.generationAllowed, state.generationReason, state.documentDiagnostic, state.imageDiagnostic,
     state.stopUnknown, pending.length, imageReading, imageError, hasNew]);
   useEffect(() => {

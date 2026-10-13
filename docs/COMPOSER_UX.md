@@ -30,7 +30,7 @@ The same loaded conversation and theme are used on both sides.
 | Send target | 48×48px | 48×48px |
 | Input font | 16px | 16px |
 
-Before: `remote-v2-9441f8f1df2e5a7a`. After: `remote-v2-833d3959f2de7b4a`.
+Before: `remote-v2-9441f8f1df2e5a7a`. After: `remote-v2-e78cd58146d6cbf5`.
 
 ![Before: two action rows and rectangular inner focus](media/composer-before.png)
 ![After: one compact rounded row](media/composer-after.png)

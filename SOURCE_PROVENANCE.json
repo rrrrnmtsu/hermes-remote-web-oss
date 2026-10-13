@@ -182,7 +182,7 @@
       "file": "docs/COMPOSER_UX.md",
       "source": "docs/COMPOSER_UX.md",
       "sourceSha256": "9ff0206c0c37fb8e3fd530fe72defca00a0755eac967c78cd482ef7632244525",
-      "sha256": "91c71d4f0c83a0329bcbed9704287e2131aa0d57471283664aa800dfd89f0287",
+      "sha256": "f9aac42b9262b2891a91d9c7e7b69a87e004a103aa549a0aec5248b47c3b4abd",
       "modifiedDuringExport": false,
       "originalPostPublicationWork": true,
       "postPublicationModified": true
@@ -1788,7 +1788,7 @@
       "file": "packages/web/src/remote/Conversation.tsx",
       "source": "packages/web/src/remote/Conversation.tsx",
       "sourceSha256": "9e41a0f703f78c6f82e957760ed5dadebaaee76126f1626b0393e0c5416eca9a",
-      "sha256": "14b0f82967642c8e8d479121eb4f7fe6204e317ea9264a89abd4aec0a45dc82d",
+      "sha256": "e3ae9d859eb109253b3a2131beadd9935f4b8063134c983963aecd5bfad8407e",
       "modifiedDuringExport": false,
       "postPublicationModified": true
     },
