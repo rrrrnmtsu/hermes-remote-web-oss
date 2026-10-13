@@ -29,11 +29,18 @@ input, textarea, select { border: 1px solid var(--remote-border); }
 :root[data-theme="dark"] { color-scheme: dark; }
 button { cursor: pointer; touch-action: manipulation; }
 button:disabled { opacity: .5; cursor: default; }
-/* Press feedback changes no geometry and applies to every existing control. */
-button:not(:disabled) { transition: background-color 120ms ease-out, box-shadow 120ms ease-out; }
-@media (hover: hover) { button:not(:disabled):hover { box-shadow: inset 0 0 0 1px var(--remote-border); } }
-button:not(:disabled):active { box-shadow: inset 0 0 0 2px currentColor; }
-@media (prefers-reduced-motion: reduce) { button:not(:disabled) { transition: none; } }
+/* Feedback never scales controls or changes their hit area. */
+button:not(:disabled):not([aria-disabled="true"]), summary {
+  transition: background-color 120ms ease-out, box-shadow 120ms ease-out, border-color 120ms ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  button:not(:disabled):not([aria-disabled="true"]):hover { box-shadow: inset 0 0 0 1px var(--remote-border); }
+  summary:hover { text-decoration: underline; text-underline-offset: 3px; }
+}
+button:not(:disabled):not([aria-disabled="true"]):active { box-shadow: inset 0 0 0 999px rgb(127 127 127 / 16%); }
+button[aria-busy="true"] { cursor: progress; }
+summary { cursor: pointer; touch-action: manipulation; border-radius: 8px; }
+summary:active { background: rgb(127 127 127 / 12%); }
 button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px solid var(--remote-accent); outline-offset: 2px; }
 a { color: var(--remote-accent); overflow-wrap: anywhere; }
 h1 { font-size: 1.5rem; margin: 0; } h2 { font-size: 1.125rem; } h3 { font-size: 1.0625rem; }
@@ -275,7 +282,6 @@ dd { margin-left: 0; overflow-wrap: anywhere; margin-bottom: 12px; } dt { font-w
 :root[data-remote-compact="true"] .remote-file-actions button, :root[data-remote-compact="true"] .remote-notice button { padding-block: 0; }
 :root[data-remote-compact="true"] .remote-notice summary { padding-block: 0; }
 @media (max-width: 360px) { :root[data-remote-compact="true"] .remote-dismiss-keyboard span { display: none; } }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; animation: none; transition: none; } }
 @media (max-width: 359px) { .remote-chat-heading { gap: 4px; } .remote-transcript { padding-inline: 12px; } .remote-composer-dock { padding-inline: 8px; } }
 
 .remote-sidebar { width: 292px; flex: 0 0 292px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; background: var(--remote-surface); border-right: 1px solid var(--remote-border); padding-top: env(safe-area-inset-top); }
@@ -339,3 +345,25 @@ dd { margin-left: 0; overflow-wrap: anywhere; margin-bottom: 12px; } dt { font-w
 .remote-chat-menu-trigger { position: relative; }
 .remote-update-dot { position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--remote-accent); }
 :root[data-remote-keyboard="true"] .remote-chat-heading { min-height: 44px; padding-block: 0; }
+
+/* Brief, opacity-only entrances preserve reading anchors and pointer targets. */
+.remote-copy-button { display: inline-flex; align-items: center; gap: 8px; }
+.remote-code-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+.remote-code-actions .remote-copy-button { grid-column: 2; grid-row: 1; }
+.remote-code-actions .remote-copy-feedback { grid-column: 1; grid-row: 1; }
+.remote-copy-feedback { min-height: 1.5em; overflow-wrap: anywhere; }
+.remote-copy-feedback[data-state="error"] { color: var(--remote-critical-text); }
+.remote-icon-loading { transform-origin: center; }
+@media (prefers-reduced-motion: no-preference) {
+  .remote-confirm[open] { animation: remote-reveal 140ms ease-out both; }
+  .remote-confirm[open]::backdrop { animation: remote-backdrop-reveal 140ms ease-out both; }
+  .remote-new, .remote-copy-feedback[data-state="success"] { animation: remote-reveal 120ms ease-out both; }
+  .remote-icon-loading { animation: remote-progress-turn 900ms linear infinite; }
+  .remote-composer { transition: border-color 120ms ease-out, box-shadow 120ms ease-out; }
+}
+@keyframes remote-reveal { from { opacity: .45; } to { opacity: 1; } }
+@keyframes remote-backdrop-reveal { from { opacity: 0; } to { opacity: 1; } }
+@keyframes remote-progress-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

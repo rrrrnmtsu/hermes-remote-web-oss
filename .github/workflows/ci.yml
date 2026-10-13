@@ -38,6 +38,7 @@ jobs:
           npm run e2e:chat-ux
           npm run e2e:composer
           npm run e2e:chat-header
+          npm run e2e:micro-interactions
           npm run e2e:sidebar
           npm run e2e:daily-ui
           npm run e2e:quote-image
@@ -65,6 +66,7 @@ jobs:
             output/bot-conversations/
             output/playwright/composer/
             output/playwright/chat-header/
+            output/playwright/micro-interactions/
             coverage/
             evidence/*browser*.json
             evidence/browser-fixture.json
