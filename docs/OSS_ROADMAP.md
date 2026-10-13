@@ -25,7 +25,8 @@ operations metadata to make this roadmap appear complete.
 
 - Existing Dashboard authentication, same-origin HTTPS/WSS and fresh tickets.
 - Registered profile/project/session navigation; real server requests; memory drafts.
-- Quotes, loaded-body search, expanded editor, templates and explicit Markdown export.
+- Quotes, loaded-body search, [conversation outline/jump](CONVERSATION_OUTLINE.md),
+  expanded editor, templates and explicit Markdown export.
 - JPEG/PNG or supported document selection and details. Selecting never transfers.
 - Capability-gated attachment turns, canonical artifacts/files and session models.
 - Opt-in encrypted drafts/history, static worker, notifications and device speech.

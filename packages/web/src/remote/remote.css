@@ -246,6 +246,11 @@ details[open] > summary::before { transform: rotate(45deg); }
 .remote-sheet-heading button { background: transparent; flex-shrink: 0; white-space: nowrap; }
 .remote-menu-action { display: block; width: 100%; text-align: left; margin: 4px 0; background: transparent; }
 .remote-menu-action:hover, .remote-session:hover { background: var(--remote-surface); }
+.remote-outline-list { list-style: none; padding: 0; margin: 12px 0 0; }
+.remote-outline > .remote-sheet-heading { position: sticky; top: 0; z-index: 1; background: var(--remote-bg); box-shadow: 0 -16px var(--remote-bg); padding-bottom: 8px; }
+.remote-outline-entry { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; overflow-wrap: anywhere; }
+.remote-outline-entry > span { max-width: 100%; }
+.remote-outline-target { outline: 2px solid var(--remote-accent); outline-offset: -2px; border-radius: 4px; background: var(--remote-surface); }
 .remote-quick-navigation-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; position: sticky; top: -16px; padding-bottom: 8px; background: var(--remote-surface); z-index: 1; }
 .remote-quick-navigation-heading h2 { margin: 0; overflow-wrap: anywhere; }
 .remote-quick-navigation > .remote-search { margin: 4px 0; background: var(--remote-bg); }

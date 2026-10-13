@@ -37,6 +37,15 @@ export function revealDialogControl(dialog: HTMLDialogElement, target: HTMLEleme
   for (let parent = target.parentElement, count = 0; parent && count < 8; parent = parent.parentElement, count++) {
     if (/(auto|scroll)/.test(getComputedStyle(parent).overflowY)) {
       const view = parent.getBoundingClientRect(), box = target.getBoundingClientRect();
+      const sticky = parent === dialog ? dialog.querySelector<HTMLElement>('[data-dialog-sticky-header]') : null;
+      if (sticky && !sticky.contains(target)) {
+        const top = Math.max(view.top, sticky.getBoundingClientRect().bottom) + 3;
+        // A tall control cannot fit in full. Prefer its beginning, and keep
+        // repeated native focus / arrow navigation reveals geometrically stable.
+        if (box.top < top || box.height > view.bottom - top - 3) parent.scrollTop += box.top - top;
+        else if (box.bottom > view.bottom - 3) parent.scrollTop += box.bottom - view.bottom + 3;
+        break;
+      }
       if (box.bottom > view.bottom - 3) parent.scrollTop += box.bottom - view.bottom + 3;
       else if (box.top < view.top + 3) parent.scrollTop -= view.top - box.top + 3;
     }
