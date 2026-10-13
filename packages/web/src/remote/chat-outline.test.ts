@@ -1,9 +1,31 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createConversationOutline, findOutlineTarget } from './chat-outline';
+import { revealDialogControl } from './dialog-focus';
 import type { RemoteMessage } from '../../../core/src/stores/remote';
 
 const message = (text: string, id = 'DEMO-a', role = 'assistant'): RemoteMessage => ({ id, role, text });
 describe('loaded conversation outline', () => {
+  it('reveals keyboard targets below its sticky heading without repeated scroll drift', () => {
+    const dialog = document.createElement('dialog'), header = document.createElement('div'), target = document.createElement('button');
+    header.dataset.dialogStickyHeader = ''; dialog.style.overflowY = 'auto'; dialog.append(header, target); document.body.append(dialog);
+    dialog.scrollTop = 200;
+    vi.spyOn(dialog, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 320, 390));
+    vi.spyOn(header, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 320, 100));
+    vi.spyOn(target, 'getBoundingClientRect').mockImplementation(() => new DOMRect(0, 210 - dialog.scrollTop, 280, 44));
+    revealDialogControl(dialog, target); expect(dialog.scrollTop).toBe(107);
+    revealDialogControl(dialog, target); expect(dialog.scrollTop).toBe(107);
+    vi.spyOn(target, 'getBoundingClientRect').mockImplementation(() => new DOMRect(0, 210 - dialog.scrollTop, 280, 600));
+    revealDialogControl(dialog, target); expect(dialog.scrollTop).toBe(107);
+    dialog.remove();
+  });
+  it('keeps ordinary dialog reveal geometry unchanged without the explicit sticky marker', () => {
+    const dialog = document.createElement('dialog'), target = document.createElement('button');
+    dialog.style.overflowY = 'auto'; dialog.append(target); document.body.append(dialog);
+    vi.spyOn(dialog, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 320, 390));
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 500, 280, 44));
+    revealDialogControl(dialog, target); expect(dialog.scrollTop).toBe(157);
+    dialog.remove();
+  });
   it('lists plain question excerpts and real Markdown headings in reading order', () => {
     const result = createConversationOutline([
       message('日本語**の質問**\n改行 🙂', 'DEMO-q', 'user'),

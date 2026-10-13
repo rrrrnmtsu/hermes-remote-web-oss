@@ -124,6 +124,10 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
           return box.top >= container.top && box.bottom <= container.bottom;
         });
         assert.equal(closeVisible, true, 'the close action stays visible after outline keyboard navigation');
+        await page.keyboard.press('Home');
+        const targetVisible = await dialog.evaluate(node => document.activeElement.getBoundingClientRect().top
+          >= node.querySelector('.remote-sheet-heading').getBoundingClientRect().bottom);
+        assert.equal(targetVisible, true, 'keyboard navigation reveals the target below the sticky heading');
         await capture(`${name}-outline-${variant.width}-${variant.font}${variant.keyboard ? '-keyboard' : ''}.png`);
         await page.keyboard.press('Escape');
         assert.equal(await menu.evaluate(node => document.activeElement === node), true);

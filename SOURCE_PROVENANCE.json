@@ -337,7 +337,7 @@
       "file": "docs/media/conversation-outline/outline.png",
       "source": "docs/media/conversation-outline/outline.png",
       "sourceSha256": "7f1b1b10e6ea67e668fc913249bf4988ee7e094ac951933952f2fa6471d008ae",
-      "sha256": "7f1b1b10e6ea67e668fc913249bf4988ee7e094ac951933952f2fa6471d008ae",
+      "sha256": "f2066f093672249586634bc789c8c98726e949e89530dc0b0c2578124e0eaae5",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },
@@ -1905,7 +1905,7 @@
       "file": "packages/web/src/remote/ConversationOutline.tsx",
       "source": "packages/web/src/remote/ConversationOutline.tsx",
       "sourceSha256": "87bd0197492ff238383140728a52fac973dd593111a25f4ef6fef3cdac295d01",
-      "sha256": "87bd0197492ff238383140728a52fac973dd593111a25f4ef6fef3cdac295d01",
+      "sha256": "2bc9f1adcae5503a2fb44819d76eedc8b72df47aaf872a687fbf21abc7612675",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },
@@ -2202,7 +2202,7 @@
       "file": "packages/web/src/remote/chat-outline.test.ts",
       "source": "packages/web/src/remote/chat-outline.test.ts",
       "sourceSha256": "70057e0992d75c852fe2fad2009fa839779bbbea643a18ccee50a72a1eb4d2ff",
-      "sha256": "70057e0992d75c852fe2fad2009fa839779bbbea643a18ccee50a72a1eb4d2ff",
+      "sha256": "3fa7a2a04d9fda7fe000263f02c2190065a5a53e21593cb649f687bac5fe21f7",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },
@@ -2261,8 +2261,9 @@
       "file": "packages/web/src/remote/dialog-focus.ts",
       "source": "packages/web/src/remote/dialog-focus.ts",
       "sourceSha256": "f279b41cace416ff080a929c89cf455297b7762aed2c125b5e537201797e0d5a",
-      "sha256": "f279b41cace416ff080a929c89cf455297b7762aed2c125b5e537201797e0d5a",
-      "modifiedDuringExport": false
+      "sha256": "9a6e5cd36b3e3187bcb1e0d94f978b13d657b8caf2604d018f4f0043882abb6c",
+      "modifiedDuringExport": false,
+      "modifiedAfterExport": true
     },
     {
       "file": "packages/web/src/remote/dialog-interactions.test.tsx",
@@ -3065,7 +3066,7 @@
       "file": "scripts/e2e-conversation-outline.mjs",
       "source": "scripts/e2e-conversation-outline.mjs",
       "sourceSha256": "d757614a3111caddcb3890bc76e8883511cbea63d9dec52b23c16f9f7fa2991c",
-      "sha256": "d757614a3111caddcb3890bc76e8883511cbea63d9dec52b23c16f9f7fa2991c",
+      "sha256": "7faec6682e636d90d317df23dac7fe01b22ad1738a86b29426a822135bb6965a",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },
