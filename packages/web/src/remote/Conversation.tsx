@@ -296,7 +296,9 @@ export function Conversation({ state, controller, chatFontSize = 16, scrollMemor
       if (!stacked && form && form.clientWidth > 0) {
         const chrome = getComputedStyle(form);
         const inlineWidth = form.clientWidth - (Number.parseFloat(chrome.paddingLeft) || 0) - (Number.parseFloat(chrome.paddingRight) || 0)
-          - (inputFocused ? 88 : 44) - 48 - 2 * (Number.parseFloat(chrome.columnGap) || 0);
+          // Use the focused width in both states: a blur between pointerdown
+          // and click must not move transcript controls by changing row layout.
+          - 88 - 48 - 2 * (Number.parseFloat(chrome.columnGap) || 0);
         const measure = document.createElement('canvas').getContext('2d');
         if (measure) {
           measure.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;

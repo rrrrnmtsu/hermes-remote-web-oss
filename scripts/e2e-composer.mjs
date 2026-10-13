@@ -24,6 +24,9 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
     Object.defineProperties(visual, { height: { get: () => window.__DEMO_keyboardHeight ?? native.height },
       width: { get: () => native.width }, scale: { get: () => native.scale }, offsetTop: { get: () => 0 }, offsetLeft: { get: () => 0 } });
     Object.defineProperty(window, 'visualViewport', { value: visual, configurable: true });
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText: async () => {
+      window.__DEMO_copyCount = (window.__DEMO_copyCount || 0) + 1;
+    } }, configurable: true });
   });
   const page = await context.newPage(), errors = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -124,9 +127,20 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.getByRole('button', { name: 'キーボードを閉じる' }).click();
       assert.equal(await input.evaluate(node => document.activeElement === node), false);
       assert.ok((await input.inputValue()).includes('改行を残す'));
+      fixture.state.sessions.get('default').messages.at(-1).text += '\n\n```text\nDEMO synthetic code\n```';
+      await page.getByRole('button', { name: '会話メニュー', exact: true }).click();
+      await page.getByRole('dialog', { name: '会話メニュー', exact: true }).getByRole('button', { name: '再同期', exact: true }).click();
+      const copy = page.getByRole('button', { name: 'コードをコピー', exact: true }); await copy.waitFor();
+      const compactBoundary = 'DEMO ' + 'あ'.repeat(11);
+      await input.fill(compactBoundary); await input.focus(); await settle(page);
+      const focusedHeight = (await page.locator('.remote-composer').boundingBox()).height;
+      await copy.click(); await settle(page);
+      assert.equal(await page.evaluate(() => window.__DEMO_copyCount), 1, 'one real pointer gesture reaches code copy');
+      assert.ok(Math.abs((await page.locator('.remote-composer').boundingBox()).height - focusedHeight) <= 1, 'blur does not move the clicked transcript control');
+      assert.equal(await input.inputValue(), compactBoundary);
       assert.equal(fixture.state.submissions, 0);
       assert.equal(fixture.state.methods.some(method => ['prompt.submit', 'session.interrupt', 'approval.respond', 'session.create'].includes(method)), false);
-      result.cases.push('reason_dialog_retains_send_guard_expanded_editor_focus_draft_IME_keyboard_close_no_writes');
+      result.cases.push('reason_dialog_retains_send_guard_expanded_editor_focus_draft_IME_keyboard_close_no_writes', 'blur_stable_layout_and_real_single_tap_code_copy');
     }
     result.status = 'PASS'; assert.deepEqual(errors, []);
   } catch (error) { result.status = 'FAIL'; result.error = String(error); throw error; }

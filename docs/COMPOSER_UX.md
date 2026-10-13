@@ -15,7 +15,7 @@ A disabled generation policy is presented compactly with **理由**. The explana
 uses the existing modal/focus handling and the unchanged server reason. During
 conversation search, the same control is in the bounded search panel, avoiding an
 extra composer status row. Closing it changes neither permission nor the draft.
-Unknown sends, request responses, stop, attachment and Web Lock guards are unchanged.
+Focus changes alone do not change the short/long row mode, keeping transcript tap targets stationary. Unknown sends, request responses, stop, attachment and Web Lock guards are unchanged.
 
 ## Matched synthetic comparison
 
@@ -30,7 +30,7 @@ The same loaded conversation and theme are used on both sides.
 | Send target | 48×48px | 48×48px |
 | Input font | 16px | 16px |
 
-Before: `remote-v2-9441f8f1df2e5a7a`. After: `remote-v2-6e99d55f4950c427`.
+Before: `remote-v2-9441f8f1df2e5a7a`. After: `remote-v2-833d3959f2de7b4a`.
 
 ![Before: two action rows and rectangular inner focus](media/composer-before.png)
 ![After: one compact rounded row](media/composer-after.png)
