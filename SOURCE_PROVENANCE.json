@@ -2906,7 +2906,7 @@
       "file": "scripts/e2e-chat-header.mjs",
       "source": "scripts/e2e-chat-header.mjs",
       "sourceSha256": "68f97aa7acaf165c3ef7539afcc9763b8439f0e707d79d6b20e6f177ffcbef87",
-      "sha256": "68f97aa7acaf165c3ef7539afcc9763b8439f0e707d79d6b20e6f177ffcbef87",
+      "sha256": "3c5efc0b50d4e29d5301dcbf34ea3107d510299befb2cd966600a2e60d9aa4ba",
       "modifiedDuringExport": false,
       "modifiedAfterExport": true
     },

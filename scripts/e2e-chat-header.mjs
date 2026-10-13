@@ -8,6 +8,21 @@ const baseline = process.argv.find(arg => arg.startsWith('--baseline='))?.slice(
 const output = resolve('output/playwright/chat-header', baseline ? 'before' : 'after');
 mkdirSync(output, { recursive: true });
 const report = { fixtureOnly: true, iphone: 'NOT_RUN', keyboard: 'SIMULATED', results: [] };
+// A reading-position assertion must start after the previous viewport/font
+// transition and the application's coalesced allocation frames have settled.
+const settleReadingLayout = page => page.evaluate(async () => {
+  await document.fonts.ready;
+  let previous = '', stable = 0;
+  for (let frame = 0; frame < 120; frame++) {
+    await new Promise(resolveFrame => requestAnimationFrame(resolveFrame));
+    const node = document.querySelector('.remote-transcript');
+    const form = document.querySelector('.remote-composer');
+    const signature = [node.clientWidth, node.clientHeight, node.scrollHeight, node.scrollTop, form.offsetHeight].join(':');
+    stable = signature === previous ? stable + 1 : 0; previous = signature;
+    if (stable >= 5) return;
+  }
+  throw new Error('Reading layout did not settle');
+});
 for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
   const fixture = await startFixture(baseline ? { releaseDirectory: resolve(baseline) } : {});
   fixture.state.nextBuild = 'DEMO-header-update';
@@ -67,8 +82,12 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       const menu = page.getByRole('button', { name: '会話メニュー', exact: true });
       assert.equal(await menu.getAttribute('aria-describedby'), 'remote-update-status');
       const transcript = page.locator('.remote-transcript');
+      await settleReadingLayout(page);
+      await transcript.dispatchEvent('wheel', { deltaY: -100 });
       await transcript.evaluate(node => { node.scrollTop = 100; node.dispatchEvent(new Event('scroll')); });
+      await settleReadingLayout(page);
       const beforeTop = await transcript.evaluate(node => node.scrollTop);
+      assert.ok(Math.abs(beforeTop - 100) <= 2, 'reading starts at the selected position');
       await menu.click();
       await page.getByRole('button', { name: 'アプリの更新を確認', exact: true }).click();
       const dialog = page.getByRole('dialog', { name: 'アプリの更新', exact: true });
@@ -78,7 +97,10 @@ for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
       await page.getByRole('button', { name: '会話に戻る', exact: true }).click();
       assert.equal(await input.inputValue(), 'DEMO 下書き');
       assert.equal(await menu.evaluate(node => document.activeElement === node), true, 'return focus to menu');
-      assert.ok(Math.abs(await transcript.evaluate(node => node.scrollTop) - beforeTop) <= 2, 'preserve reading position');
+      await settleReadingLayout(page);
+      const afterTop = await transcript.evaluate(node => node.scrollTop);
+      row.readingPosition = { before: beforeTop, after: afterTop };
+      assert.ok(Math.abs(afterTop - beforeTop) <= 2, `preserve reading position: ${beforeTop} -> ${afterTop}`);
       await input.fill('');
       await menu.click(); await page.getByRole('button', { name: 'アプリの更新を確認', exact: true }).click();
       assert.equal(await dialog.getByRole('button', { name: '操作と下書きがない状態で更新' }).isEnabled(), true);
