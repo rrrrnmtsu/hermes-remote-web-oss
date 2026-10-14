@@ -7,6 +7,28 @@
 [English](README.md) · [導入](docs/OSS_INSTALL.md) ·
 [互換表](compatibility.json) · [ロードマップ](docs/OSS_ROADMAP.md)
 
+## レビュワー向けガイド
+
+**由来:** 本リポジトリは派生物であり、ゼロから作った/clean-roomの実装ではありません。
+MIT の [stasstepv/hermes-pwa](https://github.com/stasstepv/hermes-pwa)（`7dc780b`）を出発点とし、
+MIT の Hermes Agent `apps/shared`（`e8c9732`）も取り込んでいます。
+[NOTICE](NOTICE)、`upstream.lock.json`、`THIRD_PARTY_NOTICES.md` を参照してください。
+公開履歴は squash した1コミット（`66322cf`）から始まり、それ以前の非公開履歴は含みません。
+そのため、これ以前の行ごとの作者はGitから示せません。以降の変更はPR #1〜#9です。
+Gitからは、人が書いた行とAIツールが書いた行は区別できません。
+
+**テストで読む代表的な判断3つ**（`packages/core/src/stores/remote-product.test.ts`）:
+
+1. *送信結果が不明なときは再送しない。* 返答が失われても下書きを残し、復旧や連打で再送しない（二重送信を防ぐ）。
+2. *資料が拒否されてもテキストだけで再送しない。* 下書きと資料の選択を残す（添付が黙って落ちるのを防ぐ）。
+3. *serverが生成を許可していなければ生成を呼ばない。* `prompt.submit` は呼ばず、読み取りだけ動く。
+
+**読む順番:** `compatibility.json` → `remote-product.test.ts` → 確認したいコミットのCI（Actionsの "OSS verification"）。
+過去には失敗した実行（`66322cf`、PR #1で修正）や取消（`a69e69d`）もあり、以降のコミットは成功しています。
+
+**未検証:** 実機iPhone（Safari/ホーム画面）と実providerでの生成は、`compatibility.json` で `NOT_RUN` です。
+自動試験は合成gatewayによるもので、これらを証明しません。
+
 ## 機能と受入れ
 
 profile/project/会話、Markdownとコードコピー、明示送信、本物の承認・追加質問・取消、

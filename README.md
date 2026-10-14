@@ -8,6 +8,33 @@ same-origin Dashboard authentication and one foreground conversation.
 [Compatibility](compatibility.json) · [Roadmap](docs/OSS_ROADMAP.md) ·
 [Privacy](docs/SECURITY.md) · [Security reports](SECURITY.md)
 
+## Reviewer guide
+
+**Provenance.** This is a derivative, not a from-scratch or clean-room project. It
+starts from MIT-licensed [stasstepv/hermes-pwa](https://github.com/stasstepv/hermes-pwa)
+(`7dc780b`) and also includes MIT-licensed Hermes Agent `apps/shared` source
+(`e8c9732`). See [NOTICE](NOTICE), `upstream.lock.json` and `THIRD_PARTY_NOTICES.md`.
+The public history starts with one squashed commit (`66322cf`); earlier private history
+is not included, so per-line authorship before it cannot be shown from Git. Later
+changes are in PRs #1–#9. Git cannot tell which lines were written by a person or by
+an AI tool.
+
+**Three decisions to read in the tests** (`packages/core/src/stores/remote-product.test.ts`):
+
+1. *Unknown delivery is never resent.* If the reply to a send is lost, the draft stays
+   and neither recovery nor repeat clicks send it again (a resend could duplicate a turn).
+2. *A rejected document is never retried as text only.* The draft is kept and the
+   document stays selected (a text-only resend would silently drop what the user attached).
+3. *No server permission, no generation call.* If the server does not allow generation,
+   `prompt.submit` is not called; read-only calls still work.
+
+**Reading order:** `compatibility.json` → `remote-product.test.ts` → the CI run for the
+commit you are reviewing (Actions, "OSS verification"). Note that some historical runs
+failed (e.g. `66322cf`, fixed by PR #1) and `a69e69d` was cancelled; later commits pass.
+
+**Not verified:** real iPhone Safari / Home Screen use and real provider generation are
+`NOT_RUN` in `compatibility.json`. Automated tests use synthetic gateways and do not prove them.
+
 ## What is available
 
 The existing client provides profile/project/session navigation, safe Markdown and
